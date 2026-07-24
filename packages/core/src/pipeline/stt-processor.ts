@@ -35,6 +35,7 @@ export class STTProcessor implements Processor {
 
   process(frame: Frame): Frame | null {
     if (frame.kind === "speech_start") {
+      void this.closeStream();
       void this.openStream();
       return frame;
     }
@@ -84,6 +85,9 @@ export class STTProcessor implements Processor {
           language: result.language,
           confidence: result.confidence,
         });
+        if (result.isFinal) {
+          void this.closeStream();
+        }
       }),
     );
     this.unsubs.push(

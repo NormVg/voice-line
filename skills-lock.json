@@ -25,6 +25,12 @@
       "skillPath": "skills/eve/SKILL.md",
       "computedHash": "4833349453c45c606f79202e495b7bbc42ea380f329f3beee36b9927763f19ef"
     },
+    "living-architecture": {
+      "source": "TheAlphaOnes/skills",
+      "sourceType": "github",
+      "skillPath": "living-architecture/SKILL.md",
+      "computedHash": "a5ae3c15027552cf3cb0eea7a5108da3cc242c7be59177f8ad806df61e3f1c9c"
+    },
     "nuxt": {
       "source": "antfu/skills",
       "sourceType": "github",

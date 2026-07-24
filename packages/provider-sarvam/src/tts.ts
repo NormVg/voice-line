@@ -113,16 +113,40 @@ export class SarvamTTSProvider implements TTSProvider {
   ): AsyncIterable<AudioChunk> {
     const reader = body.getReader();
     const sampleRate = config.sampleRate ?? this.options.sampleRate ?? 16_000;
+    let pending = new Uint8Array(0);
+
     try {
       while (true) {
         const { done, value } = await reader.read();
         if (done) break;
         if (!value || value.byteLength === 0) continue;
-        // Copy into a standalone ArrayBuffer (avoid SharedArrayBuffer typing)
-        const copy = new Uint8Array(value.byteLength);
-        copy.set(value);
+
+        const totalLength = pending.length + value.length;
+        const validBytes = totalLength - (totalLength % 2);
+
+        if (validBytes === 0) {
+          const newPending = new Uint8Array(totalLength);
+          newPending.set(pending);
+          newPending.set(value, pending.length);
+          pending = newPending;
+          continue;
+        }
+
+        const toYield = new Uint8Array(validBytes);
+        const nextPending = new Uint8Array(totalLength - validBytes);
+
+        if (pending.length > 0) {
+          toYield.set(pending);
+          toYield.set(value.subarray(0, validBytes - pending.length), pending.length);
+          nextPending.set(value.subarray(validBytes - pending.length));
+        } else {
+          toYield.set(value.subarray(0, validBytes));
+          nextPending.set(value.subarray(validBytes));
+        }
+
+        pending = nextPending;
         yield {
-          data: copy.buffer,
+          data: toYield.buffer,
           sampleRate,
           format: config.format ?? "pcm16",
         };
