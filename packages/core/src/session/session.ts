@@ -137,6 +137,10 @@ export class Session {
   private ttsTail: Promise<void> = Promise.resolve();
   /** Bumped on interrupt so in-flight queue items bail out. */
   private ttsGeneration = 0;
+  /** Watchdog timer: if we stay in `processing` too long, snap back to listening. */
+  private processingTimer: ReturnType<typeof setTimeout> | null = null;
+  /** Max ms we allow `processing` state before forcibly recovering. */
+  private static readonly PROCESSING_TIMEOUT_MS = 8_000;
 
   constructor(options: SessionOptions) {
     this.id = options.id ?? createId("ses");
@@ -299,6 +303,9 @@ export class Session {
     if (frame.kind === "speech_end") {
       if (this.state === "receiving") {
         this.setState("processing");
+        // Arm a watchdog: if STT never returns a final transcript (dead silence,
+        // network hiccup, Sarvam timeout) we snap back to listening automatically.
+        this.armProcessingTimer();
       }
       return;
     }
@@ -314,28 +321,41 @@ export class Session {
       return;
     }
 
+    // Guard: empty transcript (background noise, breath, mic rustle).
+    // Don't waste an LLM turn — just go back to listening.
+    const trimmed = frame.text.trim();
+    if (!trimmed) {
+      this.clearProcessingTimer();
+      if (this.state === "processing" || this.state === "receiving") {
+        this.setState("listening");
+      }
+      return;
+    }
+
     const isBusy = this.state === "speaking" || this.state === "processing" || this.turnAbort !== null;
 
     if (isBusy) {
       if (this.sessionConfig.bargeIn === "ignore") return;
       if (this.sessionConfig.bargeIn === "queue") {
-        const userMsg = this.history.addUser(frame.text);
+        const userMsg = this.history.addUser(trimmed);
         this.transport.sendEvent({
           type: "transcript:final",
-          text: frame.text,
+          text: trimmed,
           messageId: userMsg.id,
         });
-        this.transcriptQueue.push(frame.text);
+        this.transcriptQueue.push(trimmed);
         return;
       }
     }
 
-    await this.runBrainTurn(frame.text);
+    await this.runBrainTurn(trimmed);
   }
 
   private async runBrainTurn(userText: string, alreadyInHistory = false): Promise<void> {
     if (this.destroyed) return;
 
+    // A real turn is starting — clear the processing watchdog so it doesn't fire.
+    this.clearProcessingTimer();
     this.interruptTurn();
 
     if (!alreadyInHistory) {
@@ -515,9 +535,28 @@ export class Session {
     }, this.sessionConfig.idleTimeoutMs);
   }
 
+  private armProcessingTimer(): void {
+    this.clearProcessingTimer();
+    this.processingTimer = setTimeout(() => {
+      // Only fire if we're still stuck in processing — i.e. the STT never resolved.
+      if ((this.state === "processing" || this.state === "receiving") && !this.destroyed) {
+        this.setState("listening");
+      }
+      this.processingTimer = null;
+    }, Session.PROCESSING_TIMEOUT_MS);
+  }
+
+  private clearProcessingTimer(): void {
+    if (this.processingTimer) {
+      clearTimeout(this.processingTimer);
+      this.processingTimer = null;
+    }
+  }
+
   private clearTimers(): void {
     if (this.maxDurationTimer) clearTimeout(this.maxDurationTimer);
     if (this.idleTimer) clearTimeout(this.idleTimer);
+    this.clearProcessingTimer();
     this.maxDurationTimer = null;
     this.idleTimer = null;
   }
