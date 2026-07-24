@@ -83,18 +83,16 @@
 }
 
 .VPHero .name {
-  font-size: 80px !important;
-  font-weight: 700 !important;
+  font-weight: 800 !important;
   letter-spacing: -0.05em !important;
-  line-height: 1.05 !important;
+  line-height: 1.1 !important;
   color: var(--vercel-foreground) !important;
 }
 
 .VPHero .text {
-  font-size: 80px !important;
-  font-weight: 700 !important;
+  font-weight: 800 !important;
   letter-spacing: -0.05em !important;
-  line-height: 1.05 !important;
+  line-height: 1.1 !important;
   color: var(--vercel-accents-5) !important;
   margin-top: 0.25rem;
 }
@@ -103,10 +101,16 @@
   font-size: 20px !important;
   color: var(--vercel-accents-6) !important;
   max-width: 650px;
-  margin: 2rem auto !important;
+  margin: 1.5rem auto !important;
   font-weight: 400 !important;
   line-height: 1.5 !important;
   letter-spacing: -0.02em;
+}
+
+/* Flyouts, Search, Menus */
+.VPMenu, .VPLocalNav, .VPSwitchAppearance, .DocSearch-Modal {
+  background-color: var(--vercel-bg) !important;
+  border: 1px solid var(--vercel-accents-2) !important;
 }
 
 /* Primary Button - Vercel White CTA */
