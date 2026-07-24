@@ -5,7 +5,7 @@ import { SessionManager } from "./session-manager.js";
 export interface VoiceLineServer {
   readonly sessions: SessionManager;
   /** Create and start a new session. */
-  createSession(sessionId?: string): Promise<Session>;
+  createSession(sessionId?: string): Promise<{ session: Session; clientPayload?: Record<string, unknown> }>;
   /** Look up a live session. */
   getSession(sessionId: string): Session | undefined;
   /** Shut down all sessions. */

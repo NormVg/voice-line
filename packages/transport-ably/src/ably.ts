@@ -12,15 +12,9 @@ export interface AblyTransportOptions {
   ) => void;
   /**
    * Role of this transport endpoint.
-   *
-   * Pub/sub is directional:
-   * - client publishes on `audio:client` / `event:client`
-   * - server publishes on `audio:server` / `event:server`
-   * - each side subscribes to the *other* side's events only.
-   *
-   * This eliminates echo without any `echoMessages` hack.
+   * Default is "server" for the server-side ably() factory, and "client" for createAblyClientSession().
    */
-  role: "client" | "server";
+  role?: "client" | "server";
   /** Channel name factory. Default: `voice-line:{sessionId}` */
   channelName?: (sessionId: string) => string;
   /**
@@ -64,16 +58,16 @@ export class AblyTransport implements Transport {
   // Client publishes audio:client, subscribes to audio:server (and vice versa).
 
   private get publishAudioEvent(): string {
-    return `audio:${this.options.role}`;
+    return `audio:${this.options.role ?? "server"}`;
   }
   private get subscribeAudioEvent(): string {
-    return this.options.role === "client" ? "audio:server" : "audio:client";
+    return (this.options.role ?? "server") === "client" ? "audio:server" : "audio:client";
   }
   private get publishJsonEvent(): string {
-    return `event:${this.options.role}`;
+    return `event:${this.options.role ?? "server"}`;
   }
   private get subscribeJsonEvent(): string {
-    return this.options.role === "client" ? "event:server" : "event:client";
+    return (this.options.role ?? "server") === "client" ? "event:server" : "event:client";
   }
 
   async connect(sessionId: string): Promise<void> {
@@ -194,8 +188,34 @@ export class AblyTransport implements Transport {
  * transport: ably({ apiKey: process.env.ABLY_API_KEY })
  * ```
  */
-export function ably(options: AblyTransportOptions): (sessionId: string) => Transport {
-  return () => new AblyTransport(options);
+export function ably(options: AblyTransportOptions) {
+  return async (sessionId: string) => {
+    let tokenRequest: unknown;
+
+    // If we're on the server and have an apiKey, generate a token request for the client
+    if (options.apiKey && (options.role === "server" || options.role === undefined)) {
+      const Rest = await importAblyRest();
+      const rest = new Rest(options.apiKey);
+      const name = options.channelName ? options.channelName(sessionId) : `voice-line:${sessionId}`;
+      
+      tokenRequest = await rest.auth.createTokenRequest({
+        clientId: `client_${sessionId}`,
+        capability: {
+          [name]: ["publish", "subscribe", "presence"],
+        },
+      });
+    }
+
+    const transport = new AblyTransport({
+      ...options,
+      role: options.role ?? "server",
+    });
+
+    return { 
+      transport, 
+      clientPayload: tokenRequest ? { tokenRequest } : undefined 
+    };
+  };
 }
 
 /**
@@ -253,6 +273,17 @@ async function importAblyRealtime(): Promise<new (options: Record<string, unknow
     throw new Error("Could not load ably.Realtime — is `ably` installed?");
   }
   return Realtime;
+}
+
+async function importAblyRest(): Promise<new (apiKey: string) => any> {
+  const mod = await import("ably");
+  const Rest =
+    (mod as { Rest?: new (k: string) => any }).Rest ??
+    (mod as { default?: { Rest?: new (k: string) => any } }).default?.Rest;
+  if (!Rest) {
+    throw new Error("Could not load ably.Rest — is `ably` installed?");
+  }
+  return Rest;
 }
 
 function encodeAudio(chunk: ArrayBuffer): { encoding: "base64"; data: string } {

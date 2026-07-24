@@ -19,10 +19,23 @@ export interface Transport {
 }
 
 /**
+ * Optional return type for a TransportFactory.
+ * Allows a transport to pass auth payloads (like tokenRequests) back to the client.
+ */
+export interface TransportFactoryResult {
+  transport: Transport;
+  clientPayload?: Record<string, unknown>;
+}
+
+/**
  * Factory that creates a Transport for a new session.
  * Server-side: often creates a channel and returns credentials for the client.
  * Client-side: connects with auth tokens from the server.
  */
-export interface TransportFactory {
-  create(sessionId: string): Transport | Promise<Transport>;
-}
+export type TransportFactory = (
+  sessionId: string,
+) =>
+  | Transport
+  | Promise<Transport>
+  | TransportFactoryResult
+  | Promise<TransportFactoryResult>;

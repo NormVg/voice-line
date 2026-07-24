@@ -21,13 +21,13 @@ export class SessionManager {
     return this.sessions.get(sessionId);
   }
 
-  async create(sessionId?: string): Promise<Session> {
+  async create(sessionId?: string): Promise<{ session: Session; clientPayload?: Record<string, unknown> }> {
     const id = sessionId ?? createId("ses");
     if (this.sessions.has(id)) {
       throw new Error(`Session already exists: ${id}`);
     }
 
-    const transport = await resolveTransport(this.config.transport, id);
+    const { transport, clientPayload } = await resolveTransport(this.config.transport, id);
 
     // Build options without explicit `undefined` fields (exactOptionalPropertyTypes).
     const options: SessionOptions = {
@@ -57,7 +57,11 @@ export class SessionManager {
     this.sessions.set(id, session);
     await session.start();
     this.config.onSessionStart?.(session);
-    return session;
+    
+    if (clientPayload !== undefined) {
+      return { session, clientPayload };
+    }
+    return { session };
   }
 
   async destroy(sessionId: string): Promise<void> {
@@ -77,9 +81,14 @@ export class SessionManager {
 async function resolveTransport(
   transport: VoiceLineServerConfig["transport"],
   sessionId: string,
-): Promise<Transport> {
+): Promise<{ transport: Transport; clientPayload?: Record<string, unknown> }> {
   if (typeof transport === "function") {
-    return transport(sessionId);
+    const result = await transport(sessionId);
+    // Transport has a 'connect' method. TransportFactoryResult has a 'transport' property.
+    if ("transport" in result) {
+      return result as { transport: Transport; clientPayload?: Record<string, unknown> };
+    }
+    return { transport: result };
   }
-  return transport;
+  return { transport };
 }

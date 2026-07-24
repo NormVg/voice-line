@@ -14,22 +14,41 @@ import { createStatelessHandlerBase, type StatelessHandlerConfig } from "./state
  * Compatible with h3's event handler signature without importing h3
  * (duck-typed to avoid a hard dependency).
  */
-export function createEventHandler(config: VoiceLineServerConfig) {
-  const server = createServer(config);
+export function createEventHandler(
+  configOrFactory: VoiceLineServerConfig | ((event: any) => Promise<VoiceLineServerConfig> | VoiceLineServerConfig)
+) {
+  // If static config, create the server once globally.
+  const staticServer = typeof configOrFactory === "function" ? null : createServer(configOrFactory);
 
   return async (event: {
     node?: { req?: { method?: string } };
     method?: string;
-    // h3 readBody is injected by the host; we accept a pre-parsed body via context
     context?: { body?: { sessionId?: string } };
   }) => {
+    let currentConfig: VoiceLineServerConfig;
+    if (typeof configOrFactory === "function") {
+      currentConfig = await configOrFactory(event);
+    } else {
+      currentConfig = configOrFactory;
+    }
+
+    const server = staticServer ?? createServer(currentConfig);
+
     try {
       const body = event.context?.body ?? null;
-      const session = await server.createSession(body?.sessionId);
-      return { sessionId: session.id };
+      const { session, clientPayload } = await server.createSession(body?.sessionId);
+      
+      // If we created a dynamic server just for this request, close it when the session ends
+      // to avoid leaking the session manager, OR we can just let it GC. 
+      // Actually, SessionManager doesn't hold references outside of its sessions.
+      
+      return { sessionId: session.id, ...clientPayload };
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err);
-      config.onError?.(err instanceof Error ? err : new Error(message));
+      
+      // We don't have currentConfig in scope if it fails before initialization, 
+      // but try block is inside, so we do.
+      currentConfig?.onError?.(err instanceof Error ? err : new Error(message));
       throw err;
     }
   };

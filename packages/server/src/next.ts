@@ -19,18 +19,33 @@ export interface CreateSessionResponse {
  * The transport is expected to already be configured so the client can join
  * the same session channel (e.g. Ably token + channel name).
  */
-export function createRouteHandler(config: VoiceLineServerConfig) {
-  const server = createServer(config);
+export function createRouteHandler(
+  configOrFactory: VoiceLineServerConfig | ((request: Request) => Promise<VoiceLineServerConfig> | VoiceLineServerConfig)
+) {
+  const staticServer = typeof configOrFactory === "function" ? null : createServer(configOrFactory);
 
   return async function POST(request: Request): Promise<Response> {
+    let currentConfig: VoiceLineServerConfig | undefined;
     try {
+      if (typeof configOrFactory === "function") {
+        currentConfig = await configOrFactory(request);
+      } else {
+        currentConfig = configOrFactory;
+      }
+      const server = staticServer ?? createServer(currentConfig);
+
       const body = (await safeJson(request)) as { sessionId?: string } | null;
-      const session = await server.createSession(body?.sessionId);
-      const payload: CreateSessionResponse = { sessionId: session.id };
+      const { session, clientPayload } = await server.createSession(body?.sessionId);
+      
+      const payload: CreateSessionResponse & Record<string, unknown> = { 
+        sessionId: session.id,
+        ...clientPayload
+      };
+      
       return Response.json(payload, { status: 201 });
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err);
-      config.onError?.(err instanceof Error ? err : new Error(message));
+      currentConfig?.onError?.(err instanceof Error ? err : new Error(message));
       return Response.json({ error: message }, { status: 500 });
     }
   };
