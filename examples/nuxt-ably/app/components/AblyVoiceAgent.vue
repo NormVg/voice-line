@@ -53,7 +53,7 @@ async function onConnect() {
 
     // 2. Create the Ably transport using the token request
     const transport = new AblyTransport({
-      authCallback: (callback) => {
+      authCallback: (_, callback) => {
         callback(null, tokenRequest);
       },
       channelName: () => `voice-line:${sessionId}`,

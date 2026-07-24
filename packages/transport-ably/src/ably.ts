@@ -11,7 +11,7 @@ export interface AblyTransportOptions {
   /** Auth URL for client-side token requests. */
   authUrl?: string;
   /** Auth callback returning a token request / token details. */
-  authCallback?: (callback: (err: Error | null, tokenOrDetails: unknown) => void) => void;
+  authCallback?: (tokenParams: unknown, callback: (err: Error | null, tokenOrDetails: unknown) => void) => void;
   /** Channel name factory. Default: `voice-line:{sessionId}` */
   channelName?: (sessionId: string) => string;
   /**

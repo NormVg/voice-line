@@ -30,3 +30,4 @@ export { requestIdleCallback, cancelIdleCallback } from '#app/compat/idle-callba
 export { setInterval } from '#app/compat/interval';
 export { definePageMeta } from '../../../node_modules/.pnpm/nuxt@3.21.9_@biomejs+biome@1.9.4_@types+node@22.20.1_@vue+compiler-sfc@3.5.40_cac@6.7.14_db0@_eachidmypsudlfp3yvbkwoxude/node_modules/nuxt/dist/pages/runtime/composables';
 export { defineLazyHydrationComponent } from '#app/composables/lazy-hydration';
+export { useNuxtDevTools } from '../../../node_modules/.pnpm/@nuxt+devtools@3.3.1_db0@0.3.4_ioredis@5.11.1_magic-string@0.30.21_oxc-parser@0.140.0_unplugi_6vthfxgqe4eqr3qyzpykscuvy4/node_modules/@nuxt/devtools/dist/runtime/use-nuxt-devtools';
