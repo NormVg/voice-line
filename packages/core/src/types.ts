@@ -75,7 +75,7 @@ export interface VADConfig {
 
 export const DEFAULT_VAD_CONFIG: VADConfig = {
   confidence: 0.4, // Lowered from 0.7 so quiet speech isn't treated as silence
-  silenceMs: 800,  // Increased from 400ms to allow for natural pauses
+  silenceMs: 800, // Increased from 400ms to allow for natural pauses
   minSpeechMs: 200,
 };
 

@@ -23,11 +23,16 @@ export function createVoiceStack(env: {
 
   if (!env.sarvamApiKey) {
     warnings.push("SARVAM_API_KEY missing — STT/TTS will fail until set.");
-  } else { ready.stt = true; ready.tts = true; }
+  } else {
+    ready.stt = true;
+    ready.tts = true;
+  }
 
   if (!env.ollamaApiKey) {
     warnings.push("OLLAMA_API_KEY missing — brain will use a local echo fallback.");
-  } else { ready.brain = true; }
+  } else {
+    ready.brain = true;
+  }
 
   const stt = sarvam.stt({
     apiKey: env.sarvamApiKey || undefined,

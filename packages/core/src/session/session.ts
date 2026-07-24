@@ -1,4 +1,5 @@
 import type { VoiceLineEvent } from "../events.js";
+import { toVoiceLineError, type VoiceLineError } from "../errors.js";
 import type { Brain, BrainContext } from "../interfaces/brain.js";
 import { brainToStream } from "../interfaces/brain.js";
 import type { Frame } from "../interfaces/processor.js";
@@ -32,7 +33,7 @@ function eagerStream<T>(iterable: AsyncIterable<T>): AsyncIterable<T> {
   const queue: (T | Error)[] = [];
   let done = false;
   const state: { resolveWaiting: (() => void) | null } = { resolveWaiting: null };
-  
+
   void (async () => {
     try {
       for await (const item of iterable) {
@@ -54,7 +55,7 @@ function eagerStream<T>(iterable: AsyncIterable<T>): AsyncIterable<T> {
       }
     }
   })();
-  
+
   return {
     async *[Symbol.asyncIterator]() {
       while (true) {
@@ -65,12 +66,12 @@ function eagerStream<T>(iterable: AsyncIterable<T>): AsyncIterable<T> {
         } else if (done) {
           break;
         } else {
-          await new Promise<void>(resolve => {
+          await new Promise<void>((resolve) => {
             state.resolveWaiting = resolve;
           });
         }
       }
-    }
+    },
   };
 }
 
@@ -88,7 +89,7 @@ export interface SessionOptions {
   ttsConfig?: TTSConfig;
   metadata?: Record<string, unknown>;
   onStateChange?: (state: SessionState, prev: SessionState) => void;
-  onError?: (error: Error) => void;
+  onError?: (error: VoiceLineError) => void;
 }
 
 type StateListener = (state: SessionState, prev: SessionState) => void;
@@ -115,7 +116,7 @@ export class Session {
   private readonly sttConfig: STTConfig;
   private readonly sessionConfig: SessionConfig;
   private readonly metadata: Record<string, unknown>;
-  private readonly onError: ((error: Error) => void) | undefined;
+  private readonly onError: ((error: VoiceLineError) => void) | undefined;
 
   private inbound: Pipeline;
   private outbound: Pipeline;
@@ -218,8 +219,11 @@ export class Session {
     this.unsubs.push(
       this.transport.onAudio((chunk) => {
         audioCount++;
-        if (audioCount % 10 === 0) console.log(`[session ${this.id}] Received 10 audio chunks (${chunk.byteLength} bytes each)`);
-        
+        if (audioCount % 10 === 0)
+          console.log(
+            `[session ${this.id}] Received 10 audio chunks (${chunk.byteLength} bytes each)`,
+          );
+
         if (!this.micEnabled || this.destroyed) return;
         void this.inbound.push({
           kind: "audio",
@@ -294,7 +298,8 @@ export class Session {
 
   private async onInboundFrame(frame: Frame): Promise<void> {
     if (frame.kind === "speech_start") {
-      const isBusy = this.state === "speaking" || this.state === "processing" || this.turnAbort !== null;
+      const isBusy =
+        this.state === "speaking" || this.state === "processing" || this.turnAbort !== null;
       if (isBusy) {
         if (this.sessionConfig.bargeIn === "ignore") return;
         if (this.sessionConfig.bargeIn === "queue") return;
@@ -336,7 +341,8 @@ export class Session {
       return;
     }
 
-    const isBusy = this.state === "speaking" || this.state === "processing" || this.turnAbort !== null;
+    const isBusy =
+      this.state === "speaking" || this.state === "processing" || this.turnAbort !== null;
 
     if (isBusy) {
       if (this.sessionConfig.bargeIn === "ignore") return;
@@ -519,9 +525,13 @@ export class Session {
     }
   }
 
-  private handleError(error: Error): void {
-    this.onError?.(error);
-    this.transport.sendEvent({ type: "error", message: error.message });
+  private handleError(error: unknown): void {
+    const vle = toVoiceLineError("ERR_INTERNAL", error);
+    this.onError?.(vle);
+    this.transport.sendEvent({
+      type: "error",
+      error: { code: vle.code, message: vle.message },
+    });
   }
 
   private armMaxDuration(): void {

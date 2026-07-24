@@ -19,12 +19,17 @@ export interface VoiceLineClientOptions {
   autoMic?: boolean;
 }
 
+export interface VoiceLineErrorPayload {
+  code: string;
+  message: string;
+}
+
 export interface VoiceLineClientEvents {
   state: (state: ClientState) => void;
   message: (message: Message) => void;
   messages: (messages: Message[]) => void;
   partialTranscript: (text: string) => void;
-  error: (error: Error) => void;
+  error: (error: Error & { code?: string }) => void;
 }
 
 type EventKey = keyof VoiceLineClientEvents;
@@ -196,7 +201,7 @@ export class VoiceLineClient {
       }
 
       case "bot:text:delta": {
-        const idx = this.messages.findIndex(m => m.id === event.messageId);
+        const idx = this.messages.findIndex((m) => m.id === event.messageId);
         if (idx === -1) {
           const msg: Message = {
             id: event.messageId,
@@ -218,7 +223,7 @@ export class VoiceLineClient {
       }
 
       case "bot:text:done": {
-        const idx = this.messages.findIndex(m => m.id === event.messageId);
+        const idx = this.messages.findIndex((m) => m.id === event.messageId);
         if (idx === -1) {
           const msg: Message = {
             id: event.messageId,
@@ -244,9 +249,12 @@ export class VoiceLineClient {
         this.speaker.flush();
         break;
 
-      case "error":
-        this.emit("error", new Error(event.message));
+      case "error": {
+        const err = new Error(event.error.message) as Error & { code?: string };
+        err.code = event.error.code;
+        this.emit("error", err);
         break;
+      }
 
       default:
         break;

@@ -1,2 +1,2 @@
-export { ably, AblyTransport } from "./ably.js";
+export { ably, AblyTransport, createAblyClientSession } from "./ably.js";
 export type { AblyTransportOptions } from "./ably.js";

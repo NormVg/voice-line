@@ -107,12 +107,15 @@ export default defineEventHandler(async (event) => {
   //    is what actually starts the conversation.
   setImmediate(() => {
     console.log(`[session.post.ts] calling session.start() for ${sessionId}...`);
-    session.start().then(() => {
-      console.log(`[session.post.ts] session.start() finished for ${sessionId}`);
-    }).catch((err) => {
-      console.error(`[session ${sessionId}] failed to start:`, err);
-      sessionStore.delete(sessionId);
-    });
+    session
+      .start()
+      .then(() => {
+        console.log(`[session.post.ts] session.start() finished for ${sessionId}`);
+      })
+      .catch((err) => {
+        console.error(`[session ${sessionId}] failed to start:`, err);
+        sessionStore.delete(sessionId);
+      });
   });
 
   return {

@@ -1,5 +1,11 @@
 import { describe, expect, it, vi } from "vitest";
-import type { AudioChunk, STTProvider, STTStream, TTSProvider, TranscriptResult } from "../src/index.js";
+import type {
+  AudioChunk,
+  STTProvider,
+  STTStream,
+  TTSProvider,
+  TranscriptResult,
+} from "../src/index.js";
 import { Session, createMemoryTransportPair } from "../src/index.js";
 
 class FakeSTT implements STTProvider {

@@ -12,16 +12,16 @@ async function run() {
   const tokenRequest = await rest.auth.createTokenRequest({
     clientId: `client_${sessionId}`,
     capability: {
-      [channelName]: ["publish", "subscribe", "presence"]
-    }
+      [channelName]: ["publish", "subscribe", "presence"],
+    },
   });
 
   console.log("Token request created. Connecting client...");
-  
+
   const client = new Ably.Realtime({
     authCallback: (tokenParams, callback) => {
       callback(null, tokenRequest);
-    }
+    },
   });
 
   await new Promise((resolve, reject) => {
@@ -34,23 +34,23 @@ async function run() {
   const channel = client.channels.get(channelName);
   await Promise.all([
     channel.subscribe("audio:server", () => {}),
-    channel.subscribe("event:server", () => {})
+    channel.subscribe("event:server", () => {}),
   ]);
 
   console.log("Subscribed! Publishing...");
 
   await channel.publish("event:client", { type: "client:ready" });
-  
+
   console.log("Published! Waiting a bit...");
-  
-  await new Promise(r => setTimeout(r, 2000));
-  
+
+  await new Promise((r) => setTimeout(r, 2000));
+
   console.log("Closing...");
   client.close();
   console.log("Done.");
 }
 
-run().catch(err => {
+run().catch((err) => {
   console.error("Test failed:", err);
   process.exit(1);
 });

@@ -44,7 +44,7 @@ export default defineWebSocketHandler({
       },
       off: (event: string, listener: Function) => {
         if (!listeners[event]) return;
-        listeners[event] = listeners[event].filter(l => l !== listener);
+        listeners[event] = listeners[event].filter((l) => l !== listener);
       },
       addEventListener: (type: string, listener: any) => {
         if (!listeners[type]) listeners[type] = [];
@@ -52,8 +52,8 @@ export default defineWebSocketHandler({
       },
       removeEventListener: (type: string, listener: any) => {
         if (!listeners[type]) return;
-        listeners[type] = listeners[type].filter(l => l !== listener);
-      }
+        listeners[type] = listeners[type].filter((l) => l !== listener);
+      },
     };
 
     const stack = getStack();
@@ -107,7 +107,7 @@ export default defineWebSocketHandler({
         },
       });
 
-      session.start().catch(err => {
+      session.start().catch((err) => {
         console.error("[voice-line] failed to start session:", err);
         peer.close();
       });
@@ -117,11 +117,11 @@ export default defineWebSocketHandler({
       peer.close();
     }
   },
-  
+
   message(peer, message) {
     const isBinary = typeof message.rawData !== "string";
     const data = isBinary ? message.arrayBuffer() : message.text();
-    
+
     const ctx = peerContexts.get(peer);
     const listeners = ctx?.listeners?.message || [];
     listeners.forEach((l: any) => {
@@ -129,7 +129,7 @@ export default defineWebSocketHandler({
       l({ data });
     });
   },
-  
+
   close(peer) {
     const ctx = peerContexts.get(peer);
     const listeners = ctx?.listeners?.close || [];
@@ -137,10 +137,10 @@ export default defineWebSocketHandler({
     const session = ctx?.session;
     void session?.close();
   },
-  
+
   error(peer, error) {
     const ctx = peerContexts.get(peer);
     const listeners = ctx?.listeners?.error || [];
     listeners.forEach((l: any) => l(error));
-  }
+  },
 });

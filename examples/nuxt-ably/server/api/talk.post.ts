@@ -26,7 +26,7 @@ function getHandler() {
       sampleRate: 16_000,
       format: "pcm16",
       model: "bulbul:v3",
-    }
+    },
   });
 }
 

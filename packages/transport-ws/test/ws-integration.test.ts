@@ -1,19 +1,9 @@
-import {
-  Session,
-  type ServerToClientEvent,
-  type VoiceLineEvent,
-} from "@voice-line/core";
+import { Session, type ServerToClientEvent, type VoiceLineEvent } from "@voice-line/core";
 import { afterEach, describe, expect, it } from "vitest";
 import WebSocket, { WebSocketServer } from "ws";
 import { fromWebSocket } from "../src/from-websocket.js";
 import { WsTransport } from "../src/ws.js";
-import {
-  makeSilencePcm,
-  makeSpeechPcm,
-  MockSTT,
-  MockTTS,
-  waitFor,
-} from "./helpers.js";
+import { makeSilencePcm, makeSpeechPcm, MockSTT, MockTTS, waitFor } from "./helpers.js";
 
 type WsCtor = new (url: string, protocols?: string | string[]) => WebSocket;
 
@@ -188,9 +178,7 @@ describe("WebSocket transport integration", () => {
     });
 
     await waitFor(() => events.some((e) => e.type === "session:ready"));
-    await waitFor(() =>
-      events.some((e) => e.type === "state:change" && e.state === "listening"),
-    );
+    await waitFor(() => events.some((e) => e.type === "state:change" && e.state === "listening"));
 
     client.sendEvent({ type: "text:send", text: "book a flight" });
 
@@ -212,172 +200,153 @@ describe("WebSocket transport integration", () => {
     await session?.close();
   });
 
-  it(
-    "runs a full Session audio turn (VAD → STT → brain → TTS) over WebSocket",
-    async () => {
-      const { port, wss } = await listen();
-      let session: Session | undefined;
-      const tts = new MockTTS();
+  it("runs a full Session audio turn (VAD → STT → brain → TTS) over WebSocket", async () => {
+    const { port, wss } = await listen();
+    let session: Session | undefined;
+    const tts = new MockTTS();
 
-      wss.on("connection", (socket) => {
-        const transport = fromWebSocket(socket, {
-          onClose: () => {
-            void session?.close();
-          },
-        });
-
-        session = new Session({
-          transport,
-          stt: new MockSTT("hello voice world"),
-          tts,
-          brain: async function* (text) {
-            yield `Heard: ${text}.`;
-          },
-          session: { maxDurationMs: 60_000, idleTimeoutMs: 60_000 },
-          // Sensitive VAD for synthetic sine waves
-          vad: { confidence: 0.05, silenceMs: 200, minSpeechMs: 50 },
-        });
-
-        void session.start();
+    wss.on("connection", (socket) => {
+      const transport = fromWebSocket(socket, {
+        onClose: () => {
+          void session?.close();
+        },
       });
 
-      const client = new WsTransport({
-        url: `ws://127.0.0.1:${port}`,
-        WebSocketImpl: WS,
+      session = new Session({
+        transport,
+        stt: new MockSTT("hello voice world"),
+        tts,
+        brain: async function* (text) {
+          yield `Heard: ${text}.`;
+        },
+        session: { maxDurationMs: 60_000, idleTimeoutMs: 60_000 },
+        // Sensitive VAD for synthetic sine waves
+        vad: { confidence: 0.05, silenceMs: 200, minSpeechMs: 50 },
       });
 
-      const events: ServerToClientEvent[] = [];
-      const audioOut: ArrayBuffer[] = [];
-      client.onEvent((e) => {
-        events.push(e as ServerToClientEvent);
+      void session.start();
+    });
+
+    const client = new WsTransport({
+      url: `ws://127.0.0.1:${port}`,
+      WebSocketImpl: WS,
+    });
+
+    const events: ServerToClientEvent[] = [];
+    const audioOut: ArrayBuffer[] = [];
+    client.onEvent((e) => {
+      events.push(e as ServerToClientEvent);
+    });
+    client.onAudio((c) => {
+      audioOut.push(c);
+    });
+
+    await client.connect("ses_voice");
+    client.sendEvent({
+      type: "client:ready",
+      capabilities: { audio: true, sampleRate: 16000 },
+    });
+    await waitFor(() => events.some((e) => e.type === "state:change" && e.state === "listening"));
+
+    // Stream speech-like audio (above VAD threshold), then silence to end utterance
+    const speechChunk = makeSpeechPcm(100);
+    for (let i = 0; i < 8; i++) {
+      client.sendAudio(speechChunk);
+      // let the event loop process each chunk
+      await new Promise((r) => setTimeout(r, 5));
+    }
+    const silence = makeSilencePcm(300);
+    for (let i = 0; i < 4; i++) {
+      client.sendAudio(silence);
+      await new Promise((r) => setTimeout(r, 5));
+    }
+
+    await waitFor(
+      () => events.some((e) => e.type === "transcript:final" && e.text.length > 0),
+      5000,
+    );
+
+    const finals = events.filter(
+      (e): e is Extract<ServerToClientEvent, { type: "transcript:final" }> =>
+        e.type === "transcript:final",
+    );
+    expect(finals.some((f) => f.text === "hello voice world")).toBe(true);
+
+    await waitFor(
+      () => events.some((e) => e.type === "bot:text:done" && e.text.includes("hello voice world")),
+      5000,
+    );
+
+    const bot = events.find(
+      (e) => e.type === "bot:text:done" && e.text.includes("hello voice world"),
+    );
+    expect(bot).toBeDefined();
+    expect(audioOut.length).toBeGreaterThanOrEqual(1);
+    expect(tts.synthesized.length).toBeGreaterThanOrEqual(1);
+
+    await client.disconnect();
+    await session?.close();
+  }, 15_000);
+
+  it("interrupts speaking when a new text turn arrives", async () => {
+    const { port, wss } = await listen();
+    let session: Session | undefined;
+
+    wss.on("connection", (socket) => {
+      const transport = fromWebSocket(socket);
+      session = new Session({
+        transport,
+        stt: new MockSTT(),
+        tts: new MockTTS(),
+        brain: async function* (text) {
+          if (text === "first") {
+            yield "Long answer one. ";
+            await new Promise((r) => setTimeout(r, 300));
+            yield "Should not always finish.";
+          } else {
+            yield "Short second answer.";
+          }
+        },
+        session: { maxDurationMs: 60_000, idleTimeoutMs: 60_000 },
       });
-      client.onAudio((c) => {
-        audioOut.push(c);
-      });
+      void session.start();
+    });
 
-      await client.connect("ses_voice");
-      client.sendEvent({
-        type: "client:ready",
-        capabilities: { audio: true, sampleRate: 16000 },
-      });
-      await waitFor(() =>
-        events.some((e) => e.type === "state:change" && e.state === "listening"),
-      );
+    const client = new WsTransport({
+      url: `ws://127.0.0.1:${port}`,
+      WebSocketImpl: WS,
+    });
+    const events: ServerToClientEvent[] = [];
+    client.onEvent((e) => events.push(e as ServerToClientEvent));
 
-      // Stream speech-like audio (above VAD threshold), then silence to end utterance
-      const speechChunk = makeSpeechPcm(100);
-      for (let i = 0; i < 8; i++) {
-        client.sendAudio(speechChunk);
-        // let the event loop process each chunk
-        await new Promise((r) => setTimeout(r, 5));
-      }
-      const silence = makeSilencePcm(300);
-      for (let i = 0; i < 4; i++) {
-        client.sendAudio(silence);
-        await new Promise((r) => setTimeout(r, 5));
-      }
+    await client.connect("ses_int");
+    client.sendEvent({
+      type: "client:ready",
+      capabilities: { audio: true },
+    });
+    await waitFor(() => events.some((e) => e.type === "state:change" && e.state === "listening"));
 
-      await waitFor(
-        () => events.some((e) => e.type === "transcript:final" && e.text.length > 0),
-        5000,
-      );
+    client.sendEvent({ type: "text:send", text: "first" });
+    await waitFor(() => events.some((e) => e.type === "bot:text:delta"), 3000);
 
-      const finals = events.filter(
-        (e): e is Extract<ServerToClientEvent, { type: "transcript:final" }> =>
-          e.type === "transcript:final",
-      );
-      expect(finals.some((f) => f.text === "hello voice world")).toBe(true);
+    // Barge-in
+    client.sendEvent({ type: "text:send", text: "second" });
 
-      await waitFor(
-        () =>
-          events.some(
-            (e) => e.type === "bot:text:done" && e.text.includes("hello voice world"),
-          ),
-        5000,
-      );
+    await waitFor(
+      () =>
+        events.some((e) => e.type === "bot:text:done" && e.text.includes("Short second answer")),
+      8000,
+    );
 
-      const bot = events.find(
-        (e) => e.type === "bot:text:done" && e.text.includes("hello voice world"),
-      );
-      expect(bot).toBeDefined();
-      expect(audioOut.length).toBeGreaterThanOrEqual(1);
-      expect(tts.synthesized.length).toBeGreaterThanOrEqual(1);
+    const second = events.find(
+      (e) => e.type === "bot:text:done" && e.text.includes("Short second answer"),
+    );
+    expect(second).toBeDefined();
 
-      await client.disconnect();
-      await session?.close();
-    },
-    15_000,
-  );
+    // At least one flush should have been sent on interrupt
+    expect(events.some((e) => e.type === "audio:flush")).toBe(true);
 
-  it(
-    "interrupts speaking when a new text turn arrives",
-    async () => {
-      const { port, wss } = await listen();
-      let session: Session | undefined;
-
-      wss.on("connection", (socket) => {
-        const transport = fromWebSocket(socket);
-        session = new Session({
-          transport,
-          stt: new MockSTT(),
-          tts: new MockTTS(),
-          brain: async function* (text) {
-            if (text === "first") {
-              yield "Long answer one. ";
-              await new Promise((r) => setTimeout(r, 300));
-              yield "Should not always finish.";
-            } else {
-              yield "Short second answer.";
-            }
-          },
-          session: { maxDurationMs: 60_000, idleTimeoutMs: 60_000 },
-        });
-        void session.start();
-      });
-
-      const client = new WsTransport({
-        url: `ws://127.0.0.1:${port}`,
-        WebSocketImpl: WS,
-      });
-      const events: ServerToClientEvent[] = [];
-      client.onEvent((e) => events.push(e as ServerToClientEvent));
-
-      await client.connect("ses_int");
-      client.sendEvent({
-        type: "client:ready",
-        capabilities: { audio: true },
-      });
-      await waitFor(() =>
-        events.some((e) => e.type === "state:change" && e.state === "listening"),
-      );
-
-      client.sendEvent({ type: "text:send", text: "first" });
-      await waitFor(() => events.some((e) => e.type === "bot:text:delta"), 3000);
-
-      // Barge-in
-      client.sendEvent({ type: "text:send", text: "second" });
-
-      await waitFor(
-        () =>
-          events.some(
-            (e) =>
-              e.type === "bot:text:done" &&
-              e.text.includes("Short second answer"),
-          ),
-        8000,
-      );
-
-      const second = events.find(
-        (e) => e.type === "bot:text:done" && e.text.includes("Short second answer"),
-      );
-      expect(second).toBeDefined();
-
-      // At least one flush should have been sent on interrupt
-      expect(events.some((e) => e.type === "audio:flush")).toBe(true);
-
-      await client.disconnect();
-      await session?.close();
-    },
-    15_000,
-  );
+    await client.disconnect();
+    await session?.close();
+  }, 15_000);
 });

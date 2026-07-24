@@ -17,10 +17,7 @@ describe("SentenceChunker", () => {
     expect(r).toBeNull();
 
     const flushed = chunker.process({ kind: "flush" });
-    expect(flushed).toEqual([
-      { kind: "sentence", text: "Hello there" },
-      { kind: "flush" },
-    ]);
+    expect(flushed).toEqual([{ kind: "sentence", text: "Hello there" }, { kind: "flush" }]);
   });
 
   it("flushes at maxChars", () => {

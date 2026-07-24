@@ -67,9 +67,7 @@ export function attachSocket(socket: WebSocketLike, handlers: SocketHandlers): (
       data instanceof ArrayBuffer ||
       ArrayBuffer.isView(data)
     ) {
-      handlers.onAudio(
-        toArrayBuffer(data as Buffer | ArrayBuffer | ArrayBufferView | Buffer[]),
-      );
+      handlers.onAudio(toArrayBuffer(data as Buffer | ArrayBuffer | ArrayBufferView | Buffer[]));
       return;
     }
     dispatchIncoming(typeof data === "string" ? data : String(data), handlers);

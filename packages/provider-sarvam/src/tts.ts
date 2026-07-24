@@ -1,10 +1,5 @@
 import type { AudioChunk, TTSConfig, TTSProvider } from "@voice-line/core";
-import {
-  authHeaders,
-  resolveApiKey,
-  SARVAM_BASE_URL,
-  type SarvamCredentials,
-} from "./shared.js";
+import { authHeaders, resolveApiKey, SARVAM_BASE_URL, type SarvamCredentials } from "./shared.js";
 
 export interface SarvamTTSOptions extends SarvamCredentials {
   /** Default speaker. bulbul:v3 default is `shubh`. */
@@ -40,14 +35,11 @@ export class SarvamTTSProvider implements TTSProvider {
 
     const body = {
       text: trimmed,
-      target_language_code:
-        config.language ?? this.options.language ?? "en-IN",
+      target_language_code: config.language ?? this.options.language ?? "en-IN",
       model: config.model ?? this.options.model ?? "bulbul:v3",
       speaker: config.voice ?? this.options.voice ?? "shubh",
       pace: config.pace ?? this.options.pace ?? 1.0,
-      speech_sample_rate: String(
-        config.sampleRate ?? this.options.sampleRate ?? 16_000,
-      ),
+      speech_sample_rate: String(config.sampleRate ?? this.options.sampleRate ?? 16_000),
     };
 
     try {
@@ -95,7 +87,7 @@ export class SarvamTTSProvider implements TTSProvider {
         view[0] === 0x52 && // R
         view[1] === 0x49 && // I
         view[2] === 0x46 && // F
-        view[3] === 0x46    // F
+        view[3] === 0x46 // F
       ) {
         data = data.slice(44);
       }
@@ -144,7 +136,7 @@ export class SarvamTTSProvider implements TTSProvider {
             currentChunk[0] === 0x52 && // R
             currentChunk[1] === 0x49 && // I
             currentChunk[2] === 0x46 && // F
-            currentChunk[3] === 0x46    // F
+            currentChunk[3] === 0x46 // F
           ) {
             const headerSize = 44;
             if (currentChunk.length <= headerSize) continue;

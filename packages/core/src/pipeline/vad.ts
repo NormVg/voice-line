@@ -1,8 +1,5 @@
 import type { Frame, Processor } from "../interfaces/processor.js";
-import {
-  DEFAULT_VAD_CONFIG,
-  type VADConfig,
-} from "../types.js";
+import { DEFAULT_VAD_CONFIG, type VADConfig } from "../types.js";
 import { pcm16ToFloat32, rmsEnergy } from "../utils/audio.js";
 
 /**

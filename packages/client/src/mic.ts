@@ -59,9 +59,7 @@ export class Microphone {
       this.processor = this.context.createScriptProcessor(bufferSize, 1, 1);
 
       let pending = new Float32Array(0);
-      const samplesPerChunk = Math.floor(
-        (this.targetRate * this.chunkDurationMs) / 1000,
-      );
+      const samplesPerChunk = Math.floor((this.targetRate * this.chunkDurationMs) / 1000);
 
       this.processor.onaudioprocess = (event) => {
         // Zero out the output buffer to prevent local mic echo

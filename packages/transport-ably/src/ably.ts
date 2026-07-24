@@ -1,9 +1,4 @@
-import type {
-  Transport,
-  TransportState,
-  Unsubscribe,
-  VoiceLineEvent,
-} from "@voice-line/core";
+import type { Transport, TransportState, Unsubscribe, VoiceLineEvent } from "@voice-line/core";
 
 export interface AblyTransportOptions {
   /** Ably API key (server) or token-auth callback (client). */
@@ -11,7 +6,10 @@ export interface AblyTransportOptions {
   /** Auth URL for client-side token requests. */
   authUrl?: string;
   /** Auth callback returning a token request / token details. */
-  authCallback?: (tokenParams: unknown, callback: (err: Error | null, tokenOrDetails: unknown) => void) => void;
+  authCallback?: (
+    tokenParams: unknown,
+    callback: (err: Error | null, tokenOrDetails: unknown) => void,
+  ) => void;
   /**
    * Role of this transport endpoint.
    *
@@ -30,7 +28,9 @@ export interface AblyTransportOptions {
    * Defaults to dynamic import of `ably`.
    */
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  Realtime?: new (options: Record<string, unknown>) => any;
+  Realtime?: new (
+    options: Record<string, unknown>,
+  ) => any;
 }
 
 type AudioHandler = (chunk: ArrayBuffer) => void;
@@ -100,8 +100,16 @@ export class AblyTransport implements Transport {
     });
 
     realtime.connection.on((stateChange: any) => {
-      console.log(`[AblyTransport:${this.options.role}] Connection state changed:`, stateChange.current, stateChange.reason);
-      if (stateChange.current === "closed" || stateChange.current === "failed" || stateChange.current === "suspended") {
+      console.log(
+        `[AblyTransport:${this.options.role}] Connection state changed:`,
+        stateChange.current,
+        stateChange.reason,
+      );
+      if (
+        stateChange.current === "closed" ||
+        stateChange.current === "failed" ||
+        stateChange.current === "suspended"
+      ) {
         this.stateValue = "disconnected";
       }
     });
@@ -186,10 +194,52 @@ export class AblyTransport implements Transport {
  * transport: ably({ apiKey: process.env.ABLY_API_KEY })
  * ```
  */
-export function ably(
-  options: AblyTransportOptions,
-): (sessionId: string) => Transport {
+export function ably(options: AblyTransportOptions): (sessionId: string) => Transport {
   return () => new AblyTransport(options);
+}
+
+/**
+ * Frontend helper to fetch a session token from your server and automatically
+ * initialize an AblyTransport. Designed to be passed to `useVoiceAgent({ session: ... })`.
+ *
+ * @param authUrl The API endpoint that returns { sessionId, tokenRequest }
+ * @param Realtime Optional Ably.Realtime injection (useful if dynamically imported)
+ */
+export function createAblyClientSession(
+  authUrl: string,
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  Realtime?: new (options: Record<string, unknown>) => any,
+  body?: Record<string, unknown>,
+): () => Promise<{ transport: Transport; sessionId: string }> {
+  return async () => {
+    const fetchOptions: RequestInit = {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+    };
+    if (body) fetchOptions.body = JSON.stringify(body);
+
+    const res = await fetch(authUrl, fetchOptions);
+
+    if (!res.ok) {
+      throw new Error(`Failed to fetch Ably session: ${res.statusText}`);
+    }
+
+    const data = await res.json();
+    if (!data.sessionId || !data.tokenRequest) {
+      throw new Error("Server must return { sessionId, tokenRequest }");
+    }
+
+    const transportOptions: AblyTransportOptions = {
+      role: "client",
+      authCallback: (_, callback) => callback(null, data.tokenRequest),
+      channelName: () => `voice-line:${data.sessionId}`,
+    };
+    if (Realtime) transportOptions.Realtime = Realtime;
+
+    const transport = new AblyTransport(transportOptions);
+
+    return { transport, sessionId: data.sessionId };
+  };
 }
 
 async function importAblyRealtime(): Promise<new (options: Record<string, unknown>) => unknown> {
@@ -211,10 +261,7 @@ function encodeAudio(chunk: ArrayBuffer): { encoding: "base64"; data: string } {
   for (let i = 0; i < bytes.length; i++) {
     binary += String.fromCharCode(bytes[i]!);
   }
-  const data =
-    typeof btoa === "function"
-      ? btoa(binary)
-      : Buffer.from(bytes).toString("base64");
+  const data = typeof btoa === "function" ? btoa(binary) : Buffer.from(bytes).toString("base64");
   return { encoding: "base64", data };
 }
 

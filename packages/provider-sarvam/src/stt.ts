@@ -7,12 +7,7 @@ import type {
   Unsubscribe,
 } from "@voice-line/core";
 import { pcm16ToWav } from "@voice-line/core";
-import {
-  authHeaders,
-  resolveApiKey,
-  SARVAM_BASE_URL,
-  type SarvamCredentials,
-} from "./shared.js";
+import { authHeaders, resolveApiKey, SARVAM_BASE_URL, type SarvamCredentials } from "./shared.js";
 
 export interface SarvamSTTOptions extends SarvamCredentials {
   language?: string;
@@ -197,11 +192,7 @@ export class SarvamSTTStream implements STTStream {
 
     try {
       const form = new FormData();
-      form.append(
-        "file",
-        new Blob([new Uint8Array(wav)], { type: "audio/wav" }),
-        "audio.wav",
-      );
+      form.append("file", new Blob([new Uint8Array(wav)], { type: "audio/wav" }), "audio.wav");
       form.append("model", this.config.model ?? this.options.model ?? "saaras:v3");
       form.append("mode", this.options.mode ?? "transcribe");
       const language = this.config.language ?? this.options.language;
@@ -237,10 +228,7 @@ export class SarvamSTTStream implements STTStream {
     }
   }
 
-  private emit<E extends keyof STTStreamEventMap>(
-    event: E,
-    payload: STTStreamEventMap[E],
-  ): void {
+  private emit<E extends keyof STTStreamEventMap>(event: E, payload: STTStreamEventMap[E]): void {
     for (const h of this.handlers[event]) {
       h(payload);
     }

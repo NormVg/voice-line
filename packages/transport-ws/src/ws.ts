@@ -69,9 +69,7 @@ export class WsTransport implements Transport {
     this.stateValue = "connecting";
 
     const url =
-      typeof this.options.url === "function"
-        ? this.options.url(sessionId)
-        : this.options.url;
+      typeof this.options.url === "function" ? this.options.url(sessionId) : this.options.url;
 
     const WS = this.options.WebSocketImpl ?? globalThis.WebSocket;
     if (!WS) {

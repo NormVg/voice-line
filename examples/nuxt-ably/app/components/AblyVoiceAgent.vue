@@ -1,24 +1,38 @@
 <script setup lang="ts">
-import { VoiceLineClient } from "@voice-line/client";
-import { AblyTransport } from "@voice-line/transport-ably";
-import type { ClientState, Message } from "@voice-line/core";
-import { computed, ref, onUnmounted, shallowRef } from "vue";
+import { useVoiceAgent } from "@voice-line/vue";
+import { createAblyClientSession } from "@voice-line/transport-ably";
+import { computed, ref, onUnmounted } from "vue";
 import Ably from "ably";
 
-const error = ref<string | null>(null);
 const partial = ref("");
 const textInput = ref("");
-const connecting = ref(false);
 
 const vadConfidence = ref(0.4);
 const vadSilenceMs = ref(800);
 
-const state = ref<ClientState>("idle");
-const messages = ref<Message[]>([]);
-const client = shallowRef<VoiceLineClient | null>(null);
+const {
+  state,
+  messages,
+  error,
+  isConnected,
+  isBotSpeaking,
+  connect: baseConnect,
+  disconnect,
+  toggleMic,
+  sendText,
+  client,
+} = useVoiceAgent({
+  session: createAblyClientSession("/api/session", Ably.Realtime, {
+    vad: {
+      confidence: vadConfidence.value,
+      silenceMs: vadSilenceMs.value,
+    },
+  }),
+  sampleRate: 16_000,
+  autoMic: true,
+});
 
-const isConnected = computed(() => state.value !== "idle" && state.value !== "connecting");
-const isBotSpeaking = computed(() => state.value === "speaking");
+const connecting = computed(() => state.value === "connecting");
 
 const statusLabel = computed(() => {
   if (connecting.value) return "connecting…";
@@ -27,92 +41,46 @@ const statusLabel = computed(() => {
 
 const statusClass = computed(() => {
   switch (state.value) {
-    case "listening": return "ok";
-    case "receiving": case "processing": case "speaking": return "active";
-    case "connecting": return "warn";
-    default: return "idle";
+    case "listening":
+      return "ok";
+    case "receiving":
+    case "processing":
+    case "speaking":
+      return "active";
+    case "connecting":
+      return "warn";
+    default:
+      return "idle";
   }
 });
 
-function bindClientEvents(c: VoiceLineClient) {
-  c.on("state", (s) => { state.value = s; });
-  c.on("messages", (msgs) => { messages.value = msgs; });
-  c.on("partialTranscript", (text) => { partial.value = text; });
-  c.on("error", (err) => { error.value = err.message; });
-  c.on("message", () => { partial.value = ""; });
-}
-
 async function onConnect() {
-  error.value = null;
-  connecting.value = true;
-  try {
-    // 1. Ask the server to create a session and give us a token request
-    const response = await fetch("/api/session", { 
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        vad: {
-          confidence: vadConfidence.value,
-          silenceMs: vadSilenceMs.value
-        }
-      })
+  await baseConnect();
+  if (client.value) {
+    client.value.on("partialTranscript", (text) => {
+      partial.value = text;
     });
-    if (!response.ok) {
-      const errText = await response.text();
-      throw new Error(`Server error: ${errText}`);
-    }
-    const { sessionId, tokenRequest } = await response.json();
-
-    // 2. Create the Ably transport using the token request
-    const transport = new AblyTransport({
-      role: "client",
-      authCallback: (_, callback) => {
-        callback(null, tokenRequest);
-      },
-      channelName: () => `voice-line:${sessionId}`,
-      Realtime: Ably.Realtime,
+    client.value.on("message", () => {
+      partial.value = "";
     });
-
-    // 3. Initialize the VoiceLineClient
-    const c = new VoiceLineClient({
-      transport,
-      sampleRate: 16_000,
-      autoMic: true,
-    });
-    
-    bindClientEvents(c);
-    client.value = c;
-
-    // 4. Connect using the sessionId provided by the server
-    await c.connect(sessionId);
-    
-  } catch (err) {
-    error.value = err instanceof Error ? err.message : String(err);
-  } finally {
-    connecting.value = false;
   }
 }
 
 async function onDisconnect() {
   partial.value = "";
-  if (client.value) {
-    await client.value.disconnect();
-    client.value = null;
-  }
-  state.value = "idle";
+  await disconnect();
 }
 
 function onSendText() {
   const t = textInput.value.trim();
   if (!t) return;
-  client.value?.sendText(t);
+  sendText(t);
   textInput.value = "";
   partial.value = "";
 }
 
 async function onToggleMic() {
-  try { await client.value?.toggleMic(); }
-  catch (err) { error.value = err instanceof Error ? err.message : String(err); }
+  await toggleMic();
 }
 
 onUnmounted(() => {
@@ -133,7 +101,7 @@ onUnmounted(() => {
       </div>
     </header>
 
-    <p v-if="error" class="error">{{ error }}</p>
+    <p v-if="error" class="error">{{ error.message }}</p>
 
     <div v-if="!isConnected" class="settings">
       <div class="setting-group">

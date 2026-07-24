@@ -1,17 +1,17 @@
-export type LayoutKey = string
-declare module 'nitropack' {
+export type LayoutKey = string;
+declare module "nitropack" {
   interface NitroRouteConfig {
-    appLayout?: LayoutKey | false
+    appLayout?: LayoutKey | false;
   }
   interface NitroRouteRules {
-    appLayout?: LayoutKey | false
+    appLayout?: LayoutKey | false;
   }
 }
-declare module 'nitropack/types' {
+declare module "nitropack/types" {
   interface NitroRouteConfig {
-    appLayout?: LayoutKey | false
+    appLayout?: LayoutKey | false;
   }
   interface NitroRouteRules {
-    appLayout?: LayoutKey | false
+    appLayout?: LayoutKey | false;
   }
 }

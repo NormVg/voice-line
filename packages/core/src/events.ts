@@ -45,10 +45,13 @@ export interface AudioFlushEvent {
   type: "audio:flush";
 }
 
+/** Server → Client: A fatal or recoverable error occurred. */
 export interface ErrorEvent {
   type: "error";
-  message: string;
-  code?: string;
+  error: {
+    code: string;
+    message: string;
+  };
 }
 
 export type ServerToClientEvent =
@@ -100,7 +103,5 @@ export function isServerEvent(event: VoiceLineEvent): event is ServerToClientEve
 }
 
 export function isClientEvent(event: VoiceLineEvent): event is ClientToServerEvent {
-  return (
-    event.type === "client:ready" || event.type === "text:send" || event.type === "mic:toggle"
-  );
+  return event.type === "client:ready" || event.type === "text:send" || event.type === "mic:toggle";
 }

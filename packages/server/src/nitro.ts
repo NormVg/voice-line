@@ -47,13 +47,15 @@ export function createTTSHandler(config: TTSHandlerConfig) {
     else if (event.node?.req) {
       // In a real Nuxt app, the user would use readBody(event) in their route file
       // and pass the text, or we can just expect { text: string } in the body
-      throw new Error("createTTSHandler must receive a parsed body with { text: string } via context, or you can wrap it to pass text directly.");
+      throw new Error(
+        "createTTSHandler must receive a parsed body with { text: string } via context, or you can wrap it to pass text directly.",
+      );
     }
 
     if (!text) throw new Error("Missing 'text' in request body");
-    
+
     const stream = await base(text);
-    
+
     // Convert AsyncIterable<AudioChunk> to a web stream
     const readable = new ReadableStream({
       async start(controller) {
@@ -65,15 +67,15 @@ export function createTTSHandler(config: TTSHandlerConfig) {
         } catch (err) {
           controller.error(err);
         }
-      }
+      },
     });
 
     // In h3, you can just return the stream and it will chunk it.
     // However, it's safer to return a proper Response object in modern Nitro.
     return new Response(readable, {
       headers: {
-        "Content-Type": "audio/pcm"
-      }
+        "Content-Type": "audio/pcm",
+      },
     });
   };
 }
@@ -93,11 +95,13 @@ export function createStatelessHandler(config: StatelessHandlerConfig) {
       const b = event.context.rawBody;
       audio = b.buffer.slice(b.byteOffset, b.byteOffset + b.byteLength);
     } else {
-      throw new Error("createStatelessHandler requires raw binary body. Use readRawBody() in Nuxt and pass to event.context.rawBody.");
+      throw new Error(
+        "createStatelessHandler requires raw binary body. Use readRawBody() in Nuxt and pass to event.context.rawBody.",
+      );
     }
 
     const stream = base(audio);
-    
+
     const readable = new ReadableStream({
       async start(controller) {
         try {
@@ -108,13 +112,13 @@ export function createStatelessHandler(config: StatelessHandlerConfig) {
         } catch (err) {
           controller.error(err);
         }
-      }
+      },
     });
 
     return new Response(readable, {
       headers: {
-        "Content-Type": "audio/pcm"
-      }
+        "Content-Type": "audio/pcm",
+      },
     });
   };
 }

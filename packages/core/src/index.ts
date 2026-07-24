@@ -87,6 +87,9 @@ export {
 } from "./utils/audio.js";
 export { createId } from "./utils/id.js";
 
+// Errors
+export { VoiceLineError, toVoiceLineError } from "./errors.js";
+export type { ErrorCode } from "./errors.js";
+
 // Testing helpers
 export { MemoryTransport, createMemoryTransportPair } from "./testing/memory-transport.js";
-

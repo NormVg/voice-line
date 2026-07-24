@@ -57,7 +57,12 @@ export interface ErrorFrame {
   error: Error;
 }
 
-export type ProcessResult = Frame | Frame[] | null | undefined | Promise<Frame | Frame[] | null | undefined>;
+export type ProcessResult =
+  | Frame
+  | Frame[]
+  | null
+  | undefined
+  | Promise<Frame | Frame[] | null | undefined>;
 
 /**
  * A single stage in a Pipeline. Receives a frame, optionally emits zero or more frames.

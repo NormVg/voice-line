@@ -55,9 +55,9 @@ export function createTTSHandler(config: TTSHandlerConfig) {
       if (!body?.text) {
         return Response.json({ error: "Missing 'text' in request body" }, { status: 400 });
       }
-      
+
       const stream = await base(body.text);
-      
+
       const readable = new ReadableStream({
         async start(controller) {
           try {
@@ -68,11 +68,11 @@ export function createTTSHandler(config: TTSHandlerConfig) {
           } catch (err) {
             controller.error(err);
           }
-        }
+        },
       });
 
       return new Response(readable, {
-        headers: { "Content-Type": "audio/pcm" }
+        headers: { "Content-Type": "audio/pcm" },
       });
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err);
@@ -94,7 +94,7 @@ export function createStatelessHandler(config: StatelessHandlerConfig) {
       }
 
       const stream = base(arrayBuffer);
-      
+
       const readable = new ReadableStream({
         async start(controller) {
           try {
@@ -105,11 +105,11 @@ export function createStatelessHandler(config: StatelessHandlerConfig) {
           } catch (err) {
             controller.error(err);
           }
-        }
+        },
       });
 
       return new Response(readable, {
-        headers: { "Content-Type": "audio/pcm" }
+        headers: { "Content-Type": "audio/pcm" },
       });
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err);

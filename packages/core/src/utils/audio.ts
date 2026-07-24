@@ -41,11 +41,7 @@ export function rmsEnergy(samples: Float32Array): number {
  * Linear resample from `fromRate` to `toRate`.
  * Good enough for voice; not a high-quality SRC.
  */
-export function resample(
-  input: Float32Array,
-  fromRate: number,
-  toRate: number,
-): Float32Array {
+export function resample(input: Float32Array, fromRate: number, toRate: number): Float32Array {
   if (fromRate === toRate) return input;
   if (input.length === 0) return new Float32Array(0);
 

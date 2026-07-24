@@ -9,9 +9,7 @@ export interface SarvamCredentials {
 export function resolveApiKey(explicit?: string): string {
   const key = explicit ?? (typeof process !== "undefined" ? process.env.SARVAM_API_KEY : undefined);
   if (!key) {
-    throw new Error(
-      "Sarvam API key missing. Pass apiKey or set SARVAM_API_KEY.",
-    );
+    throw new Error("Sarvam API key missing. Pass apiKey or set SARVAM_API_KEY.");
   }
   return key;
 }

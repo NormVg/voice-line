@@ -44,10 +44,7 @@ export class Speaker {
           const available = head.length - this.fifoOffset;
           const toWrite = Math.min(available, output.length - written);
 
-          output.set(
-            head.subarray(this.fifoOffset, this.fifoOffset + toWrite),
-            written,
-          );
+          output.set(head.subarray(this.fifoOffset, this.fifoOffset + toWrite), written);
           written += toWrite;
           this.fifoOffset += toWrite;
 
