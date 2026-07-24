@@ -282,10 +282,14 @@ export class Session {
     }
   }
 
+  private transcriptQueue: string[] = [];
+
   private async onInboundFrame(frame: Frame): Promise<void> {
     if (frame.kind === "speech_start") {
-      // Barge-in: user started speaking while bot was talking
-      if (this.state === "speaking" || this.state === "processing") {
+      const isBusy = this.state === "speaking" || this.state === "processing" || this.turnAbort !== null;
+      if (isBusy) {
+        if (this.sessionConfig.bargeIn === "ignore") return;
+        if (this.sessionConfig.bargeIn === "queue") return;
         this.interruptTurn();
       }
       this.setState("receiving");
@@ -310,23 +314,38 @@ export class Session {
       return;
     }
 
-    // Single transcript:final is emitted inside runBrainTurn (with real message id).
-    // Do not emit here — that caused duplicate USER bubbles in the client.
+    const isBusy = this.state === "speaking" || this.state === "processing" || this.turnAbort !== null;
+
+    if (isBusy) {
+      if (this.sessionConfig.bargeIn === "ignore") return;
+      if (this.sessionConfig.bargeIn === "queue") {
+        const userMsg = this.history.addUser(frame.text);
+        this.transport.sendEvent({
+          type: "transcript:final",
+          text: frame.text,
+          messageId: userMsg.id,
+        });
+        this.transcriptQueue.push(frame.text);
+        return;
+      }
+    }
+
     await this.runBrainTurn(frame.text);
   }
 
-  private async runBrainTurn(userText: string): Promise<void> {
+  private async runBrainTurn(userText: string, alreadyInHistory = false): Promise<void> {
     if (this.destroyed) return;
 
-    // Interrupt any in-flight turn
     this.interruptTurn();
 
-    const userMsg = this.history.addUser(userText);
-    this.transport.sendEvent({
-      type: "transcript:final",
-      text: userText,
-      messageId: userMsg.id,
-    });
+    if (!alreadyInHistory) {
+      const userMsg = this.history.addUser(userText);
+      this.transport.sendEvent({
+        type: "transcript:final",
+        text: userText,
+        messageId: userMsg.id,
+      });
+    }
 
     this.setState("processing");
     this.turnAbort = new AbortController();
@@ -356,17 +375,14 @@ export class Session {
           delta: token,
           messageId: this.assistantMessageId,
         });
-        // Chunker may enqueue sentences; TTS runs serially via ttsTail.
         await this.outbound.push({ kind: "text", text: token });
       }
 
       if (!signal.aborted) {
         await this.outbound.push({ kind: "flush" });
-        // Wait until all queued sentences have been synthesized in order
         await this.ttsTail;
       }
 
-      // Interrupted mid-turn — don't emit a second done
       if (turnGen !== this.ttsGeneration && !this.assistantMessageId) {
         return;
       }
@@ -403,6 +419,12 @@ export class Session {
       this.assistantBuffer = "";
       this.outbound.reset();
       this.bumpIdle();
+
+      if (this.transcriptQueue.length > 0 && !this.destroyed) {
+        const nextPrompt = this.transcriptQueue.join("\n");
+        this.transcriptQueue = [];
+        void this.runBrainTurn(nextPrompt, true);
+      }
     }
   }
 

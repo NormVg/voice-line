@@ -90,15 +90,20 @@ export const DEFAULT_CHUNKER_CONFIG: ChunkerConfig = {
   flushOnPunctuation: true,
 };
 
+/** Barge-in (interruption) behavior modes. */
+export type BargeInMode = "interrupt" | "ignore" | "queue";
+
 /** Session lifecycle configuration. */
 export interface SessionConfig {
   maxDurationMs: number;
   idleTimeoutMs: number;
+  bargeIn: BargeInMode;
 }
 
 export const DEFAULT_SESSION_CONFIG: SessionConfig = {
   maxDurationMs: 1_800_000,
   idleTimeoutMs: 60_000,
+  bargeIn: "interrupt",
 };
 
 /** STT stream configuration. */
