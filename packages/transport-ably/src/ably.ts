@@ -57,7 +57,9 @@ export class AblyTransport implements Transport {
     this.stateValue = "connecting";
 
     const Realtime = this.options.Realtime ?? (await importAblyRealtime());
-    const clientOptions: Record<string, unknown> = {};
+    const clientOptions: Record<string, unknown> = {
+      echoMessages: false,
+    };
     if (this.options.apiKey) clientOptions.key = this.options.apiKey;
     if (this.options.authUrl) clientOptions.authUrl = this.options.authUrl;
     if (this.options.authCallback) clientOptions.authCallback = this.options.authCallback;
