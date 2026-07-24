@@ -1,0 +1,161 @@
+/* Premium Theme Overrides */
+
+:root {
+  /* Premium Dark Mode Colors */
+  --vp-c-bg: #000000;
+  --vp-c-bg-alt: #0a0a0a;
+  --vp-c-bg-elv: #111111;
+  
+  /* Brand Gradients & Colors */
+  --vp-c-brand-1: #ffffff;
+  --vp-c-brand-2: #8b5cf6;
+  --vp-c-brand-3: #ec4899;
+  
+  /* Typography */
+  --vp-font-family-base: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+  
+  /* Hero Name Gradient */
+  --vp-home-hero-name-color: transparent;
+  --vp-home-hero-name-background: linear-gradient(135deg, #fff 0%, #a5a5a5 100%);
+  
+  /* Background glow effect */
+  --vp-home-hero-image-background-image: linear-gradient(-45deg, #8b5cf6 50%, #ec4899 50%);
+  --vp-home-hero-image-filter: blur(150px);
+}
+
+/* Feature Cards Glassmorphism */
+.VPFeatures {
+  padding: 0 24px;
+}
+
+.VPFeature {
+  background: rgba(20, 20, 20, 0.4) !important;
+  border: 1px solid rgba(255, 255, 255, 0.05) !important;
+  backdrop-filter: blur(10px);
+  border-radius: 16px !important;
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), border-color 0.3s ease, background 0.3s ease !important;
+}
+
+.VPFeature:hover {
+  transform: translateY(-5px);
+  border-color: rgba(139, 92, 246, 0.5) !important;
+  background: rgba(30, 30, 30, 0.6) !important;
+}
+
+.VPFeature .title {
+  font-weight: 600 !important;
+  letter-spacing: -0.02em;
+  color: #fff !important;
+}
+
+.VPFeature .details {
+  color: #a3a3a3 !important;
+  line-height: 1.6 !important;
+}
+
+/* Hero Section Polish */
+.VPHero {
+  margin-top: 4rem;
+}
+
+.VPHero .name {
+  font-size: 84px !important;
+  font-weight: 800 !important;
+  letter-spacing: -0.04em;
+  line-height: 1 !important;
+}
+
+.VPHero .text {
+  font-size: 64px !important;
+  font-weight: 700 !important;
+  letter-spacing: -0.03em;
+  line-height: 1.1 !important;
+  color: #fff !important;
+  margin-top: 1rem;
+}
+
+.VPHero .tagline {
+  font-size: 24px !important;
+  color: #a3a3a3 !important;
+  max-width: 700px;
+  margin: 2rem auto !important;
+  font-weight: 400 !important;
+  line-height: 1.5 !important;
+}
+
+/* Primary Button */
+.VPButton.brand {
+  border-radius: 100px !important;
+  background: linear-gradient(135deg, #8b5cf6, #ec4899) !important;
+  color: white !important;
+  border: none !important;
+  font-weight: 600 !important;
+  padding: 0 32px !important;
+  height: 48px !important;
+  line-height: 48px !important;
+  transition: transform 0.2s ease, box-shadow 0.2s ease !important;
+}
+
+.VPButton.brand:hover {
+  transform: scale(1.05);
+  box-shadow: 0 10px 25px -5px rgba(139, 92, 246, 0.5) !important;
+}
+
+/* Secondary Button */
+.VPButton.alt {
+  border-radius: 100px !important;
+  background: rgba(255, 255, 255, 0.1) !important;
+  border: 1px solid rgba(255, 255, 255, 0.2) !important;
+  color: #fff !important;
+  font-weight: 600 !important;
+  padding: 0 32px !important;
+  height: 48px !important;
+  line-height: 46px !important;
+  transition: background 0.2s ease, border-color 0.2s ease !important;
+}
+
+.VPButton.alt:hover {
+  background: rgba(255, 255, 255, 0.15) !important;
+  border-color: rgba(255, 255, 255, 0.3) !important;
+}
+
+/* Navbar */
+.VPNavBar {
+  background-color: rgba(0, 0, 0, 0.7) !important;
+  backdrop-filter: blur(20px) !important;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05) !important;
+}
+
+.VPNavBarMenuLink {
+  font-weight: 500 !important;
+  color: #a3a3a3 !important;
+}
+.VPNavBarMenuLink:hover {
+  color: #fff !important;
+}
+
+/* Custom animated background blob for hero */
+.image-bg {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 600px;
+  height: 600px;
+  background: radial-gradient(circle, rgba(139,92,246,0.15) 0%, rgba(236,72,153,0.1) 50%, rgba(0,0,0,0) 70%);
+  transform: translate(-50%, -50%);
+  border-radius: 50%;
+  z-index: -1;
+  pointer-events: none;
+  filter: blur(60px);
+  animation: pulse 8s infinite alternate ease-in-out;
+}
+
+@keyframes pulse {
+  0% { transform: translate(-50%, -50%) scale(1); opacity: 0.8; }
+  100% { transform: translate(-50%, -50%) scale(1.2); opacity: 1; }
+}
+
+/* Fix overall layout background */
+.Layout {
+  background-color: #000 !important;
+}

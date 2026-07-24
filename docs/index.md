@@ -25,6 +25,8 @@ features:
     details: Ships with useVoiceAgent hooks that handle token fetching, transport instantiation, and state management in a single line.
 ---
 
+<div class="image-bg"></div>
+
 <style>
 :root {
   --vp-home-hero-name-color: transparent;
