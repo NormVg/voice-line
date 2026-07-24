@@ -71,43 +71,14 @@
   --vp-c-text-3: var(--vercel-accents-5) !important;
 }
 
-/* Force unbroken Navbar bottom border with absolute precision */
-.VPNavBar {
-  position: relative !important;
-  border-bottom: none !important;
-  box-shadow: none !important;
-}
-.VPNavBar::after {
-  content: "" !important;
-  position: absolute !important;
-  bottom: 0 !important;
-  left: 0 !important;
-  right: 0 !important;
-  height: 1px !important;
-  background-color: var(--vercel-accents-2) !important;
-  z-index: 9999 !important;
-  pointer-events: none !important;
-}
-.VPNavBar .wrapper,
-.VPNavBar .container,
-.VPNavBar .title,
-.VPNavBar .content,
-.VPNavBar .content-body,
-.VPNavBar .divider,
-.VPNavBar .divider-line,
-.VPNavBarTitle,
-.VPNavBarContent {
-  border-bottom: none !important;
-  box-shadow: none !important;
-}
+/* Ensure VitePress's native header divider is always visible (Vercel style) */
 .VPNavBar .divider,
 .VPNavBar .divider-line {
-  display: none !important;
-  opacity: 0 !important;
+  opacity: 1 !important;
+  visibility: visible !important;
 }
-.VPSidebar {
-  border-top: none !important;
-  box-shadow: none !important;
+.VPNavBar.has-sidebar .content-body {
+  border-bottom-color: var(--vp-c-divider) !important;
 }
 
 /* Feature Cards - Vercel Style */
