@@ -107,7 +107,13 @@ export class AblyTransport implements Transport {
 
   sendAudio(chunk: ArrayBuffer): void {
     if (!this.channel || this.stateValue !== "connected") return;
-    void this.channel.publish(AUDIO_EVENT, encodeAudio(chunk));
+    
+    // Ably has a 64KB message limit. We slice audio into 32KB chunks.
+    const MAX_BYTES = 32 * 1024;
+    for (let offset = 0; offset < chunk.byteLength; offset += MAX_BYTES) {
+      const slice = chunk.slice(offset, offset + MAX_BYTES);
+      void this.channel.publish(AUDIO_EVENT, encodeAudio(slice));
+    }
   }
 
   onAudio(handler: AudioHandler): Unsubscribe {
