@@ -34,7 +34,7 @@ export default defineEventHandler(async (event) => {
   const sessionId = "ses_" + Math.random().toString(36).substring(2, 9);
   const channelName = `voice-line:${sessionId}`;
 
-  // 2. Generate an Ably token request for the client, scoped ONLY to this session's channel
+  // 2. Generate an Ably token request for the client, scoped to this session's channel
   const restClient = new Ably.Rest(ablyApiKey);
   const tokenRequest = await restClient.auth.createTokenRequest({
     clientId: `client_${sessionId}`,
@@ -43,10 +43,9 @@ export default defineEventHandler(async (event) => {
     },
   });
 
-  // 3. Start the server-side session immediately
+  // 3. Build the server session (but DON'T start it yet)
   const stack = getStack();
-  
-  // The server uses the full API key to connect to Ably
+
   const transport = new AblyTransport({
     role: "server",
     apiKey: ablyApiKey,
@@ -96,16 +95,22 @@ export default defineEventHandler(async (event) => {
 
   sessionStore.set(sessionId, session);
 
-  // Start the session (this connects the transport)
-  try {
-    await session.start();
-  } catch (err) {
-    console.error(`[session ${sessionId}] failed to start:`, err);
-    sessionStore.delete(sessionId);
-    throw createError({ statusCode: 500, message: "Failed to start Ably session" });
-  }
+  // 4. Return the token to the client FIRST, then start the session.
+  //    We use waitUntil / setImmediate to ensure the HTTP response is sent
+  //    before the server connects to Ably and publishes session:ready.
+  //    This gives the client time to connect and subscribe.
+  //
+  //    The client calls connect() → subscribes to event:server → sends client:ready.
+  //    The server receives client:ready → calls session.ready() → state → listening.
+  //    Even if session:ready is lost (it's informational), the client:ready handshake
+  //    is what actually starts the conversation.
+  setImmediate(() => {
+    session.start().catch((err) => {
+      console.error(`[session ${sessionId}] failed to start:`, err);
+      sessionStore.delete(sessionId);
+    });
+  });
 
-  // 4. Return the ID and token request to the client
   return {
     sessionId,
     tokenRequest,

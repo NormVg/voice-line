@@ -12,7 +12,16 @@ export interface AblyTransportOptions {
   authUrl?: string;
   /** Auth callback returning a token request / token details. */
   authCallback?: (tokenParams: unknown, callback: (err: Error | null, tokenOrDetails: unknown) => void) => void;
-  /** Role of this transport to separate upstream/downstream pub-sub traffic */
+  /**
+   * Role of this transport endpoint.
+   *
+   * Pub/sub is directional:
+   * - client publishes on `audio:client` / `event:client`
+   * - server publishes on `audio:server` / `event:server`
+   * - each side subscribes to the *other* side's events only.
+   *
+   * This eliminates echo without any `echoMessages` hack.
+   */
   role: "client" | "server";
   /** Channel name factory. Default: `voice-line:{sessionId}` */
   channelName?: (sessionId: string) => string;
@@ -26,9 +35,6 @@ export interface AblyTransportOptions {
 
 type AudioHandler = (chunk: ArrayBuffer) => void;
 type EventHandler = (event: VoiceLineEvent) => void;
-
-const AUDIO_EVENT = "vl:audio";
-const JSON_EVENT = "vl:event";
 
 /**
  * Ably transport — audio and events on separate message names of one channel.
@@ -54,10 +60,21 @@ export class AblyTransport implements Transport {
     return this.stateValue;
   }
 
-  private get publishAudioEvent() { return `audio:${this.options.role}`; }
-  private get subscribeAudioEvent() { return this.options.role === "client" ? "audio:server" : "audio:client"; }
-  private get publishJsonEvent() { return `event:${this.options.role}`; }
-  private get subscribeJsonEvent() { return this.options.role === "client" ? "event:server" : "event:client"; }
+  // ── Directional event routing ───────────────────────────────────────────
+  // Client publishes audio:client, subscribes to audio:server (and vice versa).
+
+  private get publishAudioEvent(): string {
+    return `audio:${this.options.role}`;
+  }
+  private get subscribeAudioEvent(): string {
+    return this.options.role === "client" ? "audio:server" : "audio:client";
+  }
+  private get publishJsonEvent(): string {
+    return `event:${this.options.role}`;
+  }
+  private get subscribeJsonEvent(): string {
+    return this.options.role === "client" ? "event:server" : "event:client";
+  }
 
   async connect(sessionId: string): Promise<void> {
     if (this.stateValue === "connected" || this.stateValue === "connecting") {
@@ -73,41 +90,44 @@ export class AblyTransport implements Transport {
 
     const realtime = new Realtime(clientOptions);
 
-    return new Promise((resolve, reject) => {
-      realtime.connection.once("connected", () => {
-        this.client = realtime;
-        const name = this.options.channelName
-          ? this.options.channelName(sessionId)
-          : `voice-line:${sessionId}`;
-        this.channel = realtime.channels.get(name);
-
-        void this.channel.subscribe(this.subscribeAudioEvent, (msg: { data: unknown }) => {
-          const pcm = decodeAudio(msg.data);
-          if (pcm) {
-            for (const h of this.audioHandlers) h(pcm);
-          }
-        });
-
-        void this.channel.subscribe(this.subscribeJsonEvent, (msg: { data: unknown }) => {
-          if (msg.data && typeof msg.data === "object") {
-            const evt = msg.data as VoiceLineEvent;
-            console.log(`[AblyTransport:${this.options.role}] received event on ${this.subscribeJsonEvent}:`, evt.type);
-            for (const h of this.eventHandlers) h(evt);
-          }
-        });
-
-        this.stateValue = "connected";
-        resolve();
-      });
-
-      realtime.connection.once("failed", (err: Error) => {
+    // 1. Wait for the Ably connection itself to be established.
+    await new Promise<void>((resolve, reject) => {
+      realtime.connection.once("connected", () => resolve());
+      realtime.connection.once("failed", (err: unknown) => {
         this.stateValue = "disconnected";
-        reject(err);
+        reject(err instanceof Error ? err : new Error(String(err)));
       });
     });
+
+    this.client = realtime;
+    const name = this.options.channelName
+      ? this.options.channelName(sessionId)
+      : `voice-line:${sessionId}`;
+    this.channel = realtime.channels.get(name);
+
+    // 2. Wait for both subscriptions to be confirmed by the Ably service
+    //    before resolving. This ensures we won't miss any messages.
+    await Promise.all([
+      this.channel.subscribe(this.subscribeAudioEvent, (msg: { data: unknown }) => {
+        const pcm = decodeAudio(msg.data);
+        if (pcm) {
+          for (const h of this.audioHandlers) h(pcm);
+        }
+      }),
+      this.channel.subscribe(this.subscribeJsonEvent, (msg: { data: unknown }) => {
+        if (msg.data && typeof msg.data === "object") {
+          for (const h of this.eventHandlers) h(msg.data as VoiceLineEvent);
+        }
+      }),
+    ]);
+
+    this.stateValue = "connected";
   }
 
   async disconnect(): Promise<void> {
+    if (this.channel) {
+      this.channel.unsubscribe();
+    }
     if (this.client) {
       this.client.close();
       this.client = null;
@@ -120,8 +140,8 @@ export class AblyTransport implements Transport {
 
   sendAudio(chunk: ArrayBuffer): void {
     if (!this.channel || this.stateValue !== "connected") return;
-    
-    // Ably has a 64KB message limit. We slice audio into 32KB chunks.
+
+    // Ably has a 64KB message limit. Slice into safe 32KB chunks.
     const MAX_BYTES = 32 * 1024;
     for (let offset = 0; offset < chunk.byteLength; offset += MAX_BYTES) {
       const slice = chunk.slice(offset, offset + MAX_BYTES);
@@ -138,7 +158,6 @@ export class AblyTransport implements Transport {
 
   sendEvent(event: VoiceLineEvent): void {
     if (!this.channel || this.stateValue !== "connected") return;
-    console.log(`[AblyTransport:${this.options.role}] sending event to ${this.publishJsonEvent}:`, event.type);
     void this.channel.publish(this.publishJsonEvent, event);
   }
 

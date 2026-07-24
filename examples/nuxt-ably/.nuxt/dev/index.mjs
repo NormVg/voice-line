@@ -3265,13 +3265,12 @@ const session_post = defineEventHandler(async (event) => {
     }
   });
   sessionStore.set(sessionId, session);
-  try {
-    await session.start();
-  } catch (err) {
-    console.error(`[session ${sessionId}] failed to start:`, err);
-    sessionStore.delete(sessionId);
-    throw createError({ statusCode: 500, message: "Failed to start Ably session" });
-  }
+  setImmediate(() => {
+    session.start().catch((err) => {
+      console.error(`[session ${sessionId}] failed to start:`, err);
+      sessionStore.delete(sessionId);
+    });
+  });
   return {
     sessionId,
     tokenRequest
