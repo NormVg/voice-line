@@ -15,24 +15,21 @@
   --vercel-accents-8: #111111;
   --vercel-foreground: #000000;
 
-  /* VitePress Overrides */
-  --vp-c-bg: var(--vercel-bg);
-  --vp-c-bg-alt: var(--vercel-bg); /* Sidebar background */
-  --vp-c-bg-elv: var(--vercel-accents-1);
-  --vp-c-divider: var(--vercel-accents-2);
-  --vp-c-border: var(--vercel-accents-2);
-  
-  --vp-sidebar-bg-color: var(--vercel-bg);
-  --vp-code-block-bg: var(--vercel-accents-1);
-  --vp-code-bg: var(--vercel-accents-2);
-  
-  --vp-c-brand-1: var(--vercel-foreground);
-  --vp-c-brand-2: var(--vercel-accents-7);
-  --vp-c-brand-3: var(--vercel-accents-6);
-
-  --vp-c-text-1: var(--vercel-foreground);
-  --vp-c-text-2: var(--vercel-accents-6);
-  --vp-c-text-3: var(--vercel-accents-5);
+/* VitePress Overrides (Light) */
+  --vp-c-bg: var(--vercel-bg) !important;
+  --vp-c-bg-alt: var(--vercel-bg) !important;
+  --vp-c-bg-elv: var(--vercel-accents-1) !important;
+  --vp-c-divider: var(--vercel-accents-2) !important;
+  --vp-c-border: var(--vercel-accents-2) !important;
+  --vp-sidebar-bg-color: var(--vercel-bg) !important;
+  --vp-code-block-bg: var(--vercel-accents-1) !important;
+  --vp-code-bg: var(--vercel-accents-2) !important;
+  --vp-c-brand-1: var(--vercel-foreground) !important;
+  --vp-c-brand-2: var(--vercel-accents-7) !important;
+  --vp-c-brand-3: var(--vercel-accents-6) !important;
+  --vp-c-text-1: var(--vercel-foreground) !important;
+  --vp-c-text-2: var(--vercel-accents-6) !important;
+  --vp-c-text-3: var(--vercel-accents-5) !important;
   
   /* Typography */
   --vp-font-family-base: 'Geist', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
@@ -57,8 +54,34 @@
   --vercel-accents-8: #fafafa;
   --vercel-foreground: #ffffff;
   
-  --vp-code-block-bg: var(--vercel-bg);
-  --vp-code-bg: var(--vercel-accents-1);
+  /* VitePress Overrides (Dark) */
+  --vp-c-bg: var(--vercel-bg) !important;
+  --vp-c-bg-alt: var(--vercel-bg) !important;
+  --vp-c-bg-elv: var(--vercel-accents-1) !important;
+  --vp-c-divider: var(--vercel-accents-2) !important;
+  --vp-c-border: var(--vercel-accents-2) !important;
+  --vp-sidebar-bg-color: var(--vercel-bg) !important;
+  --vp-code-block-bg: var(--vercel-bg) !important;
+  --vp-code-bg: var(--vercel-accents-1) !important;
+  --vp-c-brand-1: var(--vercel-foreground) !important;
+  --vp-c-brand-2: var(--vercel-accents-7) !important;
+  --vp-c-brand-3: var(--vercel-accents-6) !important;
+  --vp-c-text-1: var(--vercel-foreground) !important;
+  --vp-c-text-2: var(--vercel-accents-6) !important;
+  --vp-c-text-3: var(--vercel-accents-5) !important;
+}
+
+/* Force unbroken Navbar bottom border */
+.VPNavBar {
+  border-bottom: 1px solid var(--vercel-accents-2) !important;
+}
+.VPNavBar .divider,
+.VPNavBar .divider-line {
+  display: none !important;
+}
+.VPNavBarTitle,
+.VPNavBarContent {
+  border-bottom: none !important;
 }
 
 /* Feature Cards - Vercel Style */
