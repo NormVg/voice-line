@@ -12,6 +12,20 @@ Full architecture: [project.md](./project.md) · Agent rules: [AGENTS.md](./AGEN
 
 ---
 
+## Philosophy & The Problem We Solve
+
+Building real-time voice agents is exceptionally difficult. Developers often find themselves wrestling with WebRTC signaling, deciphering complex state machines to handle human interruptions, and dealing with massive, opinionated orchestrators that lock them into specific LLM ecosystems.
+
+`voice-line` was built to solve this by embracing three core principles:
+
+1. **Do One Thing Best**: We handle the audio pipeline—Speech-to-Text (STT), Text-to-Speech (TTS), Voice Activity Detection (VAD), and interruptions. We leave the intelligence to you.
+2. **Bring Your Own Brain**: `voice-line` does not dictate how you manage your LLM, tools, or memory. By exposing a simple text-in/text-out interface, it integrates effortlessly with the tools you already use, such as the Vercel AI SDK or custom backend frameworks.
+3. **No WebRTC**: WebRTC is notorious for its complex infrastructure and restrictive NAT traversal requirements. `voice-line` relies purely on WebSockets and robust pub/sub transports (like Ably), enabling highly scalable voice applications without the overhead of STUN/TURN servers.
+
+By isolating the real-time audio complexity, `voice-line` empowers developers to focus entirely on designing the conversational intelligence of their agents.
+
+---
+
 ## Architecture
 
 `voice-line` is built on a stateless, transport-agnostic pipeline.
