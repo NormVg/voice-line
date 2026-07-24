@@ -88,7 +88,18 @@ export class SarvamTTSProvider implements TTSProvider {
       const b64 = json.audios?.[0];
       if (!b64) return;
 
-      const data = base64ToArrayBuffer(b64);
+      let data = base64ToArrayBuffer(b64);
+      const view = new Uint8Array(data);
+      if (
+        view.length >= 44 &&
+        view[0] === 0x52 && // R
+        view[1] === 0x49 && // I
+        view[2] === 0x46 && // F
+        view[3] === 0x46    // F
+      ) {
+        data = data.slice(44);
+      }
+
       yield {
         data,
         sampleRate: config.sampleRate ?? this.options.sampleRate ?? 16_000,
