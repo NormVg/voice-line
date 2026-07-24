@@ -64,6 +64,11 @@ export class Microphone {
       );
 
       this.processor.onaudioprocess = (event) => {
+        // Zero out the output buffer to prevent local mic echo
+        for (let i = 0; i < event.outputBuffer.numberOfChannels; i++) {
+          event.outputBuffer.getChannelData(i).fill(0);
+        }
+
         if (!this.enabled) return;
         const input = event.inputBuffer.getChannelData(0);
         const ctxRate = this.context?.sampleRate ?? 48_000;
@@ -84,8 +89,11 @@ export class Microphone {
         }
       };
 
+      const gain = this.context.createGain();
+      gain.gain.value = 0;
       this.source.connect(this.processor);
-      this.processor.connect(this.context.destination);
+      this.processor.connect(gain);
+      gain.connect(this.context.destination);
       this.enabled = true;
     } catch (err) {
       this.onError?.(err instanceof Error ? err : new Error(String(err)));
