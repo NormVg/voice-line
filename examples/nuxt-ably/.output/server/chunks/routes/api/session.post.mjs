@@ -1,29 +1,20 @@
-import {
-  d as defineEventHandler,
-  r as readBody,
-  c as createError,
-  u as useRuntimeConfig,
-} from "../../nitro/nitro.mjs";
-import { S as Session, c as createVoiceStack } from "../../_/voice-stack.mjs";
-import Ably from "ably";
-import "node:http";
-import "node:https";
-import "node:events";
-import "node:buffer";
-import "node:fs";
-import "node:path";
-import "node:crypto";
-import "node:url";
-import "ai";
-import "ai-sdk-ollama";
+import { d as defineEventHandler, c as createError, r as readBody, u as useRuntimeConfig } from '../../nitro/nitro.mjs';
+import { createEventHandler } from '@voice-line/server/nitro';
+import { c as createVoiceStack } from '../../_/voice-stack.mjs';
+import 'node:http';
+import 'node:https';
+import 'node:events';
+import 'node:buffer';
+import 'node:fs';
+import 'node:path';
+import 'node:crypto';
+import 'node:url';
+import 'ai';
+import 'ai-sdk-ollama';
 
 var __defProp = Object.defineProperty;
-var __defNormalProp = (obj, key, value) =>
-  key in obj
-    ? __defProp(obj, key, { enumerable: true, configurable: true, writable: true, value })
-    : (obj[key] = value);
-var __publicField = (obj, key, value) =>
-  __defNormalProp(obj, typeof key !== "symbol" ? key + "" : key, value);
+var __defNormalProp = (obj, key, value) => key in obj ? __defProp(obj, key, { enumerable: true, configurable: true, writable: true, value }) : obj[key] = value;
+var __publicField = (obj, key, value) => __defNormalProp(obj, typeof key !== "symbol" ? key + "" : key, value);
 var AblyTransport = class {
   constructor(options) {
     __publicField(this, "stateValue", "idle");
@@ -42,16 +33,20 @@ var AblyTransport = class {
   // ── Directional event routing ───────────────────────────────────────────
   // Client publishes audio:client, subscribes to audio:server (and vice versa).
   get publishAudioEvent() {
-    return `audio:${this.options.role}`;
+    var _a;
+    return `audio:${(_a = this.options.role) != null ? _a : "server"}`;
   }
   get subscribeAudioEvent() {
-    return this.options.role === "client" ? "audio:server" : "audio:client";
+    var _a;
+    return ((_a = this.options.role) != null ? _a : "server") === "client" ? "audio:server" : "audio:client";
   }
   get publishJsonEvent() {
-    return `event:${this.options.role}`;
+    var _a;
+    return `event:${(_a = this.options.role) != null ? _a : "server"}`;
   }
   get subscribeJsonEvent() {
-    return this.options.role === "client" ? "event:server" : "event:client";
+    var _a;
+    return ((_a = this.options.role) != null ? _a : "server") === "client" ? "event:server" : "event:client";
   }
   async connect(sessionId) {
     var _a;
@@ -76,20 +71,14 @@ var AblyTransport = class {
       console.log(
         `[AblyTransport:${this.options.role}] Connection state changed:`,
         stateChange.current,
-        stateChange.reason,
+        stateChange.reason
       );
-      if (
-        stateChange.current === "closed" ||
-        stateChange.current === "failed" ||
-        stateChange.current === "suspended"
-      ) {
+      if (stateChange.current === "closed" || stateChange.current === "failed" || stateChange.current === "suspended") {
         this.stateValue = "disconnected";
       }
     });
     this.client = realtime;
-    const name = this.options.channelName
-      ? this.options.channelName(sessionId)
-      : `voice-line:${sessionId}`;
+    const name = this.options.channelName ? this.options.channelName(sessionId) : `voice-line:${sessionId}`;
     this.channel = realtime.channels.get(name);
     await Promise.all([
       this.channel.subscribe(this.subscribeAudioEvent, (msg) => {
@@ -103,7 +92,7 @@ var AblyTransport = class {
         if (msg.data && typeof msg.data === "object") {
           for (const h of this.eventHandlers) h(msg.data);
         }
-      }),
+      })
     ]);
     console.log(`[AblyTransport:${this.options.role}] Connected and subscribed`);
     this.stateValue = "connected";
@@ -147,15 +136,48 @@ var AblyTransport = class {
     };
   }
 };
+function ably(options) {
+  return async (sessionId) => {
+    var _a;
+    let tokenRequest;
+    if (options.apiKey && (options.role === "server" || options.role === void 0)) {
+      const Rest = await importAblyRest();
+      const rest = new Rest(options.apiKey);
+      const name = options.channelName ? options.channelName(sessionId) : `voice-line:${sessionId}`;
+      tokenRequest = await rest.auth.createTokenRequest({
+        clientId: `client_${sessionId}`,
+        capability: {
+          [name]: ["publish", "subscribe", "presence"]
+        }
+      });
+    }
+    const transport = new AblyTransport({
+      ...options,
+      role: (_a = options.role) != null ? _a : "server"
+    });
+    return {
+      transport,
+      clientPayload: tokenRequest ? { tokenRequest } : void 0
+    };
+  };
+}
 async function importAblyRealtime() {
   var _a, _b;
-  const mod = await import("ably");
-  const Realtime =
-    (_b = mod.Realtime) != null ? _b : (_a = mod.default) == null ? void 0 : _a.Realtime;
+  const mod = await import('ably');
+  const Realtime = (_b = mod.Realtime) != null ? _b : (_a = mod.default) == null ? void 0 : _a.Realtime;
   if (!Realtime) {
     throw new Error("Could not load ably.Realtime \u2014 is `ably` installed?");
   }
   return Realtime;
+}
+async function importAblyRest() {
+  var _a, _b;
+  const mod = await import('ably');
+  const Rest = (_b = mod.Rest) != null ? _b : (_a = mod.default) == null ? void 0 : _a.Rest;
+  if (!Rest) {
+    throw new Error("Could not load ably.Rest \u2014 is `ably` installed?");
+  }
+  return Rest;
 }
 function encodeAudio(chunk) {
   const bytes = new Uint8Array(chunk);
@@ -180,108 +202,70 @@ function decodeAudio(payload) {
   return buf.buffer.slice(buf.byteOffset, buf.byteOffset + buf.byteLength);
 }
 
-const sessionStore = /* @__PURE__ */ new Map();
-
 let globalStack = null;
-function getStack() {
+function getStack(config) {
   if (globalStack) return globalStack;
-  const config = useRuntimeConfig();
   globalStack = createVoiceStack({
     sarvamApiKey: String(config.sarvamApiKey || ""),
     ollamaApiKey: String(config.ollamaApiKey || ""),
     ollamaBaseUrl: String(config.ollamaBaseUrl || "https://ollama.com"),
-    ollamaModel: String(config.ollamaModel || "gemma4:31b-cloud"),
+    ollamaModel: String(config.ollamaModel || "gemma4:31b-cloud")
   });
   return globalStack;
 }
-const session_post = defineEventHandler(async (event) => {
-  var _a, _b, _c, _d, _e, _f;
-  const config = useRuntimeConfig();
-  const ablyApiKey = config.ablyApiKey;
-  const body = await readBody(event).catch(() => ({}));
-  if (!ablyApiKey) {
-    throw createError({
-      statusCode: 500,
-      statusMessage: "ABLY_API_KEY is not configured on the server.",
-    });
-  }
-  const sessionId = "ses_" + Math.random().toString(36).substring(2, 9);
-  const channelName = `voice-line:${sessionId}`;
-  const restClient = new Ably.Rest(ablyApiKey);
-  const tokenRequest = await restClient.auth.createTokenRequest({
-    clientId: `client_${sessionId}`,
-    capability: {
-      [channelName]: ["publish", "subscribe", "presence"],
-    },
-  });
-  const stack = getStack();
-  const transport = new AblyTransport({
-    role: "server",
-    apiKey: ablyApiKey,
-    channelName: () => channelName,
-    Realtime: Ably.Realtime,
-  });
-  const session = new Session({
-    id: sessionId,
-    transport,
-    stt: stack.stt,
-    tts: stack.tts,
-    brain: stack.brain,
-    sttConfig: {
-      language: "unknown",
-      sampleRate: 16e3,
-      encoding: "pcm_s16le",
-      model: "saaras:v3",
-    },
-    ttsConfig: {
-      voice: "shubh",
-      language: "en-IN",
-      sampleRate: 16e3,
-      format: "pcm16",
-      model: "bulbul:v3",
-    },
-    vad: {
-      confidence: Number(
-        (_b = (_a = body.vad) == null ? void 0 : _a.confidence) != null ? _b : 0.3,
-      ),
-      silenceMs: Number((_d = (_c = body.vad) == null ? void 0 : _c.silenceMs) != null ? _d : 1e3),
-      minSpeechMs: Number(
-        (_f = (_e = body.vad) == null ? void 0 : _e.minSpeechMs) != null ? _f : 200,
-      ),
-    },
-    session: {
-      maxDurationMs: 30 * 60 * 1e3,
-      idleTimeoutMs: 5 * 60 * 1e3,
-      bargeIn: "interrupt",
-    },
-    onStateChange: (state, prev) => {
-      console.log(`[session ${session.id}] ${prev} \u2192 ${state}`);
-      if (state === "closed") {
-        sessionStore.delete(session.id);
-      }
-    },
-    onError: (err) => {
-      console.error(`[session ${session.id}]`, err.message);
-    },
-  });
-  sessionStore.set(sessionId, session);
-  setImmediate(() => {
-    console.log(`[session.post.ts] calling session.start() for ${sessionId}...`);
-    session
-      .start()
-      .then(() => {
-        console.log(`[session.post.ts] session.start() finished for ${sessionId}`);
-      })
-      .catch((err) => {
-        console.error(`[session ${sessionId}] failed to start:`, err);
-        sessionStore.delete(sessionId);
+const session_post = defineEventHandler(
+  createEventHandler(async (event) => {
+    var _a, _b, _c, _d, _e, _f;
+    const config = useRuntimeConfig();
+    const ablyApiKey = config.ablyApiKey;
+    if (!ablyApiKey) {
+      throw createError({
+        statusCode: 500,
+        statusMessage: "ABLY_API_KEY is not configured on the server."
       });
-  });
-  return {
-    sessionId,
-    tokenRequest,
-  };
-});
+    }
+    const body = await readBody(event).catch(() => ({}));
+    const stack = getStack(config);
+    return {
+      transport: ably({ apiKey: ablyApiKey }),
+      stt: stack.stt,
+      tts: stack.tts,
+      brain: stack.brain,
+      sttConfig: {
+        language: "unknown",
+        sampleRate: 16e3,
+        encoding: "pcm_s16le",
+        model: "saaras:v3"
+      },
+      ttsConfig: {
+        voice: "shubh",
+        language: "en-IN",
+        sampleRate: 16e3,
+        format: "pcm16",
+        model: "bulbul:v3"
+      },
+      // Keep dynamic VAD configuration driven by the client request!
+      vad: {
+        confidence: Number((_b = (_a = body.vad) == null ? void 0 : _a.confidence) != null ? _b : 0.3),
+        silenceMs: Number((_d = (_c = body.vad) == null ? void 0 : _c.silenceMs) != null ? _d : 1e3),
+        minSpeechMs: Number((_f = (_e = body.vad) == null ? void 0 : _e.minSpeechMs) != null ? _f : 200)
+      },
+      session: {
+        maxDurationMs: 30 * 60 * 1e3,
+        // 30 mins
+        idleTimeoutMs: 5 * 60 * 1e3,
+        // 5 mins
+        bargeIn: "interrupt"
+      },
+      onStateChange: (state, prev) => {
+        console.log(`[session] ${prev} \u2192 ${state}`);
+      },
+      onError: (err) => {
+        console.error(`[session error]`, err.message);
+      }
+    };
+  })
+);
 
 export { session_post as default };
 //# sourceMappingURL=session.post.mjs.map

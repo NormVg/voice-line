@@ -1,5 +1,5 @@
-/// <reference types="@nuxt/devtools" />
 /// <reference types="@nuxt/telemetry" />
+/// <reference types="@nuxt/devtools" />
 /// <reference path="types/nitro-layouts.d.ts" />
 /// <reference path="types/builder-env.d.ts" />
 /// <reference types="nuxt" />
@@ -20,4 +20,4 @@
 /// <reference path="schema/nuxt.schema.d.ts" />
 /// <reference path="types/nitro.d.ts" />
 
-export {};
+export {}

@@ -1,88 +1,34 @@
-import process from "node:process";
-globalThis._importMeta_ = globalThis._importMeta_ || { url: "file:///_entry.js", env: process.env };
-import {
-  hasInjectionContext,
-  getCurrentInstance,
-  defineComponent,
-  h,
-  inject,
-  computed,
-  unref,
-  shallowRef,
-  provide,
-  shallowReactive,
-  createElementBlock,
-  ref,
-  createApp,
-  watch,
-  isVNode,
-  createCommentVNode,
-  onErrorCaptured,
-  onServerPrefetch,
-  createVNode,
-  resolveDynamicComponent,
-  reactive,
-  effectScope,
-  defineAsyncComponent,
-  mergeProps,
-  getCurrentScope,
-  toRef,
-  withCtx,
-  Suspense,
-  nextTick,
-  Fragment,
-  isReadonly,
-  useSSRContext,
-  isRef,
-  isShallow,
-  isReactive,
-  toRaw,
-} from "vue";
-import {
-  p as parseURL$1,
-  e as encodePath$1,
-  m as decodePath,
-  n as hasProtocol,
-  o as isScriptProtocol,
-  q as joinURL,
-  w as withQuery,
-  s as sanitizeStatusCode,
-  t as getContext,
-  $ as $fetch,
-  v as defu,
-  x as createHooks,
-  c as createError$1,
-  y as executeAsync,
-} from "../nitro/nitro.mjs";
-import { b as baseURL } from "../routes/renderer.mjs";
-import { ssrRenderSuspense, ssrRenderComponent, ssrRenderVNode } from "vue/server-renderer";
-import "node:http";
-import "node:https";
-import "node:events";
-import "node:buffer";
-import "node:fs";
-import "node:path";
-import "node:crypto";
-import "node:url";
-import "vue-bundle-renderer/runtime";
-import "unhead/server";
-import "devalue";
-import "unhead/utils";
+import process from 'node:process';globalThis._importMeta_=globalThis._importMeta_||{url:"file:///_entry.js",env:process.env};import { hasInjectionContext, getCurrentInstance, defineComponent, h, inject, computed, unref, shallowRef, provide, shallowReactive, createElementBlock, ref, createApp, watch, isVNode, createCommentVNode, onErrorCaptured, onServerPrefetch, createVNode, resolveDynamicComponent, reactive, effectScope, defineAsyncComponent, mergeProps, getCurrentScope, toRef, withCtx, Suspense, nextTick, Fragment, isReadonly, useSSRContext, isRef, isShallow, isReactive, toRaw } from 'vue';
+import { p as parseURL$1, e as encodePath$1, m as decodePath, n as hasProtocol, o as isScriptProtocol, q as joinURL, w as withQuery, s as sanitizeStatusCode, t as getContext, $ as $fetch, v as defu, x as createHooks, c as createError$1, y as executeAsync } from '../nitro/nitro.mjs';
+import { b as baseURL } from '../routes/renderer.mjs';
+import { ssrRenderSuspense, ssrRenderComponent, ssrRenderVNode } from 'vue/server-renderer';
+import 'node:http';
+import 'node:https';
+import 'node:events';
+import 'node:buffer';
+import 'node:fs';
+import 'node:path';
+import 'node:crypto';
+import 'node:url';
+import 'vue-bundle-renderer/runtime';
+import 'unhead/server';
+import 'devalue';
+import 'unhead/utils';
 
 if (!globalThis.$fetch) {
   globalThis.$fetch = $fetch.create({
-    baseURL: baseURL(),
+    baseURL: baseURL()
   });
 }
 if (!("global" in globalThis)) {
   globalThis.global = globalThis;
 }
 const appLayoutTransition = false;
-const nuxtLinkDefaults = { componentName: "NuxtLink" };
+const nuxtLinkDefaults = { "componentName": "NuxtLink" };
 const appId = "nuxt-app";
 function getNuxtAppCtx(id = appId) {
   return getContext(id, {
-    asyncContext: false,
+    asyncContext: false
   });
 }
 const NuxtPluginIndicator = "__nuxt_plugin";
@@ -99,17 +45,17 @@ function createNuxtApp(options) {
       },
       get vue() {
         return nuxtApp.vueApp.version;
-      },
+      }
     },
     payload: shallowReactive({
-      ...(options.ssrContext?.payload || {}),
+      ...options.ssrContext?.payload || {},
       data: shallowReactive({}),
       state: reactive({}),
       once: /* @__PURE__ */ new Set(),
-      _errors: shallowReactive({}),
+      _errors: shallowReactive({})
     }),
     static: {
-      data: {},
+      data: {}
     },
     runWithContext(fn) {
       if (nuxtApp._scope.active && !getCurrentScope()) {
@@ -120,7 +66,8 @@ function createNuxtApp(options) {
     isHydrating: false,
     deferHydration() {
       if (!nuxtApp.isHydrating) {
-        return () => {};
+        return () => {
+        };
       }
       hydratingCount++;
       let called = false;
@@ -139,28 +86,29 @@ function createNuxtApp(options) {
     _asyncDataPromises: {},
     _asyncData: shallowReactive({}),
     _payloadRevivers: {},
-    ...options,
+    ...options
   };
+  {
     nuxtApp.payload.serverRendered = true;
+  }
   if (nuxtApp.ssrContext) {
     nuxtApp.payload.path = nuxtApp.ssrContext.url;
     nuxtApp.ssrContext.nuxt = nuxtApp;
     nuxtApp.ssrContext.payload = nuxtApp.payload;
     nuxtApp.ssrContext.config = {
       public: nuxtApp.ssrContext.runtimeConfig.public,
-      app: nuxtApp.ssrContext.runtimeConfig.app,
+      app: nuxtApp.ssrContext.runtimeConfig.app
     };
   }
   nuxtApp.hooks = createHooks();
   nuxtApp.hook = nuxtApp.hooks.hook;
   {
-    const contextCaller = async (hooks, args) => {
+    const contextCaller = async function(hooks, args) {
       for (const hook of hooks) {
         await nuxtApp.runWithContext(() => hook(...args));
       }
     };
-    nuxtApp.hooks.callHook = (name, ...args) =>
-      nuxtApp.hooks.callHookWith(contextCaller, name, ...args);
+    nuxtApp.hooks.callHook = (name, ...args) => nuxtApp.hooks.callHookWith(contextCaller, name, ...args);
   }
   nuxtApp.callHook = nuxtApp.hooks.callHook;
   nuxtApp.provide = (name, value) => {
@@ -181,7 +129,7 @@ function registerPluginHooks(nuxtApp, plugin2) {
 }
 async function applyPlugin(nuxtApp, plugin2) {
   if (typeof plugin2 === "function") {
-    const { provide: provide2 } = (await nuxtApp.runWithContext(() => plugin2(nuxtApp))) || {};
+    const { provide: provide2 } = await nuxtApp.runWithContext(() => plugin2(nuxtApp)) || {};
     if (provide2 && typeof provide2 === "object") {
       for (const key in provide2) {
         nuxtApp.provide(key, provide2[key]);
@@ -196,36 +144,29 @@ async function applyPlugins(nuxtApp, plugins2) {
   let error = void 0;
   let promiseDepth = 0;
   async function executePlugin(plugin2) {
-    const unresolvedPluginsForThisPlugin =
-      plugin2.dependsOn?.filter(
-        (name) => plugins2.some((p) => p._name === name) && !resolvedPlugins.has(name),
-      ) ?? [];
+    const unresolvedPluginsForThisPlugin = plugin2.dependsOn?.filter((name) => plugins2.some((p) => p._name === name) && !resolvedPlugins.has(name)) ?? [];
     if (unresolvedPluginsForThisPlugin.length > 0) {
       unresolvedPlugins.push([new Set(unresolvedPluginsForThisPlugin), plugin2]);
     } else {
-      const promise = applyPlugin(nuxtApp, plugin2)
-        .then(async () => {
-          if (plugin2._name) {
-            resolvedPlugins.add(plugin2._name);
-            await Promise.all(
-              unresolvedPlugins.map(async ([dependsOn, unexecutedPlugin]) => {
-                if (dependsOn.has(plugin2._name)) {
-                  dependsOn.delete(plugin2._name);
-                  if (dependsOn.size === 0) {
-                    promiseDepth++;
-                    await executePlugin(unexecutedPlugin);
-                  }
-                }
-              }),
-            );
-          }
-        })
-        .catch((e) => {
-          if (!plugin2.parallel && !nuxtApp.payload.error) {
-            throw e;
-          }
-          error ||= e;
-        });
+      const promise = applyPlugin(nuxtApp, plugin2).then(async () => {
+        if (plugin2._name) {
+          resolvedPlugins.add(plugin2._name);
+          await Promise.all(unresolvedPlugins.map(async ([dependsOn, unexecutedPlugin]) => {
+            if (dependsOn.has(plugin2._name)) {
+              dependsOn.delete(plugin2._name);
+              if (dependsOn.size === 0) {
+                promiseDepth++;
+                await executePlugin(unexecutedPlugin);
+              }
+            }
+          }));
+        }
+      }).catch((e) => {
+        if (!plugin2.parallel && !nuxtApp.payload.error) {
+          throw e;
+        }
+        error ||= e;
+      });
       if (plugin2.parallel) {
         parallels.push(promise);
       } else {
@@ -262,15 +203,15 @@ function defineNuxtPlugin(plugin2) {
   }
   const _name = plugin2._name || plugin2.name;
   delete plugin2.name;
-  return Object.assign(plugin2.setup || (() => {}), plugin2, {
-    [NuxtPluginIndicator]: true,
-    _name,
-  });
+  return Object.assign(plugin2.setup || (() => {
+  }), plugin2, { [NuxtPluginIndicator]: true, _name });
 }
 function callWithNuxt(nuxt, setup, args) {
   const fn = () => setup();
   const nuxtAppCtx = getNuxtAppCtx(nuxt._id);
+  {
     return nuxt.vueApp.runWithContext(() => nuxtAppCtx.callAsync(nuxt, fn));
+  }
 }
 function tryUseNuxtApp(id) {
   let nuxtAppInstance;
@@ -283,7 +224,9 @@ function tryUseNuxtApp(id) {
 function useNuxtApp(id) {
   const nuxtAppInstance = tryUseNuxtApp(id);
   if (!nuxtAppInstance) {
+    {
       throw new Error("[nuxt] instance unavailable");
+    }
   }
   return nuxtAppInstance;
 }
@@ -326,26 +269,19 @@ const HTML_ATTR_ENCODE_MAP = {
   '"': "%22",
   "'": "%27",
   "<": "%3C",
-  ">": "%3E",
+  ">": "%3E"
 };
 function encodeForHtmlAttr(value) {
   return value.replace(HTML_ATTR_UNSAFE_RE, (c) => HTML_ATTR_ENCODE_MAP[c]);
 }
 const navigateTo = (to, options) => {
   to ||= "/";
-  const toPath =
-    typeof to === "string"
-      ? to
-      : "path" in to
-        ? resolveRouteObject(to)
-        : useRouter().resolve(to).href;
+  const toPath = typeof to === "string" ? to : "path" in to ? resolveRouteObject(to) : useRouter().resolve(to).href;
   const isExternalHost = hasProtocol(toPath, { acceptRelative: true });
   const isExternal = options?.external || isExternalHost;
   if (isExternal) {
     if (!options?.external) {
-      throw new Error(
-        "Navigating to an external URL is not allowed by default. Use `navigateTo(url, { external: true })`.",
-      );
+      throw new Error("Navigating to an external URL is not allowed by default. Use `navigateTo(url, { external: true })`.");
     }
     const { protocol } = new URL(toPath, "http://localhost");
     if (protocol && isScriptProtocol(protocol)) {
@@ -355,34 +291,31 @@ const navigateTo = (to, options) => {
   const inMiddleware = isProcessingMiddleware();
   const router = useRouter();
   const nuxtApp = useNuxtApp();
+  {
     if (nuxtApp.ssrContext) {
-      const fullPath =
-        typeof to === "string" || isExternal ? toPath : router.resolve(to).fullPath || "/";
-      const location2 = isExternal
-        ? toPath
-        : joinURL(/* @__PURE__ */ useRuntimeConfig().app.baseURL, fullPath);
-      const redirect = async (response) => {
+      const fullPath = typeof to === "string" || isExternal ? toPath : router.resolve(to).fullPath || "/";
+      const location2 = isExternal ? toPath : joinURL((/* @__PURE__ */ useRuntimeConfig()).app.baseURL, fullPath);
+      const redirect = async function(response) {
         await nuxtApp.callHook("app:redirected");
         const encodedHeader = encodeURL(location2, isExternalHost);
         const encodedLoc = encodeForHtmlAttr(encodedHeader);
         nuxtApp.ssrContext["~renderResponse"] = {
           statusCode: sanitizeStatusCode(options?.redirectCode || 302, 302),
           body: `<!DOCTYPE html><html><head><meta http-equiv="refresh" content="0; url=${encodedLoc}"></head></html>`,
-          headers: { location: encodedHeader },
+          headers: { location: encodedHeader }
         };
         return response;
       };
       if (!isExternal && inMiddleware) {
-        router.afterEach((final) => (final.fullPath === fullPath ? redirect(false) : void 0));
+        router.afterEach((final) => final.fullPath === fullPath ? redirect(false) : void 0);
         return to;
       }
-      return redirect(
-        !inMiddleware
-          ? void 0
-          : /* abort route navigation */
-            false,
-      );
+      return redirect(!inMiddleware ? void 0 : (
+        /* abort route navigation */
+        false
+      ));
     }
+  }
   if (isExternal) {
     nuxtApp._scope.stop();
     if (options?.replace) {
@@ -394,7 +327,8 @@ const navigateTo = (to, options) => {
       if (!nuxtApp.isHydrating) {
         return false;
       }
-      return new Promise(() => {});
+      return new Promise(() => {
+      });
     }
     return Promise.resolve();
   }
@@ -425,15 +359,14 @@ const showError = (error) => {
   const nuxtError = createError(error);
   try {
     const error2 = /* @__PURE__ */ useError();
-    if (false);
+    if (false) ;
     error2.value ||= nuxtError;
   } catch {
     throw nuxtError;
   }
   return nuxtError;
 };
-const isNuxtError = (error) =>
-  !!error && typeof error === "object" && NUXT_ERROR_SIGNATURE in error;
+const isNuxtError = (error) => !!error && typeof error === "object" && NUXT_ERROR_SIGNATURE in error;
 const createError = (error) => {
   if (typeof error !== "string" && error.statusText) {
     error.message ??= error.statusText;
@@ -442,23 +375,26 @@ const createError = (error) => {
   Object.defineProperty(nuxtError, NUXT_ERROR_SIGNATURE, {
     value: true,
     configurable: false,
-    writable: false,
+    writable: false
   });
   Object.defineProperty(nuxtError, "status", {
     // eslint-disable-next-line @typescript-eslint/no-deprecated
     get: () => nuxtError.statusCode,
-    configurable: true,
+    configurable: true
   });
   Object.defineProperty(nuxtError, "statusText", {
     // eslint-disable-next-line @typescript-eslint/no-deprecated
     get: () => nuxtError.statusMessage,
-    configurable: true,
+    configurable: true
   });
   return nuxtError;
 };
 function freezeHead(head) {
   const realPush = head.push;
-  head.push = () => ({ dispose: () => {}, patch: () => {}, _poll: () => {} });
+  head.push = () => ({ dispose: () => {
+  }, patch: () => {
+  }, _poll: () => {
+  } });
   return () => {
     head.push = realPush;
   };
@@ -473,22 +409,13 @@ const unhead__CNUuZOLr2u5jVNCZQZvq_E_Ze_R1LctAdfl03iqsGQ = /* @__PURE__ */ defin
       nuxtApp.hooks.hookOnce("app:created", unfreeze);
     }
     nuxtApp.vueApp.use(head);
-  },
+  }
 });
 function isRouteComponent(component) {
-  return (
-    typeof component === "object" ||
-    "displayName" in component ||
-    "props" in component ||
-    "__vccOpts" in component
-  );
+  return typeof component === "object" || "displayName" in component || "props" in component || "__vccOpts" in component;
 }
 function isESModule(obj) {
-  return (
-    obj.__esModule ||
-    obj[Symbol.toStringTag] === "Module" ||
-    (obj.default && isRouteComponent(obj.default))
-  );
+  return obj.__esModule || obj[Symbol.toStringTag] === "Module" || obj.default && isRouteComponent(obj.default);
 }
 const assign = Object.assign;
 function applyToParams(fn, params) {
@@ -499,12 +426,12 @@ function applyToParams(fn, params) {
   }
   return newParams;
 }
-const noop = () => {};
+const noop = () => {
+};
 const isArray = Array.isArray;
 function mergeOptions(defaults, partialOptions) {
   const options = {};
-  for (const key in defaults)
-    options[key] = key in partialOptions ? partialOptions[key] : defaults[key];
+  for (const key in defaults) options[key] = key in partialOptions ? partialOptions[key] : defaults[key];
   return options;
 }
 const HASH_RE = /#/g;
@@ -522,29 +449,13 @@ const ENC_PIPE_RE = /%7C/g;
 const ENC_CURLY_CLOSE_RE = /%7D/g;
 const ENC_SPACE_RE = /%20/g;
 function commonEncode(text) {
-  return text == null
-    ? ""
-    : encodeURI("" + text)
-        .replace(ENC_PIPE_RE, "|")
-        .replace(ENC_BRACKET_OPEN_RE, "[")
-        .replace(ENC_BRACKET_CLOSE_RE, "]");
+  return text == null ? "" : encodeURI("" + text).replace(ENC_PIPE_RE, "|").replace(ENC_BRACKET_OPEN_RE, "[").replace(ENC_BRACKET_CLOSE_RE, "]");
 }
 function encodeHash(text) {
-  return commonEncode(text)
-    .replace(ENC_CURLY_OPEN_RE, "{")
-    .replace(ENC_CURLY_CLOSE_RE, "}")
-    .replace(ENC_CARET_RE, "^");
+  return commonEncode(text).replace(ENC_CURLY_OPEN_RE, "{").replace(ENC_CURLY_CLOSE_RE, "}").replace(ENC_CARET_RE, "^");
 }
 function encodeQueryValue(text) {
-  return commonEncode(text)
-    .replace(PLUS_RE, "%2B")
-    .replace(ENC_SPACE_RE, "+")
-    .replace(HASH_RE, "%23")
-    .replace(AMPERSAND_RE, "%26")
-    .replace(ENC_BACKTICK_RE, "`")
-    .replace(ENC_CURLY_OPEN_RE, "{")
-    .replace(ENC_CURLY_CLOSE_RE, "}")
-    .replace(ENC_CARET_RE, "^");
+  return commonEncode(text).replace(PLUS_RE, "%2B").replace(ENC_SPACE_RE, "+").replace(HASH_RE, "%23").replace(AMPERSAND_RE, "%26").replace(ENC_BACKTICK_RE, "`").replace(ENC_CURLY_OPEN_RE, "{").replace(ENC_CURLY_CLOSE_RE, "}").replace(ENC_CARET_RE, "^");
 }
 function encodeQueryKey(text) {
   return encodeQueryValue(text).replace(EQUAL_RE, "%3D");
@@ -559,16 +470,14 @@ function decode(text) {
   if (text == null) return null;
   try {
     return decodeURIComponent("" + text);
-  } catch (err) {}
+  } catch (err) {
+  }
   return "" + text;
 }
 const TRAILING_SLASH_RE = /\/$/;
 const removeTrailingSlash = (path) => path.replace(TRAILING_SLASH_RE, "");
 function parseURL(parseQuery$1, location, currentLocation = "/") {
-  let path,
-    query = {},
-    searchString = "",
-    hash = "";
+  let path, query = {}, searchString = "", hash = "";
   const hashPos = location.indexOf("#");
   let searchPos = location.indexOf("?");
   searchPos = hashPos >= 0 && searchPos > hashPos ? -1 : searchPos;
@@ -586,7 +495,7 @@ function parseURL(parseQuery$1, location, currentLocation = "/") {
     fullPath: path + searchString + hash,
     path,
     query,
-    hash: decode(hash),
+    hash: decode(hash)
   };
 }
 function stringifyURL(stringifyQuery$1, location) {
@@ -596,14 +505,7 @@ function stringifyURL(stringifyQuery$1, location) {
 function isSameRouteLocation(stringifyQuery$1, a, b) {
   const aLastIndex = a.matched.length - 1;
   const bLastIndex = b.matched.length - 1;
-  return (
-    aLastIndex > -1 &&
-    aLastIndex === bLastIndex &&
-    isSameRouteRecord(a.matched[aLastIndex], b.matched[bLastIndex]) &&
-    isSameRouteLocationParams(a.params, b.params) &&
-    stringifyQuery$1(a.query) === stringifyQuery$1(b.query) &&
-    a.hash === b.hash
-  );
+  return aLastIndex > -1 && aLastIndex === bLastIndex && isSameRouteRecord(a.matched[aLastIndex], b.matched[bLastIndex]) && isSameRouteLocationParams(a.params, b.params) && stringifyQuery$1(a.query) === stringifyQuery$1(b.query) && a.hash === b.hash;
 }
 function isSameRouteRecord(a, b) {
   return (a.aliasOf || a) === (b.aliasOf || b);
@@ -614,16 +516,10 @@ function isSameRouteLocationParams(a, b) {
   return true;
 }
 function isSameRouteLocationParamsValue(a, b) {
-  return isArray(a)
-    ? isEquivalentArray(a, b)
-    : isArray(b)
-      ? isEquivalentArray(b, a)
-      : a?.valueOf() === b?.valueOf();
+  return isArray(a) ? isEquivalentArray(a, b) : isArray(b) ? isEquivalentArray(b, a) : a?.valueOf() === b?.valueOf();
 }
 function isEquivalentArray(a, b) {
-  return isArray(b)
-    ? a.length === b.length && a.every((value, i) => value === b[i])
-    : a.length === 1 && a[0] === b;
+  return isArray(b) ? a.length === b.length && a.every((value, i) => value === b[i]) : a.length === 1 && a[0] === b;
 }
 function resolveRelativePath(to, from) {
   if (to.startsWith("/")) return to;
@@ -653,14 +549,14 @@ const START_LOCATION_NORMALIZED = {
   fullPath: "/",
   matched: [],
   meta: {},
-  redirectedFrom: void 0,
+  redirectedFrom: void 0
 };
-const NavigationType = /* @__PURE__ */ ((NavigationType$1) => {
+let NavigationType = /* @__PURE__ */ (function(NavigationType$1) {
   NavigationType$1["pop"] = "pop";
   NavigationType$1["push"] = "push";
   return NavigationType$1;
 })({});
-const NavigationDirection = /* @__PURE__ */ ((NavigationDirection$1) => {
+let NavigationDirection = /* @__PURE__ */ (function(NavigationDirection$1) {
   NavigationDirection$1["back"] = "back";
   NavigationDirection$1["forward"] = "forward";
   NavigationDirection$1["unknown"] = "";
@@ -677,17 +573,17 @@ function createHref(base, location) {
   return base.replace(BEFORE_HASH_RE, "#") + location;
 }
 function isRouteLocation(route) {
-  return typeof route === "string" || (route && typeof route === "object");
+  return typeof route === "string" || route && typeof route === "object";
 }
 function isRouteName(name) {
   return typeof name === "string" || typeof name === "symbol";
 }
-const ErrorTypes = /* @__PURE__ */ ((ErrorTypes$1) => {
-  ErrorTypes$1[(ErrorTypes$1["MATCHER_NOT_FOUND"] = 1)] = "MATCHER_NOT_FOUND";
-  ErrorTypes$1[(ErrorTypes$1["NAVIGATION_GUARD_REDIRECT"] = 2)] = "NAVIGATION_GUARD_REDIRECT";
-  ErrorTypes$1[(ErrorTypes$1["NAVIGATION_ABORTED"] = 4)] = "NAVIGATION_ABORTED";
-  ErrorTypes$1[(ErrorTypes$1["NAVIGATION_CANCELLED"] = 8)] = "NAVIGATION_CANCELLED";
-  ErrorTypes$1[(ErrorTypes$1["NAVIGATION_DUPLICATED"] = 16)] = "NAVIGATION_DUPLICATED";
+let ErrorTypes = /* @__PURE__ */ (function(ErrorTypes$1) {
+  ErrorTypes$1[ErrorTypes$1["MATCHER_NOT_FOUND"] = 1] = "MATCHER_NOT_FOUND";
+  ErrorTypes$1[ErrorTypes$1["NAVIGATION_GUARD_REDIRECT"] = 2] = "NAVIGATION_GUARD_REDIRECT";
+  ErrorTypes$1[ErrorTypes$1["NAVIGATION_ABORTED"] = 4] = "NAVIGATION_ABORTED";
+  ErrorTypes$1[ErrorTypes$1["NAVIGATION_CANCELLED"] = 8] = "NAVIGATION_CANCELLED";
+  ErrorTypes$1[ErrorTypes$1["NAVIGATION_DUPLICATED"] = 16] = "NAVIGATION_DUPLICATED";
   return ErrorTypes$1;
 })({});
 const NavigationFailureSymbol = /* @__PURE__ */ Symbol("");
@@ -707,26 +603,22 @@ const NavigationFailureSymbol = /* @__PURE__ */ Symbol("");
   },
   [ErrorTypes.NAVIGATION_DUPLICATED]({ from, to }) {
     return `Avoided redundant navigation to current location: "${from.fullPath}".`;
-  },
+  }
 });
 function createRouterError(type, params) {
-  return assign(
-    /* @__PURE__ */ new Error(),
-    {
-      type,
-      [NavigationFailureSymbol]: true,
-    },
-    params,
-  );
+  return assign(/* @__PURE__ */ new Error(), {
+    type,
+    [NavigationFailureSymbol]: true
+  }, params);
 }
 function isNavigationFailure(error, type) {
-  return (
-    error instanceof Error &&
-    NavigationFailureSymbol in error &&
-    (type == null || !!(error.type & type))
-  );
+  return error instanceof Error && NavigationFailureSymbol in error && (type == null || !!(error.type & type));
 }
-const propertiesToLog = ["params", "query", "hash"];
+const propertiesToLog = [
+  "params",
+  "query",
+  "hash"
+];
 function stringifyRoute(to) {
   if (typeof to === "string") return to;
   if (to.path != null) return to.path;
@@ -760,10 +652,7 @@ function stringifyQuery(query) {
       if (value !== void 0) search += (search.length ? "&" : "") + key;
       continue;
     }
-    (isArray(value)
-      ? value.map((v) => v && encodeQueryValue(v))
-      : [value && encodeQueryValue(value)]
-    ).forEach((value$1) => {
+    (isArray(value) ? value.map((v) => v && encodeQueryValue(v)) : [value && encodeQueryValue(value)]).forEach((value$1) => {
       if (value$1 !== void 0) {
         search += (search.length ? "&" : "") + key;
         if (value$1 != null) search += "=" + value$1;
@@ -776,12 +665,7 @@ function normalizeQuery(query) {
   const normalizedQuery = {};
   for (const key in query) {
     const value = query[key];
-    if (value !== void 0)
-      normalizedQuery[key] = isArray(value)
-        ? value.map((v) => (v == null ? null : "" + v))
-        : value == null
-          ? value
-          : "" + value;
+    if (value !== void 0) normalizedQuery[key] = isArray(value) ? value.map((v) => v == null ? null : "" + v) : value == null ? value : "" + value;
   }
   return normalizedQuery;
 }
@@ -805,70 +689,52 @@ function useCallbacks() {
   return {
     add,
     list: () => handlers.slice(),
-    reset,
+    reset
   };
 }
 function guardToPromiseFn(guard, to, from, record, name, runWithContext = (fn) => fn()) {
-  const enterCallbackArray =
-    record && (record.enterCallbacks[name] = record.enterCallbacks[name] || []);
-  return () =>
-    new Promise((resolve, reject) => {
-      const next = (valid) => {
-        if (valid === false)
-          reject(
-            createRouterError(ErrorTypes.NAVIGATION_ABORTED, {
-              from,
-              to,
-            }),
-          );
-        else if (valid instanceof Error) reject(valid);
-        else if (isRouteLocation(valid))
-          reject(
-            createRouterError(ErrorTypes.NAVIGATION_GUARD_REDIRECT, {
-              from: to,
-              to: valid,
-            }),
-          );
-        else {
-          if (
-            enterCallbackArray &&
-            record.enterCallbacks[name] === enterCallbackArray &&
-            typeof valid === "function"
-          )
-            enterCallbackArray.push(valid);
-          resolve();
-        }
-      };
-      const guardReturn = runWithContext(() =>
-        guard.call(record && record.instances[name], to, from, next),
-      );
-      let guardCall = Promise.resolve(guardReturn);
-      if (guard.length < 3) guardCall = guardCall.then(next);
-      guardCall.catch((err) => reject(err));
-    });
+  const enterCallbackArray = record && (record.enterCallbacks[name] = record.enterCallbacks[name] || []);
+  return () => new Promise((resolve, reject) => {
+    const next = (valid) => {
+      if (valid === false) reject(createRouterError(ErrorTypes.NAVIGATION_ABORTED, {
+        from,
+        to
+      }));
+      else if (valid instanceof Error) reject(valid);
+      else if (isRouteLocation(valid)) reject(createRouterError(ErrorTypes.NAVIGATION_GUARD_REDIRECT, {
+        from: to,
+        to: valid
+      }));
+      else {
+        if (enterCallbackArray && record.enterCallbacks[name] === enterCallbackArray && typeof valid === "function") enterCallbackArray.push(valid);
+        resolve();
+      }
+    };
+    const guardReturn = runWithContext(() => guard.call(record && record.instances[name], to, from, next));
+    let guardCall = Promise.resolve(guardReturn);
+    if (guard.length < 3) guardCall = guardCall.then(next);
+    guardCall.catch((err) => reject(err));
+  });
 }
 function extractComponentsGuards(matched, guardType, to, from, runWithContext = (fn) => fn()) {
   const guards = [];
   for (const record of matched) {
     for (const name in record.components) {
-      const rawComponent = record.components[name];
+      let rawComponent = record.components[name];
       if (guardType !== "beforeRouteEnter" && !record.instances[name]) continue;
       if (isRouteComponent(rawComponent)) {
         const guard = (rawComponent.__vccOpts || rawComponent)[guardType];
         guard && guards.push(guardToPromiseFn(guard, to, from, record, name, runWithContext));
       } else {
-        const componentPromise = rawComponent();
-        guards.push(() =>
-          componentPromise.then((resolved) => {
-            if (!resolved)
-              throw new Error(`Couldn't resolve component "${name}" at "${record.path}"`);
-            const resolvedComponent = isESModule(resolved) ? resolved.default : resolved;
-            record.mods[name] = resolved;
-            record.components[name] = resolvedComponent;
-            const guard = (resolvedComponent.__vccOpts || resolvedComponent)[guardType];
-            return guard && guardToPromiseFn(guard, to, from, record, name, runWithContext)();
-          }),
-        );
+        let componentPromise = rawComponent();
+        guards.push(() => componentPromise.then((resolved) => {
+          if (!resolved) throw new Error(`Couldn't resolve component "${name}" at "${record.path}"`);
+          const resolvedComponent = isESModule(resolved) ? resolved.default : resolved;
+          record.mods[name] = resolved;
+          record.components[name] = resolvedComponent;
+          const guard = (resolvedComponent.__vccOpts || resolvedComponent)[guardType];
+          return guard && guardToPromiseFn(guard, to, from, record, name, runWithContext)();
+        }));
       }
     }
   }
@@ -881,17 +747,18 @@ function extractChangingRecords(to, from) {
   const len = Math.max(from.matched.length, to.matched.length);
   for (let i = 0; i < len; i++) {
     const recordFrom = from.matched[i];
-    if (recordFrom)
-      if (to.matched.find((record) => isSameRouteRecord(record, recordFrom)))
-        updatingRecords.push(recordFrom);
-      else leavingRecords.push(recordFrom);
+    if (recordFrom) if (to.matched.find((record) => isSameRouteRecord(record, recordFrom))) updatingRecords.push(recordFrom);
+    else leavingRecords.push(recordFrom);
     const recordTo = to.matched[i];
     if (recordTo) {
-      if (!from.matched.find((record) => isSameRouteRecord(record, recordTo)))
-        enteringRecords.push(recordTo);
+      if (!from.matched.find((record) => isSameRouteRecord(record, recordTo))) enteringRecords.push(recordTo);
     }
   }
-  return [leavingRecords, updatingRecords, enteringRecords];
+  return [
+    leavingRecords,
+    updatingRecords,
+    enteringRecords
+  ];
 }
 function createMemoryHistory(base = "") {
   let listeners = [];
@@ -907,7 +774,7 @@ function createMemoryHistory(base = "") {
     const info = {
       direction,
       delta,
-      type: NavigationType.pop,
+      type: NavigationType.pop
     };
     for (const callback of listeners) callback(to, from, info);
   }
@@ -939,40 +806,39 @@ function createMemoryHistory(base = "") {
       const from = this.location;
       const direction = delta < 0 ? NavigationDirection.back : NavigationDirection.forward;
       position = Math.max(0, Math.min(position + delta, queue.length - 1));
-      if (shouldTrigger)
-        triggerListeners(this.location, from, {
-          direction,
-          delta,
-        });
-    },
+      if (shouldTrigger) triggerListeners(this.location, from, {
+        direction,
+        delta
+      });
+    }
   };
   Object.defineProperty(routerHistory, "location", {
     enumerable: true,
-    get: () => queue[position][0],
+    get: () => queue[position][0]
   });
   Object.defineProperty(routerHistory, "state", {
     enumerable: true,
-    get: () => queue[position][1],
+    get: () => queue[position][1]
   });
   return routerHistory;
 }
-const TokenType = /* @__PURE__ */ ((TokenType$1) => {
-  TokenType$1[(TokenType$1["Static"] = 0)] = "Static";
-  TokenType$1[(TokenType$1["Param"] = 1)] = "Param";
-  TokenType$1[(TokenType$1["Group"] = 2)] = "Group";
+let TokenType = /* @__PURE__ */ (function(TokenType$1) {
+  TokenType$1[TokenType$1["Static"] = 0] = "Static";
+  TokenType$1[TokenType$1["Param"] = 1] = "Param";
+  TokenType$1[TokenType$1["Group"] = 2] = "Group";
   return TokenType$1;
 })({});
-var TokenizerState = /* @__PURE__ */ ((TokenizerState$1) => {
-  TokenizerState$1[(TokenizerState$1["Static"] = 0)] = "Static";
-  TokenizerState$1[(TokenizerState$1["Param"] = 1)] = "Param";
-  TokenizerState$1[(TokenizerState$1["ParamRegExp"] = 2)] = "ParamRegExp";
-  TokenizerState$1[(TokenizerState$1["ParamRegExpEnd"] = 3)] = "ParamRegExpEnd";
-  TokenizerState$1[(TokenizerState$1["EscapeNext"] = 4)] = "EscapeNext";
+var TokenizerState = /* @__PURE__ */ (function(TokenizerState$1) {
+  TokenizerState$1[TokenizerState$1["Static"] = 0] = "Static";
+  TokenizerState$1[TokenizerState$1["Param"] = 1] = "Param";
+  TokenizerState$1[TokenizerState$1["ParamRegExp"] = 2] = "ParamRegExp";
+  TokenizerState$1[TokenizerState$1["ParamRegExpEnd"] = 3] = "ParamRegExpEnd";
+  TokenizerState$1[TokenizerState$1["EscapeNext"] = 4] = "EscapeNext";
   return TokenizerState$1;
 })(TokenizerState || {});
 const ROOT_TOKEN = {
   type: TokenType.Static,
-  value: "",
+  value: ""
 };
 const VALID_PARAM_RE = /[a-zA-Z0-9_]/;
 function tokenizePath(path) {
@@ -996,24 +862,18 @@ function tokenizePath(path) {
   let customRe = "";
   function consumeBuffer() {
     if (!buffer) return;
-    if (state === TokenizerState.Static)
-      segment.push({
-        type: TokenType.Static,
-        value: buffer,
-      });
-    else if (
-      state === TokenizerState.Param ||
-      state === TokenizerState.ParamRegExp ||
-      state === TokenizerState.ParamRegExpEnd
-    ) {
-      if (segment.length > 1 && (char === "*" || char === "+"))
-        crash(`A repeatable param (${buffer}) must be alone in its segment. eg: '/:ids+.`);
+    if (state === TokenizerState.Static) segment.push({
+      type: TokenType.Static,
+      value: buffer
+    });
+    else if (state === TokenizerState.Param || state === TokenizerState.ParamRegExp || state === TokenizerState.ParamRegExpEnd) {
+      if (segment.length > 1 && (char === "*" || char === "+")) crash(`A repeatable param (${buffer}) must be alone in its segment. eg: '/:ids+.`);
       segment.push({
         type: TokenType.Param,
         value: buffer,
         regexp: customRe,
         repeatable: char === "*" || char === "+",
-        optional: char === "*" || char === "?",
+        optional: char === "*" || char === "?"
       });
     } else crash("Invalid state to consume buffer");
     buffer = "";
@@ -1052,9 +912,8 @@ function tokenizePath(path) {
         }
         break;
       case TokenizerState.ParamRegExp:
-        if (char === ")")
-          if (customRe[customRe.length - 1] == "\\") customRe = customRe.slice(0, -1) + char;
-          else state = TokenizerState.ParamRegExpEnd;
+        if (char === ")") if (customRe[customRe.length - 1] == "\\") customRe = customRe.slice(0, -1) + char;
+        else state = TokenizerState.ParamRegExpEnd;
         else customRe += char;
         break;
       case TokenizerState.ParamRegExpEnd:
@@ -1078,21 +937,21 @@ const BASE_PATH_PARSER_OPTIONS = {
   sensitive: false,
   strict: false,
   start: true,
-  end: true,
+  end: true
 };
-var PathScore = /* @__PURE__ */ ((PathScore$1) => {
-  PathScore$1[(PathScore$1["_multiplier"] = 10)] = "_multiplier";
-  PathScore$1[(PathScore$1["Root"] = 90)] = "Root";
-  PathScore$1[(PathScore$1["Segment"] = 40)] = "Segment";
-  PathScore$1[(PathScore$1["SubSegment"] = 30)] = "SubSegment";
-  PathScore$1[(PathScore$1["Static"] = 40)] = "Static";
-  PathScore$1[(PathScore$1["Dynamic"] = 20)] = "Dynamic";
-  PathScore$1[(PathScore$1["BonusCustomRegExp"] = 10)] = "BonusCustomRegExp";
-  PathScore$1[(PathScore$1["BonusWildcard"] = -50)] = "BonusWildcard";
-  PathScore$1[(PathScore$1["BonusRepeatable"] = -20)] = "BonusRepeatable";
-  PathScore$1[(PathScore$1["BonusOptional"] = -8)] = "BonusOptional";
-  PathScore$1[(PathScore$1["BonusStrict"] = 0.7000000000000001)] = "BonusStrict";
-  PathScore$1[(PathScore$1["BonusCaseSensitive"] = 0.25)] = "BonusCaseSensitive";
+var PathScore = /* @__PURE__ */ (function(PathScore$1) {
+  PathScore$1[PathScore$1["_multiplier"] = 10] = "_multiplier";
+  PathScore$1[PathScore$1["Root"] = 90] = "Root";
+  PathScore$1[PathScore$1["Segment"] = 40] = "Segment";
+  PathScore$1[PathScore$1["SubSegment"] = 30] = "SubSegment";
+  PathScore$1[PathScore$1["Static"] = 40] = "Static";
+  PathScore$1[PathScore$1["Dynamic"] = 20] = "Dynamic";
+  PathScore$1[PathScore$1["BonusCustomRegExp"] = 10] = "BonusCustomRegExp";
+  PathScore$1[PathScore$1["BonusWildcard"] = -50] = "BonusWildcard";
+  PathScore$1[PathScore$1["BonusRepeatable"] = -20] = "BonusRepeatable";
+  PathScore$1[PathScore$1["BonusOptional"] = -8] = "BonusOptional";
+  PathScore$1[PathScore$1["BonusStrict"] = 0.7000000000000001] = "BonusStrict";
+  PathScore$1[PathScore$1["BonusCaseSensitive"] = 0.25] = "BonusCaseSensitive";
   return PathScore$1;
 })(PathScore || {});
 const REGEX_CHARS_RE = /[.+*?^${}()[\]/\\]/g;
@@ -1106,8 +965,7 @@ function tokensToParser(segments, extraOptions) {
     if (options.strict && !segment.length) pattern += "/";
     for (let tokenIndex = 0; tokenIndex < segment.length; tokenIndex++) {
       const token = segment[tokenIndex];
-      let subSegmentScore =
-        PathScore.Segment + (options.sensitive ? PathScore.BonusCaseSensitive : 0);
+      let subSegmentScore = PathScore.Segment + (options.sensitive ? PathScore.BonusCaseSensitive : 0);
       if (token.type === TokenType.Static) {
         if (!tokenIndex) pattern += "/";
         pattern += token.value.replace(REGEX_CHARS_RE, "\\$&");
@@ -1117,7 +975,7 @@ function tokensToParser(segments, extraOptions) {
         keys.push({
           name: value,
           repeatable,
-          optional,
+          optional
         });
         const re$1 = regexp ? regexp : BASE_PARAM_PATTERN;
         if (re$1 !== BASE_PARAM_PATTERN) {
@@ -1129,8 +987,7 @@ function tokensToParser(segments, extraOptions) {
           }
         }
         let subPattern = repeatable ? `((?:${re$1})(?:/(?:${re$1}))*)` : `(${re$1})`;
-        if (!tokenIndex)
-          subPattern = optional && segment.length < 2 ? `(?:/${subPattern})` : "/" + subPattern;
+        if (!tokenIndex) subPattern = optional && segment.length < 2 ? `(?:/${subPattern})` : "/" + subPattern;
         if (optional) subPattern += "?";
         pattern += subPattern;
         subSegmentScore += PathScore.Dynamic;
@@ -1167,24 +1024,18 @@ function tokensToParser(segments, extraOptions) {
     for (const segment of segments) {
       if (!avoidDuplicatedSlash || !path.endsWith("/")) path += "/";
       avoidDuplicatedSlash = false;
-      for (const token of segment)
-        if (token.type === TokenType.Static) path += token.value;
-        else if (token.type === TokenType.Param) {
-          const { value, repeatable, optional } = token;
-          const param = value in params ? params[value] : "";
-          if (isArray(param) && !repeatable)
-            throw new Error(
-              `Provided param "${value}" is an array but it is not repeatable (* or + modifiers)`,
-            );
-          const text = isArray(param) ? param.join("/") : param;
-          if (!text)
-            if (optional) {
-              if (segment.length < 2)
-                if (path.endsWith("/")) path = path.slice(0, -1);
-                else avoidDuplicatedSlash = true;
-            } else throw new Error(`Missing required param "${value}"`);
-          path += text;
-        }
+      for (const token of segment) if (token.type === TokenType.Static) path += token.value;
+      else if (token.type === TokenType.Param) {
+        const { value, repeatable, optional } = token;
+        const param = value in params ? params[value] : "";
+        if (isArray(param) && !repeatable) throw new Error(`Provided param "${value}" is an array but it is not repeatable (* or + modifiers)`);
+        const text = isArray(param) ? param.join("/") : param;
+        if (!text) if (optional) {
+          if (segment.length < 2) if (path.endsWith("/")) path = path.slice(0, -1);
+          else avoidDuplicatedSlash = true;
+        } else throw new Error(`Missing required param "${value}"`);
+        path += text;
+      }
     }
     return path || "/";
   }
@@ -1193,7 +1044,7 @@ function tokensToParser(segments, extraOptions) {
     score,
     keys,
     parse,
-    stringify,
+    stringify
   };
 }
 function compareScoreArray(a, b) {
@@ -1203,10 +1054,8 @@ function compareScoreArray(a, b) {
     if (diff) return diff;
     i++;
   }
-  if (a.length < b.length)
-    return a.length === 1 && a[0] === PathScore.Static + PathScore.Segment ? -1 : 1;
-  else if (a.length > b.length)
-    return b.length === 1 && b[0] === PathScore.Static + PathScore.Segment ? 1 : -1;
+  if (a.length < b.length) return a.length === 1 && a[0] === PathScore.Static + PathScore.Segment ? -1 : 1;
+  else if (a.length > b.length) return b.length === 1 && b[0] === PathScore.Static + PathScore.Segment ? 1 : -1;
   return 0;
 }
 function comparePathParserScore(a, b) {
@@ -1231,7 +1080,7 @@ function isLastScoreNegative(score) {
 const PATH_PARSER_OPTIONS_DEFAULTS = {
   strict: false,
   end: true,
-  sensitive: false,
+  sensitive: false
 };
 function createRouteRecordMatcher(record, parent, options) {
   const parser = tokensToParser(tokenizePath(record.path), options);
@@ -1239,7 +1088,7 @@ function createRouteRecordMatcher(record, parent, options) {
     record,
     parent,
     children: [],
-    alias: [],
+    alias: []
   });
   if (parent) {
     if (!matcher2.record.aliasOf === !parent.record.aliasOf) parent.children.push(matcher2);
@@ -1261,18 +1110,11 @@ function createRouterMatcher(routes, globalOptions) {
     const normalizedRecords = [mainNormalizedRecord];
     if ("alias" in record) {
       const aliases = typeof record.alias === "string" ? [record.alias] : record.alias;
-      for (const alias of aliases)
-        normalizedRecords.push(
-          normalizeRouteRecord(
-            assign({}, mainNormalizedRecord, {
-              components: originalRecord
-                ? originalRecord.record.components
-                : mainNormalizedRecord.components,
-              path: alias,
-              aliasOf: originalRecord ? originalRecord.record : mainNormalizedRecord,
-            }),
-          ),
-        );
+      for (const alias of aliases) normalizedRecords.push(normalizeRouteRecord(assign({}, mainNormalizedRecord, {
+        components: originalRecord ? originalRecord.record.components : mainNormalizedRecord.components,
+        path: alias,
+        aliasOf: originalRecord ? originalRecord.record : mainNormalizedRecord
+      })));
     }
     let matcher2;
     let originalMatcher;
@@ -1296,16 +1138,13 @@ function createRouterMatcher(routes, globalOptions) {
       if (isMatchable(matcher2)) insertMatcher(matcher2);
       if (mainNormalizedRecord.children) {
         const children = mainNormalizedRecord.children;
-        for (let i = 0; i < children.length; i++)
-          addRoute(children[i], matcher2, originalRecord && originalRecord.children[i]);
+        for (let i = 0; i < children.length; i++) addRoute(children[i], matcher2, originalRecord && originalRecord.children[i]);
       }
       originalRecord = originalRecord || matcher2;
     }
-    return originalMatcher
-      ? () => {
-          removeRoute(originalMatcher);
-        }
-      : noop;
+    return originalMatcher ? () => {
+      removeRoute(originalMatcher);
+    } : noop;
   }
   function removeRoute(matcherRef) {
     if (isRouteName(matcherRef)) {
@@ -1332,8 +1171,7 @@ function createRouterMatcher(routes, globalOptions) {
   function insertMatcher(matcher2) {
     const index = findInsertionIndex(matcher2, matchers);
     matchers.splice(index, 0, matcher2);
-    if (matcher2.record.name && !isAliasRecord(matcher2))
-      matcherMap.set(matcher2.record.name, matcher2);
+    if (matcher2.record.name && !isAliasRecord(matcher2)) matcherMap.set(matcher2.record.name, matcher2);
   }
   function resolve(location$1, currentLocation) {
     let matcher2;
@@ -1342,23 +1180,9 @@ function createRouterMatcher(routes, globalOptions) {
     let name;
     if ("name" in location$1 && location$1.name) {
       matcher2 = matcherMap.get(location$1.name);
-      if (!matcher2)
-        throw createRouterError(ErrorTypes.MATCHER_NOT_FOUND, { location: location$1 });
+      if (!matcher2) throw createRouterError(ErrorTypes.MATCHER_NOT_FOUND, { location: location$1 });
       name = matcher2.record.name;
-      params = assign(
-        pickParams(
-          currentLocation.params,
-          matcher2.keys
-            .filter((k) => !k.optional)
-            .concat(matcher2.parent ? matcher2.parent.keys.filter((k) => k.optional) : [])
-            .map((k) => k.name),
-        ),
-        location$1.params &&
-          pickParams(
-            location$1.params,
-            matcher2.keys.map((k) => k.name),
-          ),
-      );
+      params = assign(pickParams(currentLocation.params, matcher2.keys.filter((k) => !k.optional).concat(matcher2.parent ? matcher2.parent.keys.filter((k) => k.optional) : []).map((k) => k.name)), location$1.params && pickParams(location$1.params, matcher2.keys.map((k) => k.name)));
       path = matcher2.stringify(params);
     } else if (location$1.path != null) {
       path = location$1.path;
@@ -1368,14 +1192,11 @@ function createRouterMatcher(routes, globalOptions) {
         name = matcher2.record.name;
       }
     } else {
-      matcher2 = currentLocation.name
-        ? matcherMap.get(currentLocation.name)
-        : matchers.find((m) => m.re.test(currentLocation.path));
-      if (!matcher2)
-        throw createRouterError(ErrorTypes.MATCHER_NOT_FOUND, {
-          location: location$1,
-          currentLocation,
-        });
+      matcher2 = currentLocation.name ? matcherMap.get(currentLocation.name) : matchers.find((m) => m.re.test(currentLocation.path));
+      if (!matcher2) throw createRouterError(ErrorTypes.MATCHER_NOT_FOUND, {
+        location: location$1,
+        currentLocation
+      });
       name = matcher2.record.name;
       params = assign({}, currentLocation.params, location$1.params);
       path = matcher2.stringify(params);
@@ -1391,7 +1212,7 @@ function createRouterMatcher(routes, globalOptions) {
       path,
       params,
       matched,
-      meta: mergeMetaFields(matched),
+      meta: mergeMetaFields(matched)
     };
   }
   routes.forEach((route) => addRoute(route));
@@ -1405,7 +1226,7 @@ function createRouterMatcher(routes, globalOptions) {
     removeRoute,
     clearRoutes,
     getRoutes,
-    getRecordMatcher,
+    getRecordMatcher
   };
 }
 function pickParams(params, keys) {
@@ -1427,10 +1248,7 @@ function normalizeRouteRecord(record) {
     leaveGuards: /* @__PURE__ */ new Set(),
     updateGuards: /* @__PURE__ */ new Set(),
     enterCallbacks: {},
-    components:
-      "components" in record
-        ? record.components || null
-        : record.component && { default: record.component },
+    components: "components" in record ? record.components || null : record.component && { default: record.component }
   };
   Object.defineProperty(normalized, "mods", { value: {} });
   return normalized;
@@ -1439,9 +1257,7 @@ function normalizeRecordProps(record) {
   const propsObject = {};
   const props = record.props || false;
   if ("component" in record) propsObject.default = props;
-  else
-    for (const name in record.components)
-      propsObject[name] = typeof props === "object" ? props[name] : props;
+  else for (const name in record.components) propsObject[name] = typeof props === "object" ? props[name] : props;
   return propsObject;
 }
 function isAliasRecord(record) {
@@ -1458,7 +1274,7 @@ function findInsertionIndex(matcher2, matchers) {
   let lower = 0;
   let upper = matchers.length;
   while (lower !== upper) {
-    const mid = (lower + upper) >> 1;
+    const mid = lower + upper >> 1;
     if (comparePathParserScore(matcher2, matchers[mid]) < 0) upper = mid;
     else lower = mid + 1;
   }
@@ -1470,15 +1286,10 @@ function findInsertionIndex(matcher2, matchers) {
 }
 function getInsertionAncestor(matcher2) {
   let ancestor = matcher2;
-  while ((ancestor = ancestor.parent))
-    if (isMatchable(ancestor) && comparePathParserScore(matcher2, ancestor) === 0) return ancestor;
+  while (ancestor = ancestor.parent) if (isMatchable(ancestor) && comparePathParserScore(matcher2, ancestor) === 0) return ancestor;
 }
 function isMatchable({ record }) {
-  return !!(
-    record.name ||
-    (record.components && Object.keys(record.components).length) ||
-    record.redirect
-  );
+  return !!(record.name || record.components && Object.keys(record.components).length || record.redirect);
 }
 function useLink(props) {
   const router = inject(routerKey);
@@ -1496,25 +1307,14 @@ function useLink(props) {
     const index = currentMatched.findIndex(isSameRouteRecord.bind(null, routeMatched));
     if (index > -1) return index;
     const parentRecordPath = getOriginalPath(matched[length - 2]);
-    return length > 1 &&
-      getOriginalPath(routeMatched) === parentRecordPath &&
-      currentMatched[currentMatched.length - 1].path !== parentRecordPath
-      ? currentMatched.findIndex(isSameRouteRecord.bind(null, matched[length - 2]))
-      : index;
+    return length > 1 && getOriginalPath(routeMatched) === parentRecordPath && currentMatched[currentMatched.length - 1].path !== parentRecordPath ? currentMatched.findIndex(isSameRouteRecord.bind(null, matched[length - 2])) : index;
   });
-  const isActive = computed(
-    () => activeRecordIndex.value > -1 && includesParams(currentRoute.params, route.value.params),
-  );
-  const isExactActive = computed(
-    () =>
-      activeRecordIndex.value > -1 &&
-      activeRecordIndex.value === currentRoute.matched.length - 1 &&
-      isSameRouteLocationParams(currentRoute.params, route.value.params),
-  );
+  const isActive = computed(() => activeRecordIndex.value > -1 && includesParams(currentRoute.params, route.value.params));
+  const isExactActive = computed(() => activeRecordIndex.value > -1 && activeRecordIndex.value === currentRoute.matched.length - 1 && isSameRouteLocationParams(currentRoute.params, route.value.params));
   function navigate(e = {}) {
     if (guardEvent(e)) {
       const p = router[unref(props.replace) ? "replace" : "push"](unref(props.to)).catch(noop);
-      if (props.viewTransition && false);
+      if (props.viewTransition && false) ;
       return p;
     }
     return Promise.resolve();
@@ -1524,7 +1324,7 @@ function useLink(props) {
     href: computed(() => route.value.href),
     isActive,
     isExactActive,
-    navigate,
+    navigate
   };
 }
 function preferSingleVNode(vnodes) {
@@ -1536,7 +1336,7 @@ const RouterLinkImpl = /* @__PURE__ */ defineComponent({
   props: {
     to: {
       type: [String, Object],
-      required: true,
+      required: true
     },
     replace: Boolean,
     activeClass: String,
@@ -1544,39 +1344,28 @@ const RouterLinkImpl = /* @__PURE__ */ defineComponent({
     custom: Boolean,
     ariaCurrentValue: {
       type: String,
-      default: "page",
+      default: "page"
     },
-    viewTransition: Boolean,
+    viewTransition: Boolean
   },
   useLink,
   setup(props, { slots }) {
     const link = reactive(useLink(props));
     const { options } = inject(routerKey);
     const elClass = computed(() => ({
-      [getLinkClass(props.activeClass, options.linkActiveClass, "router-link-active")]:
-        link.isActive,
-      [getLinkClass(
-        props.exactActiveClass,
-        options.linkExactActiveClass,
-        "router-link-exact-active",
-      )]: link.isExactActive,
+      [getLinkClass(props.activeClass, options.linkActiveClass, "router-link-active")]: link.isActive,
+      [getLinkClass(props.exactActiveClass, options.linkExactActiveClass, "router-link-exact-active")]: link.isExactActive
     }));
     return () => {
       const children = slots.default && preferSingleVNode(slots.default(link));
-      return props.custom
-        ? children
-        : h(
-            "a",
-            {
-              "aria-current": link.isExactActive ? props.ariaCurrentValue : null,
-              href: link.href,
-              onClick: link.navigate,
-              class: elClass.value,
-            },
-            children,
-          );
+      return props.custom ? children : h("a", {
+        "aria-current": link.isExactActive ? props.ariaCurrentValue : null,
+        href: link.href,
+        onClick: link.navigate,
+        class: elClass.value
+      }, children);
     };
-  },
+  }
 });
 const RouterLink = RouterLinkImpl;
 function guardEvent(e) {
@@ -1596,29 +1385,23 @@ function includesParams(outer, inner) {
     const outerValue = outer[key];
     if (typeof innerValue === "string") {
       if (innerValue !== outerValue) return false;
-    } else if (
-      !isArray(outerValue) ||
-      outerValue.length !== innerValue.length ||
-      innerValue.some((value, i) => value.valueOf() !== outerValue[i].valueOf())
-    )
-      return false;
+    } else if (!isArray(outerValue) || outerValue.length !== innerValue.length || innerValue.some((value, i) => value.valueOf() !== outerValue[i].valueOf())) return false;
   }
   return true;
 }
 function getOriginalPath(record) {
-  return record ? (record.aliasOf ? record.aliasOf.path : record.path) : "";
+  return record ? record.aliasOf ? record.aliasOf.path : record.path : "";
 }
-const getLinkClass = (propClass, globalClass, defaultClass) =>
-  propClass != null ? propClass : globalClass != null ? globalClass : defaultClass;
+const getLinkClass = (propClass, globalClass, defaultClass) => propClass != null ? propClass : globalClass != null ? globalClass : defaultClass;
 const RouterViewImpl = /* @__PURE__ */ defineComponent({
   name: "RouterView",
   inheritAttrs: false,
   props: {
     name: {
       type: String,
-      default: "default",
+      default: "default"
     },
-    route: Object,
+    route: Object
   },
   compatConfig: { MODE: 3 },
   setup(props, { attrs, slots }) {
@@ -1633,64 +1416,48 @@ const RouterViewImpl = /* @__PURE__ */ defineComponent({
       return initialDepth;
     });
     const matchedRouteRef = computed(() => routeToDisplay.value.matched[depth.value]);
-    provide(
-      viewDepthKey,
-      computed(() => depth.value + 1),
-    );
+    provide(viewDepthKey, computed(() => depth.value + 1));
     provide(matchedRouteKey, matchedRouteRef);
     provide(routerViewLocationKey, routeToDisplay);
     const viewRef = ref();
-    watch(
-      () => [viewRef.value, matchedRouteRef.value, props.name],
-      ([instance, to, name], [oldInstance, from, oldName]) => {
-        if (to) {
-          to.instances[name] = instance;
-          if (from && from !== to && instance && instance === oldInstance) {
-            if (!to.leaveGuards.size) to.leaveGuards = from.leaveGuards;
-            if (!to.updateGuards.size) to.updateGuards = from.updateGuards;
-          }
+    watch(() => [
+      viewRef.value,
+      matchedRouteRef.value,
+      props.name
+    ], ([instance, to, name], [oldInstance, from, oldName]) => {
+      if (to) {
+        to.instances[name] = instance;
+        if (from && from !== to && instance && instance === oldInstance) {
+          if (!to.leaveGuards.size) to.leaveGuards = from.leaveGuards;
+          if (!to.updateGuards.size) to.updateGuards = from.updateGuards;
         }
-        if (instance && to && (!from || !isSameRouteRecord(to, from) || !oldInstance))
-          (to.enterCallbacks[name] || []).forEach((callback) => callback(instance));
-      },
-      { flush: "post" },
-    );
+      }
+      if (instance && to && (!from || !isSameRouteRecord(to, from) || !oldInstance)) (to.enterCallbacks[name] || []).forEach((callback) => callback(instance));
+    }, { flush: "post" });
     return () => {
       const route = routeToDisplay.value;
       const currentName = props.name;
       const matchedRoute = matchedRouteRef.value;
       const ViewComponent = matchedRoute && matchedRoute.components[currentName];
-      if (!ViewComponent)
-        return normalizeSlot$1(slots.default, {
-          Component: ViewComponent,
-          route,
-        });
+      if (!ViewComponent) return normalizeSlot$1(slots.default, {
+        Component: ViewComponent,
+        route
+      });
       const routePropsOption = matchedRoute.props[currentName];
-      const routeProps = routePropsOption
-        ? routePropsOption === true
-          ? route.params
-          : typeof routePropsOption === "function"
-            ? routePropsOption(route)
-            : routePropsOption
-        : null;
+      const routeProps = routePropsOption ? routePropsOption === true ? route.params : typeof routePropsOption === "function" ? routePropsOption(route) : routePropsOption : null;
       const onVnodeUnmounted = (vnode) => {
         if (vnode.component.isUnmounted) matchedRoute.instances[currentName] = null;
       };
-      const component = h(
-        ViewComponent,
-        assign({}, routeProps, attrs, {
-          onVnodeUnmounted,
-          ref: viewRef,
-        }),
-      );
-      return (
-        normalizeSlot$1(slots.default, {
-          Component: component,
-          route,
-        }) || component
-      );
+      const component = h(ViewComponent, assign({}, routeProps, attrs, {
+        onVnodeUnmounted,
+        ref: viewRef
+      }));
+      return normalizeSlot$1(slots.default, {
+        Component: component,
+        route
+      }) || component;
     };
-  },
+  }
 });
 function normalizeSlot$1(slot, data) {
   if (!slot) return null;
@@ -1740,14 +1507,12 @@ function createRouter(options) {
         params: decodeParams(matchedRoute$1.params),
         hash: decode(locationNormalized.hash),
         redirectedFrom: void 0,
-        href: href$1,
+        href: href$1
       });
     }
     let matcherLocation;
     if (rawLocation.path != null) {
-      matcherLocation = assign({}, rawLocation, {
-        path: parseURL(parseQuery$1, rawLocation.path, currentLocation.path).path,
-      });
+      matcherLocation = assign({}, rawLocation, { path: parseURL(parseQuery$1, rawLocation.path, currentLocation.path).path });
     } else {
       const targetParams = assign({}, rawLocation.params);
       for (const key in targetParams) if (targetParams[key] == null) delete targetParams[key];
@@ -1757,41 +1522,28 @@ function createRouter(options) {
     const matchedRoute = matcher2.resolve(matcherLocation, currentLocation);
     const hash = rawLocation.hash || "";
     matchedRoute.params = normalizeParams(decodeParams(matchedRoute.params));
-    const fullPath = stringifyURL(
-      stringifyQuery$1,
-      assign({}, rawLocation, {
-        hash: encodeHash(hash),
-        path: matchedRoute.path,
-      }),
-    );
+    const fullPath = stringifyURL(stringifyQuery$1, assign({}, rawLocation, {
+      hash: encodeHash(hash),
+      path: matchedRoute.path
+    }));
     const href = routerHistory.createHref(fullPath);
-    return assign(
-      {
-        fullPath,
-        hash,
-        query:
-          stringifyQuery$1 === stringifyQuery
-            ? normalizeQuery(rawLocation.query)
-            : rawLocation.query || {},
-      },
-      matchedRoute,
-      {
-        redirectedFrom: void 0,
-        href,
-      },
-    );
+    return assign({
+      fullPath,
+      hash,
+      query: stringifyQuery$1 === stringifyQuery ? normalizeQuery(rawLocation.query) : rawLocation.query || {}
+    }, matchedRoute, {
+      redirectedFrom: void 0,
+      href
+    });
   }
   function locationAsObject(to) {
-    return typeof to === "string"
-      ? parseURL(parseQuery$1, to, currentRoute.value.path)
-      : assign({}, to);
+    return typeof to === "string" ? parseURL(parseQuery$1, to, currentRoute.value.path) : assign({}, to);
   }
   function checkCanceledNavigation(to, from) {
-    if (pendingLocation !== to)
-      return createRouterError(ErrorTypes.NAVIGATION_CANCELLED, {
-        from,
-        to,
-      });
+    if (pendingLocation !== to) return createRouterError(ErrorTypes.NAVIGATION_CANCELLED, {
+      from,
+      to
+    });
   }
   function push(to) {
     return pushWithRedirect(to);
@@ -1805,72 +1557,50 @@ function createRouter(options) {
       const { redirect } = lastMatched;
       let newTargetLocation = typeof redirect === "function" ? redirect(to, from) : redirect;
       if (typeof newTargetLocation === "string") {
-        newTargetLocation =
-          newTargetLocation.includes("?") || newTargetLocation.includes("#")
-            ? (newTargetLocation = locationAsObject(newTargetLocation))
-            : { path: newTargetLocation };
+        newTargetLocation = newTargetLocation.includes("?") || newTargetLocation.includes("#") ? newTargetLocation = locationAsObject(newTargetLocation) : { path: newTargetLocation };
         newTargetLocation.params = {};
       }
-      return assign(
-        {
-          query: to.query,
-          hash: to.hash,
-          params: newTargetLocation.path != null ? {} : to.params,
-        },
-        newTargetLocation,
-      );
+      return assign({
+        query: to.query,
+        hash: to.hash,
+        params: newTargetLocation.path != null ? {} : to.params
+      }, newTargetLocation);
     }
   }
   function pushWithRedirect(to, redirectedFrom) {
-    const targetLocation = (pendingLocation = resolve(to));
+    const targetLocation = pendingLocation = resolve(to);
     const from = currentRoute.value;
     const data = to.state;
     const force = to.force;
     const replace$1 = to.replace === true;
     const shouldRedirect = handleRedirectRecord(targetLocation, from);
-    if (shouldRedirect)
-      return pushWithRedirect(
-        assign(locationAsObject(shouldRedirect), {
-          state: typeof shouldRedirect === "object" ? assign({}, data, shouldRedirect.state) : data,
-          force,
-          replace: replace$1,
-        }),
-        redirectedFrom || targetLocation,
-      );
+    if (shouldRedirect) return pushWithRedirect(assign(locationAsObject(shouldRedirect), {
+      state: typeof shouldRedirect === "object" ? assign({}, data, shouldRedirect.state) : data,
+      force,
+      replace: replace$1
+    }), redirectedFrom || targetLocation);
     const toLocation = targetLocation;
     toLocation.redirectedFrom = redirectedFrom;
     let failure;
     if (!force && isSameRouteLocation(stringifyQuery$1, from, targetLocation)) {
       failure = createRouterError(ErrorTypes.NAVIGATION_DUPLICATED, {
         to: toLocation,
-        from,
+        from
       });
       handleScroll();
     }
-    return (failure ? Promise.resolve(failure) : navigate(toLocation, from))
-      .catch((error) =>
-        isNavigationFailure(error)
-          ? isNavigationFailure(error, ErrorTypes.NAVIGATION_GUARD_REDIRECT)
-            ? error
-            : markAsReady(error)
-          : triggerError(error, toLocation, from),
-      )
-      .then((failure$1) => {
-        if (failure$1) {
-          if (isNavigationFailure(failure$1, ErrorTypes.NAVIGATION_GUARD_REDIRECT)) {
-            return pushWithRedirect(
-              assign({ replace: replace$1 }, locationAsObject(failure$1.to), {
-                state:
-                  typeof failure$1.to === "object" ? assign({}, data, failure$1.to.state) : data,
-                force,
-              }),
-              redirectedFrom || toLocation,
-            );
-          }
-        } else failure$1 = finalizeNavigation(toLocation, from, true, replace$1, data);
-        triggerAfterEach(toLocation, from, failure$1);
-        return failure$1;
-      });
+    return (failure ? Promise.resolve(failure) : navigate(toLocation, from)).catch((error) => isNavigationFailure(error) ? isNavigationFailure(error, ErrorTypes.NAVIGATION_GUARD_REDIRECT) ? error : markAsReady(error) : triggerError(error, toLocation, from)).then((failure$1) => {
+      if (failure$1) {
+        if (isNavigationFailure(failure$1, ErrorTypes.NAVIGATION_GUARD_REDIRECT)) {
+          return pushWithRedirect(assign({ replace: replace$1 }, locationAsObject(failure$1.to), {
+            state: typeof failure$1.to === "object" ? assign({}, data, failure$1.to.state) : data,
+            force
+          }), redirectedFrom || toLocation);
+        }
+      } else failure$1 = finalizeNavigation(toLocation, from, true, replace$1, data);
+      triggerAfterEach(toLocation, from, failure$1);
+      return failure$1;
+    });
   }
   function checkCanceledNavigationAndReject(to, from) {
     const error = checkCanceledNavigation(to, from);
@@ -1884,61 +1614,40 @@ function createRouter(options) {
     let guards;
     const [leavingRecords, updatingRecords, enteringRecords] = extractChangingRecords(to, from);
     guards = extractComponentsGuards(leavingRecords.reverse(), "beforeRouteLeave", to, from);
-    for (const record of leavingRecords)
-      record.leaveGuards.forEach((guard) => {
-        guards.push(guardToPromiseFn(guard, to, from));
-      });
+    for (const record of leavingRecords) record.leaveGuards.forEach((guard) => {
+      guards.push(guardToPromiseFn(guard, to, from));
+    });
     const canceledNavigationCheck = checkCanceledNavigationAndReject.bind(null, to, from);
     guards.push(canceledNavigationCheck);
-    return runGuardQueue(guards)
-      .then(() => {
-        guards = [];
-        for (const guard of beforeGuards.list()) guards.push(guardToPromiseFn(guard, to, from));
-        guards.push(canceledNavigationCheck);
-        return runGuardQueue(guards);
-      })
-      .then(() => {
-        guards = extractComponentsGuards(updatingRecords, "beforeRouteUpdate", to, from);
-        for (const record of updatingRecords)
-          record.updateGuards.forEach((guard) => {
-            guards.push(guardToPromiseFn(guard, to, from));
-          });
-        guards.push(canceledNavigationCheck);
-        return runGuardQueue(guards);
-      })
-      .then(() => {
-        guards = [];
-        for (const record of enteringRecords)
-          if (record.beforeEnter)
-            if (isArray(record.beforeEnter))
-              for (const beforeEnter of record.beforeEnter)
-                guards.push(guardToPromiseFn(beforeEnter, to, from));
-            else guards.push(guardToPromiseFn(record.beforeEnter, to, from));
-        guards.push(canceledNavigationCheck);
-        return runGuardQueue(guards);
-      })
-      .then(() => {
-        to.matched.forEach((record) => (record.enterCallbacks = {}));
-        guards = extractComponentsGuards(
-          enteringRecords,
-          "beforeRouteEnter",
-          to,
-          from,
-          runWithContext,
-        );
-        guards.push(canceledNavigationCheck);
-        return runGuardQueue(guards);
-      })
-      .then(() => {
-        guards = [];
-        for (const guard of beforeResolveGuards.list())
-          guards.push(guardToPromiseFn(guard, to, from));
-        guards.push(canceledNavigationCheck);
-        return runGuardQueue(guards);
-      })
-      .catch((err) =>
-        isNavigationFailure(err, ErrorTypes.NAVIGATION_CANCELLED) ? err : Promise.reject(err),
-      );
+    return runGuardQueue(guards).then(() => {
+      guards = [];
+      for (const guard of beforeGuards.list()) guards.push(guardToPromiseFn(guard, to, from));
+      guards.push(canceledNavigationCheck);
+      return runGuardQueue(guards);
+    }).then(() => {
+      guards = extractComponentsGuards(updatingRecords, "beforeRouteUpdate", to, from);
+      for (const record of updatingRecords) record.updateGuards.forEach((guard) => {
+        guards.push(guardToPromiseFn(guard, to, from));
+      });
+      guards.push(canceledNavigationCheck);
+      return runGuardQueue(guards);
+    }).then(() => {
+      guards = [];
+      for (const record of enteringRecords) if (record.beforeEnter) if (isArray(record.beforeEnter)) for (const beforeEnter of record.beforeEnter) guards.push(guardToPromiseFn(beforeEnter, to, from));
+      else guards.push(guardToPromiseFn(record.beforeEnter, to, from));
+      guards.push(canceledNavigationCheck);
+      return runGuardQueue(guards);
+    }).then(() => {
+      to.matched.forEach((record) => record.enterCallbacks = {});
+      guards = extractComponentsGuards(enteringRecords, "beforeRouteEnter", to, from, runWithContext);
+      guards.push(canceledNavigationCheck);
+      return runGuardQueue(guards);
+    }).then(() => {
+      guards = [];
+      for (const guard of beforeResolveGuards.list()) guards.push(guardToPromiseFn(guard, to, from));
+      guards.push(canceledNavigationCheck);
+      return runGuardQueue(guards);
+    }).catch((err) => isNavigationFailure(err, ErrorTypes.NAVIGATION_CANCELLED) ? err : Promise.reject(err));
   }
   function triggerAfterEach(to, from, failure) {
     afterGuards.list().forEach((guard) => runWithContext(() => guard(to, from, failure)));
@@ -1948,13 +1657,8 @@ function createRouter(options) {
     if (error) return error;
     const isFirstNavigation = from === START_LOCATION_NORMALIZED;
     const state = {};
-    if (isPush)
-      if (replace$1 || isFirstNavigation)
-        routerHistory.replace(
-          toLocation.fullPath,
-          assign({ scroll: isFirstNavigation && state && state.scroll }, data),
-        );
-      else routerHistory.push(toLocation.fullPath, data);
+    if (isPush) if (replace$1 || isFirstNavigation) routerHistory.replace(toLocation.fullPath, assign({ scroll: isFirstNavigation && state && state.scroll }, data));
+    else routerHistory.push(toLocation.fullPath, data);
     currentRoute.value = toLocation;
     handleScroll();
     markAsReady();
@@ -1967,66 +1671,36 @@ function createRouter(options) {
       const toLocation = resolve(to);
       const shouldRedirect = handleRedirectRecord(toLocation, router.currentRoute.value);
       if (shouldRedirect) {
-        pushWithRedirect(
-          assign(shouldRedirect, {
-            replace: true,
-            force: true,
-          }),
-          toLocation,
-        ).catch(noop);
+        pushWithRedirect(assign(shouldRedirect, {
+          replace: true,
+          force: true
+        }), toLocation).catch(noop);
         return;
       }
       pendingLocation = toLocation;
       const from = currentRoute.value;
-      navigate(toLocation, from)
-        .catch((error) => {
-          if (
-            isNavigationFailure(
-              error,
-              ErrorTypes.NAVIGATION_ABORTED | ErrorTypes.NAVIGATION_CANCELLED,
-            )
-          )
-            return error;
-          if (isNavigationFailure(error, ErrorTypes.NAVIGATION_GUARD_REDIRECT)) {
-            pushWithRedirect(assign(locationAsObject(error.to), { force: true }), toLocation)
-              .then((failure) => {
-                if (
-                  isNavigationFailure(
-                    failure,
-                    ErrorTypes.NAVIGATION_ABORTED | ErrorTypes.NAVIGATION_DUPLICATED,
-                  ) &&
-                  !info.delta &&
-                  info.type === NavigationType.pop
-                )
-                  routerHistory.go(-1, false);
-              })
-              .catch(noop);
-            return Promise.reject();
-          }
-          if (info.delta) routerHistory.go(-info.delta, false);
-          return triggerError(error, toLocation, from);
-        })
-        .then((failure) => {
-          failure = failure || finalizeNavigation(toLocation, from, false);
-          if (failure) {
-            if (info.delta && !isNavigationFailure(failure, ErrorTypes.NAVIGATION_CANCELLED))
-              routerHistory.go(-info.delta, false);
-            else if (
-              info.type === NavigationType.pop &&
-              isNavigationFailure(
-                failure,
-                ErrorTypes.NAVIGATION_ABORTED | ErrorTypes.NAVIGATION_DUPLICATED,
-              )
-            )
-              routerHistory.go(-1, false);
-          }
-          triggerAfterEach(toLocation, from, failure);
-        })
-        .catch(noop);
+      navigate(toLocation, from).catch((error) => {
+        if (isNavigationFailure(error, ErrorTypes.NAVIGATION_ABORTED | ErrorTypes.NAVIGATION_CANCELLED)) return error;
+        if (isNavigationFailure(error, ErrorTypes.NAVIGATION_GUARD_REDIRECT)) {
+          pushWithRedirect(assign(locationAsObject(error.to), { force: true }), toLocation).then((failure) => {
+            if (isNavigationFailure(failure, ErrorTypes.NAVIGATION_ABORTED | ErrorTypes.NAVIGATION_DUPLICATED) && !info.delta && info.type === NavigationType.pop) routerHistory.go(-1, false);
+          }).catch(noop);
+          return Promise.reject();
+        }
+        if (info.delta) routerHistory.go(-info.delta, false);
+        return triggerError(error, toLocation, from);
+      }).then((failure) => {
+        failure = failure || finalizeNavigation(toLocation, from, false);
+        if (failure) {
+          if (info.delta && !isNavigationFailure(failure, ErrorTypes.NAVIGATION_CANCELLED)) routerHistory.go(-info.delta, false);
+          else if (info.type === NavigationType.pop && isNavigationFailure(failure, ErrorTypes.NAVIGATION_ABORTED | ErrorTypes.NAVIGATION_DUPLICATED)) routerHistory.go(-1, false);
+        }
+        triggerAfterEach(toLocation, from, failure);
+      }).catch(noop);
     });
   }
-  const readyHandlers = useCallbacks();
-  const errorListeners = useCallbacks();
+  let readyHandlers = useCallbacks();
+  let errorListeners = useCallbacks();
   let ready;
   function triggerError(error, to, from) {
     markAsReady(error);
@@ -2047,7 +1721,7 @@ function createRouter(options) {
     if (!ready) {
       ready = !err;
       setupListeners();
-      readyHandlers.list().forEach(([resolve$1, reject]) => (err ? reject(err) : resolve$1()));
+      readyHandlers.list().forEach(([resolve$1, reject]) => err ? reject(err) : resolve$1());
       readyHandlers.reset();
     }
     return err;
@@ -2084,20 +1758,19 @@ function createRouter(options) {
       app.config.globalProperties.$router = router;
       Object.defineProperty(app.config.globalProperties, "$route", {
         enumerable: true,
-        get: () => unref(currentRoute),
+        get: () => unref(currentRoute)
       });
       const reactiveRoute = {};
-      for (const key in START_LOCATION_NORMALIZED)
-        Object.defineProperty(reactiveRoute, key, {
-          get: () => currentRoute.value[key],
-          enumerable: true,
-        });
+      for (const key in START_LOCATION_NORMALIZED) Object.defineProperty(reactiveRoute, key, {
+        get: () => currentRoute.value[key],
+        enumerable: true
+      });
       app.provide(routerKey, router);
       app.provide(routeLocationKey, shallowReactive(reactiveRoute));
       app.provide(routerViewLocationKey, currentRoute);
       const unmountApp = app.unmount;
       installedApps.add(app);
-      app.unmount = () => {
+      app.unmount = function() {
         installedApps.delete(app);
         if (installedApps.size < 1) {
           pendingLocation = START_LOCATION_NORMALIZED;
@@ -2108,13 +1781,10 @@ function createRouter(options) {
         }
         unmountApp();
       };
-    },
+    }
   };
   function runGuardQueue(guards) {
-    return guards.reduce(
-      (promise, guard) => promise.then(() => runWithContext(guard)),
-      Promise.resolve(),
-    );
+    return guards.reduce((promise, guard) => promise.then(() => runWithContext(guard)), Promise.resolve());
   }
   return router;
 }
@@ -2126,17 +1796,11 @@ const ROUTE_KEY_PARENTHESES_RE$1 = /(:\w+)\([^)]+\)/g;
 const ROUTE_KEY_SYMBOLS_RE$1 = /(:\w+)[?+*]/g;
 const ROUTE_KEY_NORMAL_RE$1 = /:\w+/g;
 const interpolatePath = (route, match) => {
-  return match.path
-    .replace(ROUTE_KEY_PARENTHESES_RE$1, "$1")
-    .replace(ROUTE_KEY_SYMBOLS_RE$1, "$1")
-    .replace(ROUTE_KEY_NORMAL_RE$1, (r) => route.params[r.slice(1)]?.toString() || "");
+  return match.path.replace(ROUTE_KEY_PARENTHESES_RE$1, "$1").replace(ROUTE_KEY_SYMBOLS_RE$1, "$1").replace(ROUTE_KEY_NORMAL_RE$1, (r) => route.params[r.slice(1)]?.toString() || "");
 };
 const generateRouteKey$1 = (routeProps, override) => {
-  const matchedRoute = routeProps.route.matched.find(
-    (m) => m.components?.default === routeProps.Component.type,
-  );
-  const source =
-    matchedRoute?.meta.key ?? (matchedRoute && interpolatePath(routeProps.route, matchedRoute));
+  const matchedRoute = routeProps.route.matched.find((m) => m.components?.default === routeProps.Component.type);
+  const source = matchedRoute?.meta.key ?? (matchedRoute && interpolatePath(routeProps.route, matchedRoute));
   return typeof source === "function" ? source(routeProps.route) : source;
 };
 function toArray$1(value) {
@@ -2145,13 +1809,7 @@ function toArray$1(value) {
 const matcher = (m, p) => {
   return [];
 };
-const _routeRulesMatcher = (path) =>
-  defu(
-    {},
-    ...matcher("", typeof path === "string" ? path.toLowerCase() : path)
-      .map((r) => r.data)
-      .reverse(),
-  );
+const _routeRulesMatcher = (path) => defu({}, ...matcher("", typeof path === "string" ? path.toLowerCase() : path).map((r) => r.data).reverse());
 const routeRulesMatcher$1 = _routeRulesMatcher;
 function getRouteRules(arg) {
   const path = typeof arg === "string" ? arg : arg.path;
@@ -2166,8 +1824,8 @@ const _routes = [
   {
     name: "index",
     path: "/",
-    component: () => import("./index-Ccuwk2Y7.mjs"),
-  },
+    component: () => import('./index-Ccuwk2Y7.mjs')
+  }
 ];
 const _wrapInTransition = (props, children) => {
   return { default: () => children.default?.() };
@@ -2176,12 +1834,7 @@ const ROUTE_KEY_PARENTHESES_RE = /(:\w+)\([^)]+\)/g;
 const ROUTE_KEY_SYMBOLS_RE = /(:\w+)[?+*]/g;
 const ROUTE_KEY_NORMAL_RE = /:\w+/g;
 function generateRouteKey(route) {
-  const source =
-    route?.meta.key ??
-    route.path
-      .replace(ROUTE_KEY_PARENTHESES_RE, "$1")
-      .replace(ROUTE_KEY_SYMBOLS_RE, "$1")
-      .replace(ROUTE_KEY_NORMAL_RE, (r) => route.params[r.slice(1)]?.toString() || "");
+  const source = route?.meta.key ?? route.path.replace(ROUTE_KEY_PARENTHESES_RE, "$1").replace(ROUTE_KEY_SYMBOLS_RE, "$1").replace(ROUTE_KEY_NORMAL_RE, (r) => route.params[r.slice(1)]?.toString() || "");
   return typeof source === "function" ? source(route) : source;
 }
 function isChangingPage(to, from) {
@@ -2192,8 +1845,7 @@ function isChangingPage(to, from) {
     return true;
   }
   const areComponentsSame = to.matched.every(
-    (comp, index) =>
-      comp.components && comp.components.default === from.matched[index]?.components?.default,
+    (comp, index) => comp.components && comp.components.default === from.matched[index]?.components?.default
   );
   if (areComponentsSame) {
     return false;
@@ -2216,7 +1868,7 @@ function _mergeTransitionProps(routeProps) {
     _props.push({
       ...prop,
       onAfterLeave: prop.onAfterLeave ? toArray(prop.onAfterLeave) : void 0,
-      onBeforeLeave: prop.onBeforeLeave ? toArray(prop.onBeforeLeave) : void 0,
+      onBeforeLeave: prop.onBeforeLeave ? toArray(prop.onBeforeLeave) : void 0
     });
   }
   return defu(..._props);
@@ -2230,18 +1882,11 @@ const routerOptions0 = {
         return { left: 0, top: 0 };
       }
       if (to.hash) {
-        return {
-          el: to.hash,
-          top: _getHashElementScrollMarginTop(to.hash),
-          behavior: hashScrollBehaviour,
-        };
+        return { el: to.hash, top: _getHashElementScrollMarginTop(to.hash), behavior: hashScrollBehaviour };
       }
       return false;
     }
-    const routeAllowsScrollToTop =
-      typeof to.meta.scrollToTop === "function"
-        ? to.meta.scrollToTop(to, from)
-        : to.meta.scrollToTop;
+    const routeAllowsScrollToTop = typeof to.meta.scrollToTop === "function" ? to.meta.scrollToTop(to, from) : to.meta.scrollToTop;
     if (routeAllowsScrollToTop === false) {
       return false;
     }
@@ -2250,9 +1895,7 @@ const routerOptions0 = {
     }
     return new Promise((resolve) => {
       const doScroll = () => {
-        requestAnimationFrame(() =>
-          resolve(_calculatePosition(to, from, savedPosition, hashScrollBehaviour)),
-        );
+        requestAnimationFrame(() => resolve(_calculatePosition(to, from, savedPosition, hashScrollBehaviour)));
       };
       nuxtApp.hooks.hookOnce("page:loading:end", () => {
         const transitionPromise = nuxtApp["~transitionPromise"];
@@ -2263,18 +1906,16 @@ const routerOptions0 = {
         }
       });
     });
-  },
+  }
 };
 function _getHashElementScrollMarginTop(selector) {
   try {
     const elem = (void 0).querySelector(selector);
     if (elem) {
-      return (
-        (Number.parseFloat(getComputedStyle(elem).scrollMarginTop) || 0) +
-        (Number.parseFloat(getComputedStyle((void 0).documentElement).scrollPaddingTop) || 0)
-      );
+      return (Number.parseFloat(getComputedStyle(elem).scrollMarginTop) || 0) + (Number.parseFloat(getComputedStyle((void 0).documentElement).scrollPaddingTop) || 0);
     }
-  } catch {}
+  } catch {
+  }
   return 0;
 }
 function _calculatePosition(to, from, savedPosition, defaultHashScrollBehaviour) {
@@ -2285,52 +1926,52 @@ function _calculatePosition(to, from, savedPosition, defaultHashScrollBehaviour)
     return {
       el: to.hash,
       top: _getHashElementScrollMarginTop(to.hash),
-      behavior: isChangingPage(to, from) ? defaultHashScrollBehaviour : "instant",
+      behavior: isChangingPage(to, from) ? defaultHashScrollBehaviour : "instant"
     };
   }
   return {
     left: 0,
-    top: 0,
+    top: 0
   };
 }
 const configRouterOptions = {
   hashMode: false,
-  scrollBehaviorType: "auto",
+  scrollBehaviorType: "auto"
 };
 const routerOptions = {
   ...configRouterOptions,
-  ...routerOptions0,
+  ...routerOptions0
 };
 const validate = /* @__PURE__ */ defineNuxtRouteMiddleware(async (to, from) => {
   let __temp, __restore;
   if (!to.meta?.validate) {
     return;
   }
-  const result =
-    (([__temp, __restore] = executeAsync(() => Promise.resolve(to.meta.validate(to)))),
-    (__temp = await __temp),
-    __restore(),
-    __temp);
+  const result = ([__temp, __restore] = executeAsync(() => Promise.resolve(to.meta.validate(to))), __temp = await __temp, __restore(), __temp);
   if (result === true) {
     return;
   }
   const error = createError({
     fatal: false,
     // eslint-disable-next-line @typescript-eslint/no-deprecated
-    status: (result && (result.status || result.statusCode)) || 404,
+    status: result && (result.status || result.statusCode) || 404,
     // eslint-disable-next-line @typescript-eslint/no-deprecated
-    statusText:
-      (result && (result.statusText || result.statusMessage)) || `Page Not Found: ${to.fullPath}`,
+    statusText: result && (result.statusText || result.statusMessage) || `Page Not Found: ${to.fullPath}`,
     data: {
-      path: to.fullPath,
-    },
+      path: to.fullPath
+    }
   });
   return error;
 });
 const manifest_45route_45rule = /* @__PURE__ */ defineNuxtRouteMiddleware((to) => {
+  {
     return;
+  }
 });
-const globalMiddleware = [validate, manifest_45route_45rule];
+const globalMiddleware = [
+  validate,
+  manifest_45route_45rule
+];
 const namedMiddleware = {};
 Object.assign(/* @__PURE__ */ Object.create(null), {});
 const pageIslandRoutes = Object.assign(/* @__PURE__ */ Object.create(null), {});
@@ -2339,14 +1980,9 @@ const plugin = /* @__PURE__ */ defineNuxtPlugin({
   enforce: "pre",
   async setup(nuxtApp) {
     let __temp, __restore;
-    const routerBase = /* @__PURE__ */ useRuntimeConfig().app.baseURL;
+    let routerBase = (/* @__PURE__ */ useRuntimeConfig()).app.baseURL;
     const history = routerOptions.history?.(routerBase) ?? createMemoryHistory(routerBase);
-    const routes = routerOptions.routes
-      ? ((([__temp, __restore] = executeAsync(() => routerOptions.routes(_routes))),
-        (__temp = await __temp),
-        __restore(),
-        __temp) ?? _routes)
-      : _routes;
+    const routes = routerOptions.routes ? ([__temp, __restore] = executeAsync(() => routerOptions.routes(_routes)), __temp = await __temp, __restore(), __temp) ?? _routes : _routes;
     let startPosition;
     const router = createRouter({
       ...routerOptions,
@@ -2363,15 +1999,11 @@ const plugin = /* @__PURE__ */ defineNuxtPlugin({
               (void 0).history.scrollRestoration = "manual";
             });
           }
-          return routerOptions.scrollBehavior(
-            to,
-            START_LOCATION_NORMALIZED,
-            startPosition || savedPosition,
-          );
+          return routerOptions.scrollBehavior(to, START_LOCATION_NORMALIZED, startPosition || savedPosition);
         }
       },
       history,
-      routes,
+      routes
     });
     nuxtApp.vueApp.use(router);
     const previousRoute = shallowRef(router.currentRoute.value);
@@ -2379,7 +2011,7 @@ const plugin = /* @__PURE__ */ defineNuxtPlugin({
       previousRoute.value = from;
     });
     Object.defineProperty(nuxtApp.vueApp.config.globalProperties, "previousRoute", {
-      get: () => previousRoute.value,
+      get: () => previousRoute.value
     });
     const initialURL = nuxtApp.ssrContext.url;
     const _route = shallowRef(router.currentRoute.value);
@@ -2397,10 +2029,7 @@ const plugin = /* @__PURE__ */ defineNuxtPlugin({
         }
         return;
       }
-      if (
-        to.matched.length < from.matched.length &&
-        to.matched.every((m, i) => m.components?.default === from.matched[i]?.components?.default)
-      ) {
+      if (to.matched.length < from.matched.length && to.matched.every((m, i) => m.components?.default === from.matched[i]?.components?.default)) {
         syncCurrentRoute();
       }
     });
@@ -2408,13 +2037,13 @@ const plugin = /* @__PURE__ */ defineNuxtPlugin({
     for (const key in _route.value) {
       Object.defineProperty(route, key, {
         get: () => _route.value[key],
-        enumerable: true,
+        enumerable: true
       });
     }
     nuxtApp._route = shallowReactive(route);
     nuxtApp._middleware ||= {
       global: [],
-      named: {},
+      named: {}
     };
     const error = /* @__PURE__ */ useError();
     const isServerPage = nuxtApp.ssrContext?.islandContext?.name?.startsWith("page_");
@@ -2434,15 +2063,15 @@ const plugin = /* @__PURE__ */ defineNuxtPlugin({
     }
     try {
       if (true) {
-        ([__temp, __restore] = executeAsync(() => router.push(initialURL))),
-          await __temp,
-          __restore();
+        ;
+        [__temp, __restore] = executeAsync(() => router.push(initialURL)), await __temp, __restore();
+        ;
       }
-      ([__temp, __restore] = executeAsync(() => router.isReady())), await __temp, __restore();
+      ;
+      [__temp, __restore] = executeAsync(() => router.isReady()), await __temp, __restore();
+      ;
     } catch (error2) {
-      ([__temp, __restore] = executeAsync(() => nuxtApp.runWithContext(() => showError(error2)))),
-        await __temp,
-        __restore();
+      [__temp, __restore] = executeAsync(() => nuxtApp.runWithContext(() => showError(error2))), await __temp, __restore();
     }
     const resolvedInitialRoute = router.currentRoute.value;
     const hasDeferredRoute = false;
@@ -2459,10 +2088,7 @@ const plugin = /* @__PURE__ */ defineNuxtPlugin({
       }
       nuxtApp._processingMiddleware = true;
       if (!nuxtApp.ssrContext?.islandContext || isServerPage) {
-        const middlewareEntries = /* @__PURE__ */ new Set([
-          ...globalMiddleware,
-          ...nuxtApp._middleware.global,
-        ]);
+        const middlewareEntries = /* @__PURE__ */ new Set([...globalMiddleware, ...nuxtApp._middleware.global]);
         for (const component of to.matched) {
           const componentMiddleware = component.meta.middleware;
           if (!componentMiddleware) {
@@ -2483,25 +2109,19 @@ const plugin = /* @__PURE__ */ defineNuxtPlugin({
           }
         }
         for (const entry2 of middlewareEntries) {
-          const middleware =
-            typeof entry2 === "string"
-              ? nuxtApp._middleware.named[entry2] ||
-                (await namedMiddleware[entry2]?.().then((r) => r.default || r))
-              : entry2;
+          const middleware = typeof entry2 === "string" ? nuxtApp._middleware.named[entry2] || await namedMiddleware[entry2]?.().then((r) => r.default || r) : entry2;
           if (!middleware) {
             throw new Error(`Unknown route middleware: '${entry2}'.`);
           }
           try {
-            if (false);
+            if (false) ;
             const result = await nuxtApp.runWithContext(() => middleware(to, from));
             if (true) {
               if (result === false || result instanceof Error) {
-                const error2 =
-                  result ||
-                  createError({
-                    status: 404,
-                    statusText: `Page Not Found: ${initialURL}`,
-                  });
+                const error2 = result || createError({
+                  status: 404,
+                  statusText: `Page Not Found: ${initialURL}`
+                });
                 await nuxtApp.runWithContext(() => showError(error2));
                 return false;
               }
@@ -2531,12 +2151,11 @@ const plugin = /* @__PURE__ */ defineNuxtPlugin({
     if (isServerPage) {
       router.beforeResolve((to) => {
         const expected = pageIslandRoutes[nuxtApp.ssrContext.islandContext.name];
-        const actual = to.matched.find((m) => m.components?.default?.__nuxt_island)?.components
-          ?.default;
+        const actual = to.matched.find((m) => m.components?.default?.__nuxt_island)?.components?.default;
         if (!expected || expected !== actual?.__nuxt_island) {
           nuxtApp.ssrContext["~renderResponse"] = {
             statusCode: 400,
-            statusMessage: "Invalid island request path",
+            statusMessage: "Invalid island request path"
           };
           return false;
         }
@@ -2548,18 +2167,14 @@ const plugin = /* @__PURE__ */ defineNuxtPlugin({
     });
     router.afterEach((to) => {
       if (to.matched.length === 0 && !error.value) {
-        return nuxtApp.runWithContext(() =>
-          showError(
-            createError({
-              status: 404,
-              fatal: false,
-              statusText: `Page not found: ${to.fullPath}`,
-              data: {
-                path: to.fullPath,
-              },
-            }),
-          ),
-        );
+        return nuxtApp.runWithContext(() => showError(createError({
+          status: 404,
+          fatal: false,
+          statusText: `Page not found: ${to.fullPath}`,
+          data: {
+            path: to.fullPath
+          }
+        })));
       }
     });
     nuxtApp.hooks.hookOnce("app:created", async () => {
@@ -2568,12 +2183,12 @@ const plugin = /* @__PURE__ */ defineNuxtPlugin({
           resolvedInitialRoute.name = void 0;
         }
         const pluginNavigatedAway = false;
-        if (pluginNavigatedAway);
-        else if (hasDeferredRoute);
+        if (pluginNavigatedAway) ;
+        else if (hasDeferredRoute) ;
         else {
           await router.replace({
             ...resolvedInitialRoute,
-            force: true,
+            force: true
           });
         }
         router.options.scrollBehavior = routerOptions.scrollBehavior;
@@ -2582,51 +2197,38 @@ const plugin = /* @__PURE__ */ defineNuxtPlugin({
       }
     });
     return { provide: { router } };
-  },
+  }
 });
 function definePayloadReducer(name, reduce) {
+  {
     useNuxtApp().ssrContext["~payloadReducers"][name] = reduce;
+  }
 }
 const reducers = [
   ["NuxtError", (data) => isNuxtError(data) && data.toJSON()],
-  [
-    "EmptyShallowRef",
-    (data) =>
-      isRef(data) &&
-      isShallow(data) &&
-      !data.value &&
-      (typeof data.value === "bigint" ? "0n" : JSON.stringify(data.value) || "_"),
-  ],
-  [
-    "EmptyRef",
-    (data) =>
-      isRef(data) &&
-      !data.value &&
-      (typeof data.value === "bigint" ? "0n" : JSON.stringify(data.value) || "_"),
-  ],
+  ["EmptyShallowRef", (data) => isRef(data) && isShallow(data) && !data.value && (typeof data.value === "bigint" ? "0n" : JSON.stringify(data.value) || "_")],
+  ["EmptyRef", (data) => isRef(data) && !data.value && (typeof data.value === "bigint" ? "0n" : JSON.stringify(data.value) || "_")],
   ["ShallowRef", (data) => isRef(data) && isShallow(data) && data.value],
   ["ShallowReactive", (data) => isReactive(data) && isShallow(data) && toRaw(data)],
   ["Ref", (data) => isRef(data) && data.value],
-  ["Reactive", (data) => isReactive(data) && toRaw(data)],
+  ["Reactive", (data) => isReactive(data) && toRaw(data)]
 ];
-const revive_payload_server_joWFGlyDTzqJz8qMJ35OfLKu6_YgEbxiytuorU1rR88 =
-  /* @__PURE__ */ defineNuxtPlugin({
-    name: "nuxt:revive-payload:server",
-    setup() {
-      for (const [reducer, fn] of reducers) {
-        definePayloadReducer(reducer, fn);
-      }
-    },
-  });
-const components_plugin_4kY4pyzJIYX99vmMAAIorFf3CnAaptHitJgf7JxiED8 =
-  /* @__PURE__ */ defineNuxtPlugin({
-    name: "nuxt:global-components",
-  });
+const revive_payload_server_joWFGlyDTzqJz8qMJ35OfLKu6_YgEbxiytuorU1rR88 = /* @__PURE__ */ defineNuxtPlugin({
+  name: "nuxt:revive-payload:server",
+  setup() {
+    for (const [reducer, fn] of reducers) {
+      definePayloadReducer(reducer, fn);
+    }
+  }
+});
+const components_plugin_4kY4pyzJIYX99vmMAAIorFf3CnAaptHitJgf7JxiED8 = /* @__PURE__ */ defineNuxtPlugin({
+  name: "nuxt:global-components"
+});
 const plugins = [
   unhead__CNUuZOLr2u5jVNCZQZvq_E_Ze_R1LctAdfl03iqsGQ,
   plugin,
   revive_payload_server_joWFGlyDTzqJz8qMJ35OfLKu6_YgEbxiytuorU1rR88,
-  components_plugin_4kY4pyzJIYX99vmMAAIorFf3CnAaptHitJgf7JxiED8,
+  components_plugin_4kY4pyzJIYX99vmMAAIorFf3CnAaptHitJgf7JxiED8
 ];
 const layouts = {};
 const routeRulesMatcher = _routeRulesMatcher;
@@ -2635,21 +2237,21 @@ const LayoutLoader = defineComponent({
   inheritAttrs: false,
   props: {
     name: String,
-    layoutProps: Object,
+    layoutProps: Object
   },
   setup(props, context) {
     return () => h(layouts[props.name], props.layoutProps, context.slots);
-  },
+  }
 });
 const nuxtLayoutProps = {
   name: {
     type: [String, Boolean, Object],
-    default: null,
+    default: null
   },
   fallback: {
     type: [String, Object],
-    default: null,
-  },
+    default: null
+  }
 };
 const __nuxt_component_0 = defineComponent({
   name: "NuxtLayout",
@@ -2661,11 +2263,7 @@ const __nuxt_component_0 = defineComponent({
     const shouldUseEagerRoute = !injectedRoute || injectedRoute === useRoute$1();
     const route = shouldUseEagerRoute ? useRoute() : injectedRoute;
     const layout = computed(() => {
-      let layout2 =
-        unref(props.name) ??
-        route?.meta.layout ??
-        routeRulesMatcher(route?.path).appLayout ??
-        "default";
+      let layout2 = unref(props.name) ?? route?.meta.layout ?? routeRulesMatcher(route?.path).appLayout ?? "default";
       if (layout2 && !(layout2 in layouts)) {
         if (props.fallback) {
           layout2 = unref(props.fallback);
@@ -2680,89 +2278,81 @@ const __nuxt_component_0 = defineComponent({
     return () => {
       const hasLayout = !!layout.value && layout.value in layouts;
       const hasTransition = hasLayout && !!(route?.meta.layoutTransition ?? appLayoutTransition);
-      const transitionProps =
-        hasTransition &&
-        _mergeTransitionProps([
-          route?.meta.layoutTransition,
-          appLayoutTransition,
-          {
-            onBeforeLeave() {
-              nuxtApp["~transitionPromise"] = new Promise((resolve) => {
-                nuxtApp["~transitionFinish"] = resolve;
-              });
-            },
-            onAfterLeave() {
-              nuxtApp["~transitionFinish"]?.();
-              delete nuxtApp["~transitionFinish"];
-              delete nuxtApp["~transitionPromise"];
-            },
+      const transitionProps = hasTransition && _mergeTransitionProps([
+        route?.meta.layoutTransition,
+        appLayoutTransition,
+        {
+          onBeforeLeave() {
+            nuxtApp["~transitionPromise"] = new Promise((resolve) => {
+              nuxtApp["~transitionFinish"] = resolve;
+            });
           },
-        ]);
+          onAfterLeave() {
+            nuxtApp["~transitionFinish"]?.();
+            delete nuxtApp["~transitionFinish"];
+            delete nuxtApp["~transitionPromise"];
+          }
+        }
+      ]);
       const previouslyRenderedLayout = lastLayout;
       lastLayout = layout.value;
       return _wrapInTransition(transitionProps, {
-        default: () =>
-          h(
-            Suspense,
-            {
-              suspensible: true,
-              onResolve: async () => {
-                await nextTick(done);
+        default: () => h(
+          Suspense,
+          {
+            suspensible: true,
+            onResolve: async () => {
+              await nextTick(done);
+            }
+          },
+          {
+            default: () => h(
+              LayoutProvider,
+              {
+                layoutProps: mergeProps(context.attrs, route.meta.layoutProps ?? {}, { ref: layoutRef }),
+                key: layout.value || void 0,
+                name: layout.value,
+                shouldProvide: !props.name,
+                isRenderingNewLayout: (name) => {
+                  return name !== previouslyRenderedLayout && name === layout.value;
+                },
+                hasTransition
               },
-            },
-            {
-              default: () =>
-                h(
-                  LayoutProvider,
-                  {
-                    layoutProps: mergeProps(context.attrs, route.meta.layoutProps ?? {}, {
-                      ref: layoutRef,
-                    }),
-                    key: layout.value || void 0,
-                    name: layout.value,
-                    shouldProvide: !props.name,
-                    isRenderingNewLayout: (name) => {
-                      return name !== previouslyRenderedLayout && name === layout.value;
-                    },
-                    hasTransition,
-                  },
-                  context.slots,
-                ),
-            },
-          ),
+              context.slots
+            )
+          }
+        )
       }).default();
     };
-  },
+  }
 });
 const LayoutProvider = defineComponent({
   name: "NuxtLayoutProvider",
   inheritAttrs: false,
   props: {
     name: {
-      type: [String, Boolean],
+      type: [String, Boolean]
     },
     layoutProps: {
-      type: Object,
+      type: Object
     },
     hasTransition: {
-      type: Boolean,
+      type: Boolean
     },
     shouldProvide: {
-      type: Boolean,
+      type: Boolean
     },
     isRenderingNewLayout: {
       type: Function,
-      required: true,
-    },
+      required: true
+    }
   },
   setup(props, context) {
     const name = props.name;
     if (props.shouldProvide) {
       provide(LayoutMetaSymbol, {
         // When name=false, always return true so NuxtPage doesn't skip rendering
-        isCurrent: (route) =>
-          name === false ||
-          name === (route.meta.layout ?? routeRulesMatcher(route.path).appLayout ?? "default"),
+        isCurrent: (route) => name === false || name === (route.meta.layout ?? routeRulesMatcher(route.path).appLayout ?? "default")
       });
     }
     const injectedRoute = inject(PageRouteSymbol);
@@ -2776,84 +2366,85 @@ const LayoutProvider = defineComponent({
         Object.defineProperty(reactiveChildRoute, key, {
           enumerable: true,
           get: () => {
-            const useEagerRoute =
-              props.isRenderingNewLayout(props.name) &&
-              (!enclosingLayout || enclosingLayout.isCurrent(vueRouterRoute));
+            const useEagerRoute = props.isRenderingNewLayout(props.name) && (!enclosingLayout || enclosingLayout.isCurrent(vueRouterRoute));
             return useEagerRoute ? vueRouterRoute[key] : injectedRoute[key];
-          },
+          }
         });
       }
       provide(PageRouteSymbol, shallowReactive(reactiveChildRoute));
     }
     return () => {
-      if (!name || (typeof name === "string" && !(name in layouts))) {
+      if (!name || typeof name === "string" && !(name in layouts)) {
         return context.slots.default?.();
       }
-      return h(LayoutLoader, { key: name, layoutProps: props.layoutProps, name }, context.slots);
+      return h(
+        LayoutLoader,
+        { key: name, layoutProps: props.layoutProps, name },
+        context.slots
+      );
     };
-  },
+  }
 });
 const ServerPlaceholder = defineComponent({
   name: "ServerPlaceholder",
   render() {
     return createElementBlock("div");
-  },
+  }
 });
-const defineRouteProvider = (name = "RouteProvider") =>
-  defineComponent({
-    name,
-    props: {
-      route: {
-        type: Object,
-        required: true,
-      },
-      vnode: Object,
-      vnodeRef: Object,
-      renderKey: String,
-      trackRootNodes: Boolean,
+const defineRouteProvider = (name = "RouteProvider") => defineComponent({
+  name,
+  props: {
+    route: {
+      type: Object,
+      required: true
     },
-    setup(props) {
-      const previousKey = props.renderKey;
-      const previousRoute = props.route;
-      const route = {};
-      for (const key in props.route) {
-        Object.defineProperty(route, key, {
-          get: () => (previousKey === props.renderKey ? props.route[key] : previousRoute[key]),
-          enumerable: true,
-        });
+    vnode: Object,
+    vnodeRef: Object,
+    renderKey: String,
+    trackRootNodes: Boolean
+  },
+  setup(props) {
+    const previousKey = props.renderKey;
+    const previousRoute = props.route;
+    const route = {};
+    for (const key in props.route) {
+      Object.defineProperty(route, key, {
+        get: () => previousKey === props.renderKey ? props.route[key] : previousRoute[key],
+        enumerable: true
+      });
+    }
+    provide(PageRouteSymbol, shallowReactive(route));
+    return () => {
+      if (!props.vnode) {
+        return props.vnode;
       }
-      provide(PageRouteSymbol, shallowReactive(route));
-      return () => {
-        if (!props.vnode) {
-          return props.vnode;
-        }
-        return h(props.vnode, { ref: props.vnodeRef });
-      };
-    },
-  });
+      return h(props.vnode, { ref: props.vnodeRef });
+    };
+  }
+});
 const RouteProvider = defineRouteProvider();
 const __nuxt_component_2 = defineComponent({
   name: "NuxtPage",
   inheritAttrs: false,
   props: {
     name: {
-      type: String,
+      type: String
     },
     transition: {
       type: [Boolean, Object],
-      default: void 0,
+      default: void 0
     },
     keepalive: {
       type: [Boolean, Object],
-      default: void 0,
+      default: void 0
     },
     route: {
-      type: Object,
+      type: Object
     },
     pageKey: {
       type: [Function, String],
-      default: null,
-    },
+      default: null
+    }
   },
   setup(props, { attrs, slots, expose }) {
     const nuxtApp = useNuxtApp();
@@ -2863,34 +2454,24 @@ const __nuxt_component_2 = defineComponent({
     inject(LayoutMetaSymbol, null);
     nuxtApp.deferHydration();
     return () => {
-      return h(
-        RouterView,
-        { name: props.name, route: props.route, ...attrs },
-        {
-          default: markStableSlot((routeProps) => {
-            return h(
-              Suspense,
-              { suspensible: true },
-              {
-                default() {
-                  return h(RouteProvider, {
-                    vnode: slots.default
-                      ? normalizeSlot(slots.default, routeProps)
-                      : routeProps.Component,
-                    route: routeProps.route,
-                    vnodeRef: pageRef,
-                  });
-                },
-              },
-            );
-          }),
-        },
-      );
+      return h(RouterView, { name: props.name, route: props.route, ...attrs }, {
+        default: markStableSlot((routeProps) => {
+          return h(Suspense, { suspensible: true }, {
+            default() {
+              return h(RouteProvider, {
+                vnode: slots.default ? normalizeSlot(slots.default, routeProps) : routeProps.Component,
+                route: routeProps.route,
+                vnodeRef: pageRef
+              });
+            }
+          });
+        })
+      });
     };
-  },
+  }
 });
 function markStableSlot(fn) {
-  const wrapped = (routeProps) => {
+  const wrapped = ((routeProps) => {
     const result = fn(routeProps);
     if (Array.isArray(result)) {
       return result;
@@ -2899,7 +2480,7 @@ function markStableSlot(fn) {
       return [createCommentVNode()];
     }
     return [result];
-  };
+  });
   wrapped._n = true;
   return wrapped;
 }
@@ -2919,33 +2500,25 @@ function _sfc_ssrRender(_ctx, _push, _parent, _attrs) {
   const _component_NuxtLayout = __nuxt_component_0;
   const _component_NuxtRouteAnnouncer = ServerPlaceholder;
   const _component_NuxtPage = __nuxt_component_2;
-  _push(
-    ssrRenderComponent(
-      _component_NuxtLayout,
-      _attrs,
-      {
-        default: withCtx((_, _push2, _parent2, _scopeId) => {
-          if (_push2) {
-            _push2(
-              ssrRenderComponent(_component_NuxtRouteAnnouncer, null, null, _parent2, _scopeId),
-            );
-            _push2(ssrRenderComponent(_component_NuxtPage, null, null, _parent2, _scopeId));
-          } else {
-            return [createVNode(_component_NuxtRouteAnnouncer), createVNode(_component_NuxtPage)];
-          }
-        }),
-        _: 1,
-      },
-      _parent,
-    ),
-  );
+  _push(ssrRenderComponent(_component_NuxtLayout, _attrs, {
+    default: withCtx((_, _push2, _parent2, _scopeId) => {
+      if (_push2) {
+        _push2(ssrRenderComponent(_component_NuxtRouteAnnouncer, null, null, _parent2, _scopeId));
+        _push2(ssrRenderComponent(_component_NuxtPage, null, null, _parent2, _scopeId));
+      } else {
+        return [
+          createVNode(_component_NuxtRouteAnnouncer),
+          createVNode(_component_NuxtPage)
+        ];
+      }
+    }),
+    _: 1
+  }, _parent));
 }
 const _sfc_setup$2 = _sfc_main$2.setup;
 _sfc_main$2.setup = (props, ctx) => {
   const ssrContext = useSSRContext();
-  (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add(
-    "../../../node_modules/.pnpm/nuxt@3.21.9_@biomejs+biome@1.9.4_@types+node@22.20.1_@vue+compiler-sfc@3.5.40_cac@6.7.14_db0@_eachidmypsudlfp3yvbkwoxude/node_modules/nuxt/dist/pages/runtime/app.vue",
-  );
+  (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add("../../../node_modules/.pnpm/nuxt@3.21.9_@biomejs+biome@1.9.4_@types+node@22.20.1_@vue+compiler-sfc@3.5.40_cac@6.7.14_db0@_eachidmypsudlfp3yvbkwoxude/node_modules/nuxt/dist/pages/runtime/app.vue");
   return _sfc_setup$2 ? _sfc_setup$2(props, ctx) : void 0;
 };
 const AppComponent = /* @__PURE__ */ _export_sfc(_sfc_main$2, [["ssrRender", _sfc_ssrRender]]);
@@ -2953,7 +2526,7 @@ const _sfc_main$1 = {
   __name: "nuxt-error-page",
   __ssrInlineRender: true,
   props: {
-    error: Object,
+    error: Object
   },
   setup(__props) {
     const props = __props;
@@ -2963,37 +2536,18 @@ const _sfc_main$1 = {
     const statusText = _error.statusMessage ?? (is404 ? "Page Not Found" : "Internal Server Error");
     const description = _error.message || _error.toString();
     const stack = void 0;
-    const _Error404 = defineAsyncComponent(() => import("./error-404-u28sHMUw.mjs"));
-    const _Error = defineAsyncComponent(() => import("./error-500-C68mPCvP.mjs"));
+    const _Error404 = defineAsyncComponent(() => import('./error-404-u28sHMUw.mjs'));
+    const _Error = defineAsyncComponent(() => import('./error-500-C68mPCvP.mjs'));
     const ErrorTemplate = is404 ? _Error404 : _Error;
     return (_ctx, _push, _parent, _attrs) => {
-      _push(
-        ssrRenderComponent(
-          unref(ErrorTemplate),
-          mergeProps(
-            {
-              status: unref(status),
-              statusText: unref(statusText),
-              statusCode: unref(status),
-              statusMessage: unref(statusText),
-              description: unref(description),
-              stack: unref(stack),
-            },
-            _attrs,
-          ),
-          null,
-          _parent,
-        ),
-      );
+      _push(ssrRenderComponent(unref(ErrorTemplate), mergeProps({ status: unref(status), statusText: unref(statusText), statusCode: unref(status), statusMessage: unref(statusText), description: unref(description), stack: unref(stack) }, _attrs), null, _parent));
     };
-  },
+  }
 };
 const _sfc_setup$1 = _sfc_main$1.setup;
 _sfc_main$1.setup = (props, ctx) => {
   const ssrContext = useSSRContext();
-  (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add(
-    "../../../node_modules/.pnpm/nuxt@3.21.9_@biomejs+biome@1.9.4_@types+node@22.20.1_@vue+compiler-sfc@3.5.40_cac@6.7.14_db0@_eachidmypsudlfp3yvbkwoxude/node_modules/nuxt/dist/app/components/nuxt-error-page.vue",
-  );
+  (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add("../../../node_modules/.pnpm/nuxt@3.21.9_@biomejs+biome@1.9.4_@types+node@22.20.1_@vue+compiler-sfc@3.5.40_cac@6.7.14_db0@_eachidmypsudlfp3yvbkwoxude/node_modules/nuxt/dist/app/components/nuxt-error-page.vue");
   return _sfc_setup$1 ? _sfc_setup$1(props, ctx) : void 0;
 };
 const _sfc_main = {
@@ -3020,9 +2574,7 @@ const _sfc_main = {
       }
     }
     onErrorCaptured((err, target, info) => {
-      nuxtApp.hooks
-        .callHook("vue:error", err, target, info)
-        .catch((hookError) => console.error("[nuxt] Error in `vue:error` hook", hookError));
+      nuxtApp.hooks.callHook("vue:error", err, target, info).catch((hookError) => console.error("[nuxt] Error in `vue:error` hook", hookError));
       {
         const p = nuxtApp.runWithContext(() => showError(err));
         onServerPrefetch(() => p);
@@ -3039,35 +2591,22 @@ const _sfc_main = {
           } else if (unref(error)) {
             _push(ssrRenderComponent(unref(_sfc_main$1), { error: unref(error) }, null, _parent));
           } else if (unref(islandContext)) {
-            _push(
-              ssrRenderComponent(
-                unref(IslandRenderer),
-                { context: unref(islandContext) },
-                null,
-                _parent,
-              ),
-            );
+            _push(ssrRenderComponent(unref(IslandRenderer), { context: unref(islandContext) }, null, _parent));
           } else if (unref(SingleRenderer)) {
-            ssrRenderVNode(
-              _push,
-              createVNode(resolveDynamicComponent(unref(SingleRenderer)), null, null),
-              _parent,
-            );
+            ssrRenderVNode(_push, createVNode(resolveDynamicComponent(unref(SingleRenderer)), null, null), _parent);
           } else {
             _push(ssrRenderComponent(unref(AppComponent), null, null, _parent));
           }
         },
-        _: 1,
+        _: 1
       });
     };
-  },
+  }
 };
 const _sfc_setup = _sfc_main.setup;
 _sfc_main.setup = (props, ctx) => {
   const ssrContext = useSSRContext();
-  (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add(
-    "../../../node_modules/.pnpm/nuxt@3.21.9_@biomejs+biome@1.9.4_@types+node@22.20.1_@vue+compiler-sfc@3.5.40_cac@6.7.14_db0@_eachidmypsudlfp3yvbkwoxude/node_modules/nuxt/dist/app/components/nuxt-root.vue",
-  );
+  (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add("../../../node_modules/.pnpm/nuxt@3.21.9_@biomejs+biome@1.9.4_@types+node@22.20.1_@vue+compiler-sfc@3.5.40_cac@6.7.14_db0@_eachidmypsudlfp3yvbkwoxude/node_modules/nuxt/dist/app/components/nuxt-root.vue");
   return _sfc_setup ? _sfc_setup(props, ctx) : void 0;
 };
 let entry;
@@ -3088,18 +2627,7 @@ let entry;
     return vueApp;
   };
 }
-const entry_default = (ssrContext) => entry(ssrContext);
+const entry_default = ((ssrContext) => entry(ssrContext));
 
-export {
-  _export_sfc as _,
-  useNuxtApp as a,
-  useRuntimeConfig as b,
-  nuxtLinkDefaults as c,
-  entry_default as default,
-  encodeRoutePath as e,
-  navigateTo as n,
-  resolveRouteObject as r,
-  sanitizeTag as s,
-  useRouter as u,
-};
+export { _export_sfc as _, useNuxtApp as a, useRuntimeConfig as b, nuxtLinkDefaults as c, entry_default as default, encodeRoutePath as e, navigateTo as n, resolveRouteObject as r, sanitizeTag as s, useRouter as u };
 //# sourceMappingURL=server.mjs.map

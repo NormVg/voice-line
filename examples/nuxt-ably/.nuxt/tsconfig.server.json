@@ -14,11 +14,21 @@
     "jsxFactory": "h",
     "jsxFragmentFactory": "Fragment",
     "paths": {
-      "#imports": ["./types/nitro-imports"],
-      "~/*": ["../app/*"],
-      "@/*": ["../app/*"],
-      "~~/*": ["../*"],
-      "@@/*": ["../*"],
+      "#imports": [
+        "./types/nitro-imports"
+      ],
+      "~/*": [
+        "../app/*"
+      ],
+      "@/*": [
+        "../app/*"
+      ],
+      "~~/*": [
+        "../*"
+      ],
+      "@@/*": [
+        "../*"
+      ],
       "vue-router": [
         "../../../node_modules/.pnpm/vue-router@4.6.4_vue@3.5.40_typescript@5.9.3_/node_modules/vue-router"
       ],
@@ -40,12 +50,24 @@
       "@vue/compiler-sfc": [
         "../../../node_modules/.pnpm/@vue+compiler-sfc@3.5.40/node_modules/@vue/compiler-sfc"
       ],
-      "@nuxt/schema": ["../../../node_modules/.pnpm/@nuxt+schema@3.21.9/node_modules/@nuxt/schema"],
-      "defu": ["../../../node_modules/.pnpm/defu@6.1.7/node_modules/defu"],
-      "h3": ["../../../node_modules/.pnpm/h3@1.15.11/node_modules/h3"],
-      "consola": ["../../../node_modules/.pnpm/consola@3.4.2/node_modules/consola"],
-      "ofetch": ["../../../node_modules/.pnpm/ofetch@1.5.1/node_modules/ofetch"],
-      "crossws": ["../../../node_modules/.pnpm/crossws@0.3.5/node_modules/crossws"],
+      "@nuxt/schema": [
+        "../../../node_modules/.pnpm/@nuxt+schema@3.21.9/node_modules/@nuxt/schema"
+      ],
+      "defu": [
+        "../../../node_modules/.pnpm/defu@6.1.7/node_modules/defu"
+      ],
+      "h3": [
+        "../../../node_modules/.pnpm/h3@1.15.11/node_modules/h3"
+      ],
+      "consola": [
+        "../../../node_modules/.pnpm/consola@3.4.2/node_modules/consola"
+      ],
+      "ofetch": [
+        "../../../node_modules/.pnpm/ofetch@1.5.1/node_modules/ofetch"
+      ],
+      "crossws": [
+        "../../../node_modules/.pnpm/crossws@0.3.5/node_modules/crossws"
+      ],
       "unplugin-vue-router/client": [
         "../../../node_modules/.pnpm/unplugin-vue-router@0.19.2_@vue+compiler-sfc@3.5.40_vue-router@4.6.4_vue@3.5.40_typescript@5._x7alh5spsxct7zoecqvb2ptrvu/node_modules/unplugin-vue-router/client"
       ],
@@ -61,16 +83,36 @@
       "nitropack/runtime": [
         "../../../node_modules/.pnpm/nitropack@2.13.4_oxc-parser@0.140.0_srvx@0.11.22_vite@7.3.6_@types+node@22.20.1_jiti@2.7.0_te_h7ro5pyeyqdfhoxapjyfr76fze/node_modules/nitropack/runtime"
       ],
-      "#shared": ["../shared"],
-      "#shared/*": ["../shared/*"],
-      "assets": ["../app/assets"],
-      "assets/*": ["../app/assets/*"],
-      "public": ["../public"],
-      "public/*": ["../public/*"],
-      "#server": ["../server"],
-      "#server/*": ["../server/*"],
-      "#build": ["./"],
-      "#build/*": ["./*"],
+      "#shared": [
+        "../shared"
+      ],
+      "#shared/*": [
+        "../shared/*"
+      ],
+      "assets": [
+        "../app/assets"
+      ],
+      "assets/*": [
+        "../app/assets/*"
+      ],
+      "public": [
+        "../public"
+      ],
+      "public/*": [
+        "../public/*"
+      ],
+      "#server": [
+        "../server"
+      ],
+      "#server/*": [
+        "../server/*"
+      ],
+      "#build": [
+        "./"
+      ],
+      "#build/*": [
+        "./*"
+      ],
       "#internal/nuxt/paths": [
         "../../../node_modules/.pnpm/@nuxt+nitro-server@3.21.9_db0@0.3.4_esbuild@0.28.1_ioredis@5.11.1_magicast@0.5.3_nuxt@3.21.9__empub37zgvcnc47wjx52n7y6he/node_modules/@nuxt/nitro-server/dist/runtime/utils/paths"
       ],
@@ -78,7 +120,11 @@
         "../../../node_modules/.pnpm/nuxt@3.21.9_@biomejs+biome@1.9.4_@types+node@22.20.1_@vue+compiler-sfc@3.5.40_cac@6.7.14_db0@_eachidmypsudlfp3yvbkwoxude/node_modules/nuxt/dist/head/runtime/composables/v4"
       ]
     },
-    "lib": ["esnext", "webworker", "dom.iterable"],
+    "lib": [
+      "esnext",
+      "webworker",
+      "dom.iterable"
+    ],
     "noUncheckedIndexedAccess": true,
     "allowArbitraryExtensions": true
   },

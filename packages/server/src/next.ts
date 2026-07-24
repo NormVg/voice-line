@@ -135,3 +135,39 @@ export function createStatelessHandler(config: StatelessHandlerConfig) {
 
 export { createServer } from "./server.js";
 export type { VoiceLineServerConfig } from "./config.js";
+
+/**
+ * Creates a zero-boilerplate WebSocket handler for Next.js (`next-ws`).
+ * 
+ * @param configFactory A function returning your VoiceLineServerConfig. It receives the standard `ws` client and `req`.
+ * @returns An `UPGRADE` function expected by `next-ws`.
+ */
+export function createNextWebSocketHandler(
+  configFactory: (client: any, req: any) => VoiceLineServerConfig | Promise<VoiceLineServerConfig>
+) {
+  return async function UPGRADE(client: any, req: any) {
+    try {
+      const config = await configFactory(client, req);
+      const server = createServer(config);
+      
+      const host = req.headers.host || "localhost";
+      const url = new URL(req.url, `http://${host}`);
+      const sessionId = url.searchParams.get("session");
+      
+      // For raw WebSockets, the config's transport property is already the connected socket!
+      // `createServer.createSession` will call `session.start()`, which waits for transport connect.
+      // `WsTransport.connect` resolves instantly since the socket is already open.
+      const { session } = await server.createSession(sessionId ?? undefined);
+      
+      // When the socket closes, close the session
+      client.on("close", () => {
+        void session.close();
+      });
+      
+    } catch (err) {
+      console.error("[voice-line] Failed to start Next WS session:", err);
+      client.close();
+    }
+  };
+}
+

@@ -144,3 +144,90 @@ export function createStatelessHandler(config: StatelessHandlerConfig) {
 
 export { createServer } from "./server.js";
 export type { VoiceLineServerConfig } from "./config.js";
+
+/**
+ * Polyfills a Nuxt Nitro WebSocket `peer` into a standard Node `ws`-like interface.
+ * Use this when passing a Nitro peer to `fromWebSocket()`.
+ */
+export function nitroToWs(peer: any, listeners: Record<string, Function[]>): any {
+  return {
+    readyState: 1, // WS_OPEN
+    send: (data: any) => peer.send(data),
+    close: () => peer.close(),
+    on: (event: string, listener: Function) => {
+      if (!listeners[event]) listeners[event] = [];
+      listeners[event].push(listener);
+    },
+    off: (event: string, listener: Function) => {
+      if (!listeners[event]) return;
+      listeners[event] = listeners[event].filter((l) => l !== listener);
+    },
+    addEventListener: (type: string, listener: any) => {
+      if (!listeners[type]) listeners[type] = [];
+      listeners[type].push(listener);
+    },
+    removeEventListener: (type: string, listener: any) => {
+      if (!listeners[type]) return;
+      listeners[type] = listeners[type].filter((l) => l !== listener);
+    },
+  };
+}
+
+/**
+ * Creates a zero-boilerplate WebSocket handler for Nuxt Nitro.
+ * 
+ * @param configFactory A function returning your VoiceLineServerConfig. It receives the Nitro `peer` and `url`.
+ * @returns An object compatible with Nitro's `defineWebSocketHandler`.
+ */
+export function createNitroWebSocketHandler(
+  configFactory: (peer: any, url: URL) => VoiceLineServerConfig | Promise<VoiceLineServerConfig>
+) {
+  // Store peer contexts to route messages and handle closures
+  const peerContexts = new WeakMap<any, { listeners: Record<string, Function[]>; server?: ReturnType<typeof createServer>; session?: any }>();
+
+  return {
+    async open(peer: any) {
+      const url = new URL(peer.url, "http://localhost");
+      const ctx: { listeners: Record<string, Function[]>; server?: ReturnType<typeof createServer>; session?: any } = { listeners: {} };
+      peerContexts.set(peer, ctx);
+
+      try {
+        const config = await configFactory(peer, url);
+        const server = createServer(config);
+        ctx.server = server;
+        
+        // Use the raw peer.id or session query param
+        const sessionId = url.searchParams.get("session") ?? peer.id;
+        
+        // For raw WebSockets, the config's transport property is already the connected socket!
+        // `createServer.createSession` will call `session.start()`, which waits for transport connect.
+        // `WsTransport.connect` resolves instantly since the socket is already open.
+        const { session } = await server.createSession(sessionId);
+        ctx.session = session;
+      } catch (err) {
+        console.error("[voice-line] Failed to start WS session:", err);
+        peer.close();
+      }
+    },
+    message(peer: any, message: any) {
+      const isBinary = typeof message.rawData !== "string";
+      const data = isBinary ? message.arrayBuffer() : message.text();
+      
+      const ctx = peerContexts.get(peer);
+      const listeners = ctx?.listeners?.message || [];
+      listeners.forEach((l: any) => l({ data }));
+    },
+    close(peer: any) {
+      const ctx = peerContexts.get(peer);
+      const listeners = ctx?.listeners?.close || [];
+      listeners.forEach((l: any) => l());
+      void ctx?.session?.close();
+    },
+    error(peer: any, error: any) {
+      const ctx = peerContexts.get(peer);
+      const listeners = ctx?.listeners?.error || [];
+      listeners.forEach((l: any) => l(error));
+    },
+  };
+}
+

@@ -1,20 +1,16 @@
-import {
-  d as defineEventHandler,
-  r as readBody,
-  u as useRuntimeConfig,
-} from "../../nitro/nitro.mjs";
-import { createTTSHandler } from "@voice-line/server/nitro";
-import { c as createVoiceStack } from "../../_/voice-stack.mjs";
-import "node:http";
-import "node:https";
-import "node:events";
-import "node:buffer";
-import "node:fs";
-import "node:path";
-import "node:crypto";
-import "node:url";
-import "ai";
-import "ai-sdk-ollama";
+import { d as defineEventHandler, r as readBody, u as useRuntimeConfig } from '../../nitro/nitro.mjs';
+import { createTTSHandler } from '@voice-line/server/nitro';
+import { c as createVoiceStack } from '../../_/voice-stack.mjs';
+import 'node:http';
+import 'node:https';
+import 'node:events';
+import 'node:buffer';
+import 'node:fs';
+import 'node:path';
+import 'node:crypto';
+import 'node:url';
+import 'ai';
+import 'ai-sdk-ollama';
 
 function getHandler() {
   const config = useRuntimeConfig();
@@ -22,7 +18,7 @@ function getHandler() {
     sarvamApiKey: String(config.sarvamApiKey || ""),
     ollamaApiKey: String(config.ollamaApiKey || ""),
     ollamaBaseUrl: String(config.ollamaBaseUrl || "https://ollama.com"),
-    ollamaModel: String(config.ollamaModel || "gemma4:31b-cloud"),
+    ollamaModel: String(config.ollamaModel || "gemma4:31b-cloud")
   });
   return createTTSHandler({
     tts: stack.tts,
@@ -31,8 +27,8 @@ function getHandler() {
       language: "en-IN",
       sampleRate: 16e3,
       format: "pcm16",
-      model: "bulbul:v3",
-    },
+      model: "bulbul:v3"
+    }
   });
 }
 const tts_post = defineEventHandler(async (event) => {

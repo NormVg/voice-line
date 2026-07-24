@@ -1,34 +1,71 @@
-import { streamText } from "ai";
-import { createOllama } from "ai-sdk-ollama";
+import { streamText } from 'ai';
+import { createOllama } from 'ai-sdk-ollama';
+
+function fromAISDK(options) {
+  return async function* aiSdkBrain(userText, ctx) {
+    var _a;
+    const streamText = (_a = options.streamText) != null ? _a : await loadStreamText();
+    const messages = toCoreMessages(ctx.history, userText);
+    const result = streamText({
+      model: options.model,
+      system: options.system,
+      messages,
+      tools: options.tools,
+      maxTokens: options.maxTokens,
+      temperature: options.temperature,
+      abortSignal: ctx.signal,
+      ...options.extra
+    });
+    for await (const delta of result.textStream) {
+      if (ctx.signal.aborted) break;
+      yield delta;
+    }
+  };
+}
+function toCoreMessages(history, userText) {
+  const messages = [];
+  for (const m of history) {
+    messages.push({ role: m.role, content: m.content });
+  }
+  const last = messages[messages.length - 1];
+  if (!last || last.role !== "user" || last.content !== userText) {
+    messages.push({ role: "user", content: userText });
+  }
+  return messages;
+}
+async function loadStreamText() {
+  const mod = await import('ai');
+  const fn = mod.streamText;
+  if (!fn) {
+    throw new Error("Could not load streamText from 'ai'. Is the AI SDK installed?");
+  }
+  return fn;
+}
 
 var __defProp$1 = Object.defineProperty;
-var __defNormalProp$1 = (obj, key, value) =>
-  key in obj
-    ? __defProp$1(obj, key, { enumerable: true, configurable: true, writable: true, value })
-    : (obj[key] = value);
-var __publicField$1 = (obj, key, value) =>
-  __defNormalProp$1(obj, typeof key !== "symbol" ? key + "" : key, value);
+var __defNormalProp$1 = (obj, key, value) => key in obj ? __defProp$1(obj, key, { enumerable: true, configurable: true, writable: true, value }) : obj[key] = value;
+var __publicField$1 = (obj, key, value) => __defNormalProp$1(obj, typeof key !== "symbol" ? key + "" : key, value);
 var _a;
 var DEFAULT_AUDIO_CONFIG = {
   sampleRate: 16e3,
   audioFormat: "pcm16",
-  chunkDurationMs: 100,
+  chunkDurationMs: 100
 };
 var DEFAULT_VAD_CONFIG = {
   confidence: 0.4,
   // Lowered from 0.7 so quiet speech isn't treated as silence
   silenceMs: 800,
   // Increased from 400ms to allow for natural pauses
-  minSpeechMs: 200,
+  minSpeechMs: 200
 };
 var DEFAULT_CHUNKER_CONFIG = {
   maxChars: 80,
-  flushOnPunctuation: true,
+  flushOnPunctuation: true
 };
 var DEFAULT_SESSION_CONFIG = {
   maxDurationMs: 18e5,
   idleTimeoutMs: 6e4,
-  bargeIn: "interrupt",
+  bargeIn: "interrupt"
 };
 async function* brainToStream(result) {
   const resolved = await result;
@@ -75,7 +112,7 @@ var Pipeline = class {
         } catch (err) {
           next.push({
             kind: "error",
-            error: err instanceof Error ? err : new Error(String(err)),
+            error: err instanceof Error ? err : new Error(String(err))
           });
         }
       }
@@ -174,7 +211,7 @@ var VADProcessor = class {
     const samples = pcm16ToFloat32(frame.data);
     const energy = rmsEnergy(samples);
     const confidence = Math.min(1, energy * 8);
-    const chunkMs = (samples.length / frame.sampleRate) * 1e3;
+    const chunkMs = samples.length / frame.sampleRate * 1e3;
     this.buffer.push(frame.data);
     if (!this.speaking) {
       if (confidence >= this.config.confidence) {
@@ -222,8 +259,8 @@ var VADProcessor = class {
       {
         kind: "speech_end",
         audio,
-        sampleRate: this.sampleRate,
-      },
+        sampleRate: this.sampleRate
+      }
     ];
   }
   flush() {
@@ -359,18 +396,18 @@ var STTProcessor = class {
           text: result.text,
           isFinal: result.isFinal,
           language: result.language,
-          confidence: result.confidence,
+          confidence: result.confidence
         });
         if (result.isFinal) {
           void this.closeStream();
         }
-      }),
+      })
     );
     this.unsubs.push(
       this.stream.on("error", (error) => {
         var _a2;
         (_a2 = this.onError) == null ? void 0 : _a2.call(this, error);
-      }),
+      })
     );
   }
   async closeStream() {
@@ -396,7 +433,7 @@ var VoiceLineError = class _VoiceLineError extends Error {
     return {
       code: this.code,
       message: this.message,
-      cause: this.cause instanceof Error ? this.cause.message : this.cause,
+      cause: this.cause instanceof Error ? this.cause.message : this.cause
     };
   }
 };
@@ -406,10 +443,7 @@ function toVoiceLineError(code, err) {
   return new VoiceLineError(code, message, err);
 }
 function createId(prefix = "") {
-  const rand =
-    typeof crypto !== "undefined" && "randomUUID" in crypto
-      ? crypto.randomUUID().replace(/-/g, "").slice(0, 12)
-      : `${Date.now().toString(36)}${Math.random().toString(36).slice(2, 10)}`;
+  const rand = typeof crypto !== "undefined" && "randomUUID" in crypto ? crypto.randomUUID().replace(/-/g, "").slice(0, 12) : `${Date.now().toString(36)}${Math.random().toString(36).slice(2, 10)}`;
   return prefix ? `${prefix}_${rand}` : rand;
 }
 var MessageHistory = class {
@@ -428,7 +462,7 @@ var MessageHistory = class {
       role: "user",
       content,
       timestamp: Date.now(),
-      partial: false,
+      partial: false
     };
     this.messages.push(msg);
     return msg;
@@ -440,7 +474,7 @@ var MessageHistory = class {
       role: "assistant",
       content,
       timestamp: Date.now(),
-      partial: (_b = options == null ? void 0 : options.partial) != null ? _b : false,
+      partial: (_b = options == null ? void 0 : options.partial) != null ? _b : false
     };
     this.messages.push(msg);
     return msg;
@@ -504,475 +538,419 @@ function eagerStream(iterable) {
           });
         }
       }
-    },
+    }
   };
 }
-var Session =
-  ((_a = class {
-    constructor(options) {
-      __publicField$1(this, "id");
-      __publicField$1(this, "history", new MessageHistory());
-      __publicField$1(this, "state", "idle");
-      __publicField$1(this, "transport");
-      __publicField$1(this, "stt");
-      __publicField$1(this, "tts");
-      __publicField$1(this, "brain");
-      __publicField$1(this, "audio");
-      __publicField$1(this, "ttsConfig");
-      __publicField$1(this, "sttConfig");
-      __publicField$1(this, "sessionConfig");
-      __publicField$1(this, "metadata");
-      __publicField$1(this, "onError");
-      __publicField$1(this, "inbound");
-      __publicField$1(this, "outbound");
-      __publicField$1(this, "unsubs", []);
-      __publicField$1(this, "turnAbort", null);
-      __publicField$1(this, "micEnabled", true);
-      __publicField$1(this, "assistantMessageId", null);
-      __publicField$1(this, "assistantBuffer", "");
-      __publicField$1(this, "stateListeners", /* @__PURE__ */ new Set());
-      __publicField$1(this, "maxDurationTimer", null);
-      __publicField$1(this, "idleTimer", null);
-      __publicField$1(this, "destroyed", false);
-      /**
-       * Serial TTS queue: sentences must synthesize/send in order.
-       * Fire-and-forget parallel TTS was reordering audio when shorter
-       * later sentences finished first.
-       */
-      __publicField$1(this, "ttsTail", Promise.resolve());
-      /** Bumped on interrupt so in-flight queue items bail out. */
-      __publicField$1(this, "ttsGeneration", 0);
-      /** Watchdog timer: if we stay in `processing` too long, snap back to listening. */
-      __publicField$1(this, "processingTimer", null);
-      __publicField$1(this, "transcriptQueue", []);
-      var _a2, _b;
-      this.id = (_a2 = options.id) != null ? _a2 : createId("ses");
-      this.transport = options.transport;
-      this.stt = options.stt;
-      this.tts = options.tts;
-      this.brain = options.brain;
-      this.audio = { ...DEFAULT_AUDIO_CONFIG, ...options.audio };
-      this.ttsConfig = {
-        sampleRate: this.audio.sampleRate,
-        format: this.audio.audioFormat,
-        ...options.ttsConfig,
-      };
-      this.sttConfig = {
-        sampleRate: this.audio.sampleRate,
-        encoding: "pcm_s16le",
-        ...options.sttConfig,
-      };
-      this.sessionConfig = { ...DEFAULT_SESSION_CONFIG, ...options.session };
-      this.metadata = (_b = options.metadata) != null ? _b : {};
-      this.onError = options.onError;
-      if (options.onStateChange) {
-        this.stateListeners.add(options.onStateChange);
-      }
-      const vadConfig = { ...DEFAULT_VAD_CONFIG, ...options.vad };
-      const chunkerConfig = { ...DEFAULT_CHUNKER_CONFIG, ...options.chunker };
-      this.inbound = new Pipeline([
-        new VADProcessor(vadConfig),
-        new STTProcessor({
-          provider: this.stt,
-          config: this.sttConfig,
-          onTranscript: (frame) => {
-            void this.handleTranscript(frame);
-          },
-          onError: (err) => this.handleError(err),
-        }),
-      ]);
-      this.outbound = new Pipeline([new SentenceChunker(chunkerConfig)]);
-      this.inbound.onFrame((frame) => {
-        void this.onInboundFrame(frame);
-      });
-      this.outbound.onFrame((frame) => {
-        if (frame.kind === "sentence") {
-          this.enqueueSentence(frame.text);
-        }
-      });
-    }
-    get currentState() {
-      return this.state;
-    }
-    onStateChange(listener) {
-      this.stateListeners.add(listener);
-      return () => {
-        this.stateListeners.delete(listener);
-      };
-    }
-    async start() {
-      if (this.state !== "idle") return;
-      await this.transport.connect(this.id);
-      this.setState("connected");
-      let audioCount = 0;
-      this.unsubs.push(
-        this.transport.onAudio((chunk) => {
-          audioCount++;
-          if (audioCount % 10 === 0)
-            console.log(
-              `[session ${this.id}] Received 10 audio chunks (${chunk.byteLength} bytes each)`,
-            );
-          if (!this.micEnabled || this.destroyed) return;
-          void this.inbound.push({
-            kind: "audio",
-            data: chunk,
-            sampleRate: this.audio.sampleRate,
-          });
-        }),
-      );
-      this.unsubs.push(
-        this.transport.onEvent((event) => {
-          void this.onClientEvent(event);
-        }),
-      );
-      this.transport.sendEvent({ type: "session:ready", sessionId: this.id });
-      this.armMaxDuration();
-    }
+(_a = class {
+  constructor(options) {
+    __publicField$1(this, "id");
+    __publicField$1(this, "history", new MessageHistory());
+    __publicField$1(this, "state", "idle");
+    __publicField$1(this, "transport");
+    __publicField$1(this, "stt");
+    __publicField$1(this, "tts");
+    __publicField$1(this, "brain");
+    __publicField$1(this, "audio");
+    __publicField$1(this, "ttsConfig");
+    __publicField$1(this, "sttConfig");
+    __publicField$1(this, "sessionConfig");
+    __publicField$1(this, "metadata");
+    __publicField$1(this, "onError");
+    __publicField$1(this, "inbound");
+    __publicField$1(this, "outbound");
+    __publicField$1(this, "unsubs", []);
+    __publicField$1(this, "turnAbort", null);
+    __publicField$1(this, "micEnabled", true);
+    __publicField$1(this, "assistantMessageId", null);
+    __publicField$1(this, "assistantBuffer", "");
+    __publicField$1(this, "stateListeners", /* @__PURE__ */ new Set());
+    __publicField$1(this, "maxDurationTimer", null);
+    __publicField$1(this, "idleTimer", null);
+    __publicField$1(this, "destroyed", false);
     /**
-     * Mark client ready and enter listening state.
-     * Called when `client:ready` arrives, or can be forced by the server.
+     * Serial TTS queue: sentences must synthesize/send in order.
+     * Fire-and-forget parallel TTS was reordering audio when shorter
+     * later sentences finished first.
      */
-    ready() {
-      if (this.state === "connected" || this.state === "idle") {
-        this.setState("listening");
-      }
+    __publicField$1(this, "ttsTail", Promise.resolve());
+    /** Bumped on interrupt so in-flight queue items bail out. */
+    __publicField$1(this, "ttsGeneration", 0);
+    /** Watchdog timer: if we stay in `processing` too long, snap back to listening. */
+    __publicField$1(this, "processingTimer", null);
+    __publicField$1(this, "transcriptQueue", []);
+    var _a2, _b;
+    this.id = (_a2 = options.id) != null ? _a2 : createId("ses");
+    this.transport = options.transport;
+    this.stt = options.stt;
+    this.tts = options.tts;
+    this.brain = options.brain;
+    this.audio = { ...DEFAULT_AUDIO_CONFIG, ...options.audio };
+    this.ttsConfig = {
+      sampleRate: this.audio.sampleRate,
+      format: this.audio.audioFormat,
+      ...options.ttsConfig
+    };
+    this.sttConfig = {
+      sampleRate: this.audio.sampleRate,
+      encoding: "pcm_s16le",
+      ...options.sttConfig
+    };
+    this.sessionConfig = { ...DEFAULT_SESSION_CONFIG, ...options.session };
+    this.metadata = (_b = options.metadata) != null ? _b : {};
+    this.onError = options.onError;
+    if (options.onStateChange) {
+      this.stateListeners.add(options.onStateChange);
     }
-    async close() {
-      if (this.destroyed) return;
-      this.destroyed = true;
-      this.interruptTurn();
-      this.clearTimers();
-      this.setState("closed");
-      for (const u of this.unsubs) u();
-      this.unsubs = [];
-      await this.inbound.destroy();
-      await this.outbound.destroy();
-      await this.transport.disconnect();
+    const vadConfig = { ...DEFAULT_VAD_CONFIG, ...options.vad };
+    const chunkerConfig = { ...DEFAULT_CHUNKER_CONFIG, ...options.chunker };
+    this.inbound = new Pipeline([
+      new VADProcessor(vadConfig),
+      new STTProcessor({
+        provider: this.stt,
+        config: this.sttConfig,
+        onTranscript: (frame) => {
+          void this.handleTranscript(frame);
+        },
+        onError: (err) => this.handleError(err)
+      })
+    ]);
+    this.outbound = new Pipeline([new SentenceChunker(chunkerConfig)]);
+    this.inbound.onFrame((frame) => {
+      void this.onInboundFrame(frame);
+    });
+    this.outbound.onFrame((frame) => {
+      if (frame.kind === "sentence") {
+        this.enqueueSentence(frame.text);
+      }
+    });
+  }
+  get currentState() {
+    return this.state;
+  }
+  onStateChange(listener) {
+    this.stateListeners.add(listener);
+    return () => {
+      this.stateListeners.delete(listener);
+    };
+  }
+  async start() {
+    if (this.state !== "idle") return;
+    await this.transport.connect(this.id);
+    this.setState("connected");
+    let audioCount = 0;
+    this.unsubs.push(
+      this.transport.onAudio((chunk) => {
+        audioCount++;
+        if (audioCount % 10 === 0)
+          console.log(
+            `[session ${this.id}] Received 10 audio chunks (${chunk.byteLength} bytes each)`
+          );
+        if (!this.micEnabled || this.destroyed) return;
+        void this.inbound.push({
+          kind: "audio",
+          data: chunk,
+          sampleRate: this.audio.sampleRate
+        });
+      })
+    );
+    this.unsubs.push(
+      this.transport.onEvent((event) => {
+        void this.onClientEvent(event);
+      })
+    );
+    this.transport.sendEvent({ type: "session:ready", sessionId: this.id });
+    this.armMaxDuration();
+  }
+  /**
+   * Mark client ready and enter listening state.
+   * Called when `client:ready` arrives, or can be forced by the server.
+   */
+  ready() {
+    if (this.state === "connected" || this.state === "idle") {
+      this.setState("listening");
     }
-    /** Inject text as if the user typed it (bypasses STT). */
-    async handleTextInput(text) {
-      const trimmed = text.trim();
-      if (!trimmed || this.destroyed) return;
-      this.bumpIdle();
-      await this.runBrainTurn(trimmed);
+  }
+  async close() {
+    if (this.destroyed) return;
+    this.destroyed = true;
+    this.interruptTurn();
+    this.clearTimers();
+    this.setState("closed");
+    for (const u of this.unsubs) u();
+    this.unsubs = [];
+    await this.inbound.destroy();
+    await this.outbound.destroy();
+    await this.transport.disconnect();
+  }
+  /** Inject text as if the user typed it (bypasses STT). */
+  async handleTextInput(text) {
+    const trimmed = text.trim();
+    if (!trimmed || this.destroyed) return;
+    this.bumpIdle();
+    await this.runBrainTurn(trimmed);
+  }
+  // ── Internals ────────────────────────────────────────────────────────────
+  async onClientEvent(event) {
+    switch (event.type) {
+      case "client:ready":
+        this.ready();
+        break;
+      case "text:send":
+        await this.handleTextInput(event.text);
+        break;
+      case "mic:toggle":
+        this.micEnabled = event.enabled;
+        break;
     }
-    // ── Internals ────────────────────────────────────────────────────────────
-    async onClientEvent(event) {
-      switch (event.type) {
-        case "client:ready":
-          this.ready();
-          break;
-        case "text:send":
-          await this.handleTextInput(event.text);
-          break;
-        case "mic:toggle":
-          this.micEnabled = event.enabled;
-          break;
-      }
-    }
-    async onInboundFrame(frame) {
-      if (frame.kind === "speech_start") {
-        const isBusy =
-          this.state === "speaking" || this.state === "processing" || this.turnAbort !== null;
-        if (isBusy) {
-          if (this.sessionConfig.bargeIn === "ignore") return;
-          if (this.sessionConfig.bargeIn === "queue") return;
-          this.interruptTurn();
-        }
-        this.setState("receiving");
-        return;
-      }
-      if (frame.kind === "speech_end") {
-        if (this.state === "receiving") {
-          this.setState("processing");
-          this.armProcessingTimer();
-        }
-        return;
-      }
-      if (frame.kind === "error") {
-        this.handleError(frame.error);
-      }
-    }
-    async handleTranscript(frame) {
-      if (!frame.isFinal) {
-        this.transport.sendEvent({ type: "transcript:partial", text: frame.text });
-        return;
-      }
-      const trimmed = frame.text.trim();
-      if (!trimmed) {
-        this.clearProcessingTimer();
-        if (this.state === "processing" || this.state === "receiving") {
-          this.setState("listening");
-        }
-        return;
-      }
-      const isBusy =
-        this.state === "speaking" || this.state === "processing" || this.turnAbort !== null;
+  }
+  async onInboundFrame(frame) {
+    if (frame.kind === "speech_start") {
+      const isBusy = this.state === "speaking" || this.state === "processing" || this.turnAbort !== null;
       if (isBusy) {
         if (this.sessionConfig.bargeIn === "ignore") return;
-        if (this.sessionConfig.bargeIn === "queue") {
-          const userMsg = this.history.addUser(trimmed);
-          this.transport.sendEvent({
-            type: "transcript:final",
-            text: trimmed,
-            messageId: userMsg.id,
-          });
-          this.transcriptQueue.push(trimmed);
-          return;
-        }
+        if (this.sessionConfig.bargeIn === "queue") return;
+        this.interruptTurn();
       }
-      await this.runBrainTurn(trimmed);
+      this.setState("receiving");
+      return;
     }
-    async runBrainTurn(userText, alreadyInHistory = false) {
-      if (this.destroyed) return;
+    if (frame.kind === "speech_end") {
+      if (this.state === "receiving") {
+        this.setState("processing");
+        this.armProcessingTimer();
+      }
+      return;
+    }
+    if (frame.kind === "error") {
+      this.handleError(frame.error);
+    }
+  }
+  async handleTranscript(frame) {
+    if (!frame.isFinal) {
+      this.transport.sendEvent({ type: "transcript:partial", text: frame.text });
+      return;
+    }
+    const trimmed = frame.text.trim();
+    if (!trimmed) {
       this.clearProcessingTimer();
-      this.interruptTurn();
-      if (!alreadyInHistory) {
-        const userMsg = this.history.addUser(userText);
+      if (this.state === "processing" || this.state === "receiving") {
+        this.setState("listening");
+      }
+      return;
+    }
+    const isBusy = this.state === "speaking" || this.state === "processing" || this.turnAbort !== null;
+    if (isBusy) {
+      if (this.sessionConfig.bargeIn === "ignore") return;
+      if (this.sessionConfig.bargeIn === "queue") {
+        const userMsg = this.history.addUser(trimmed);
         this.transport.sendEvent({
           type: "transcript:final",
-          text: userText,
-          messageId: userMsg.id,
+          text: trimmed,
+          messageId: userMsg.id
         });
-      }
-      this.setState("processing");
-      this.turnAbort = new AbortController();
-      const signal = this.turnAbort.signal;
-      const turnGen = this.ttsGeneration;
-      this.assistantMessageId = createId("msg");
-      this.assistantBuffer = "";
-      const ctx = {
-        sessionId: this.id,
-        history: this.history.all,
-        interrupt: () => this.interruptTurn(),
-        signal,
-        metadata: this.metadata,
-      };
-      try {
-        const stream = brainToStream(this.brain(userText, ctx));
-        this.setState("speaking");
-        for await (const token of stream) {
-          if (signal.aborted || this.destroyed) break;
-          this.assistantBuffer += token;
-          this.transport.sendEvent({
-            type: "bot:text:delta",
-            delta: token,
-            messageId: this.assistantMessageId,
-          });
-          await this.outbound.push({ kind: "text", text: token });
-        }
-        if (!signal.aborted) {
-          await this.outbound.push({ kind: "flush" });
-          await this.ttsTail;
-        }
-        if (turnGen !== this.ttsGeneration && !this.assistantMessageId) {
-          return;
-        }
-        if (this.assistantMessageId) {
-          const partial = signal.aborted;
-          this.history.addAssistant(this.assistantBuffer, {
-            id: this.assistantMessageId,
-            partial,
-          });
-          this.transport.sendEvent({
-            type: "bot:text:done",
-            text: this.assistantBuffer,
-            messageId: this.assistantMessageId,
-            partial,
-          });
-          this.assistantMessageId = null;
-          this.assistantBuffer = "";
-        }
-        if (!this.destroyed) {
-          if (this.state === "speaking" || this.state === "processing") {
-            this.setState("listening");
-          }
-        }
-      } catch (err) {
-        if (!signal.aborted) {
-          this.handleError(err instanceof Error ? err : new Error(String(err)));
-          if (!this.destroyed) this.setState("listening");
-        }
-      } finally {
-        this.turnAbort = null;
-        this.assistantMessageId = null;
-        this.assistantBuffer = "";
-        this.outbound.reset();
-        this.bumpIdle();
-        if (this.transcriptQueue.length > 0 && !this.destroyed) {
-          const nextPrompt = this.transcriptQueue.join("\n");
-          this.transcriptQueue = [];
-          void this.runBrainTurn(nextPrompt, true);
-        }
+        this.transcriptQueue.push(trimmed);
+        return;
       }
     }
-    /**
-     * Append a sentence to the serial TTS queue.
-     * Brain tokens keep flowing; audio is always sent in sentence order.
-     */
-    enqueueSentence(text) {
-      const gen = this.ttsGeneration;
-      const stream = eagerStream(this.tts.synthesize(text, this.ttsConfig));
-      this.ttsTail = this.ttsTail
-        .then(async () => {
-          var _a2, _b;
-          if (gen !== this.ttsGeneration || this.destroyed) return;
-          if ((_a2 = this.turnAbort) == null ? void 0 : _a2.signal.aborted) return;
-          for await (const chunk of stream) {
-            if (gen !== this.ttsGeneration || this.destroyed) break;
-            if ((_b = this.turnAbort) == null ? void 0 : _b.signal.aborted) break;
-            this.transport.sendAudio(chunk.data);
-          }
-        })
-        .catch((err) => {
-          var _a2;
-          if (gen !== this.ttsGeneration) return;
-          if ((_a2 = this.turnAbort) == null ? void 0 : _a2.signal.aborted) return;
-          this.handleError(err instanceof Error ? err : new Error(String(err)));
-        });
+    await this.runBrainTurn(trimmed);
+  }
+  async runBrainTurn(userText, alreadyInHistory = false) {
+    if (this.destroyed) return;
+    this.clearProcessingTimer();
+    this.interruptTurn();
+    if (!alreadyInHistory) {
+      const userMsg = this.history.addUser(userText);
+      this.transport.sendEvent({
+        type: "transcript:final",
+        text: userText,
+        messageId: userMsg.id
+      });
     }
-    /**
-     * Interrupt current turn in a single synchronous tick:
-     * abort brain, abort TTS, drop TTS queue, notify client.
-     */
-    interruptTurn() {
-      if (this.turnAbort) {
-        this.turnAbort.abort();
-        this.turnAbort = null;
+    this.setState("processing");
+    this.turnAbort = new AbortController();
+    const signal = this.turnAbort.signal;
+    const turnGen = this.ttsGeneration;
+    this.assistantMessageId = createId("msg");
+    this.assistantBuffer = "";
+    const ctx = {
+      sessionId: this.id,
+      history: this.history.all,
+      interrupt: () => this.interruptTurn(),
+      signal,
+      metadata: this.metadata
+    };
+    try {
+      const stream = brainToStream(this.brain(userText, ctx));
+      this.setState("speaking");
+      for await (const token of stream) {
+        if (signal.aborted || this.destroyed) break;
+        this.assistantBuffer += token;
+        this.transport.sendEvent({
+          type: "bot:text:delta",
+          delta: token,
+          messageId: this.assistantMessageId
+        });
+        await this.outbound.push({ kind: "text", text: token });
       }
-      this.tts.abort();
-      this.ttsGeneration += 1;
-      this.ttsTail = Promise.resolve();
-      this.outbound.reset();
-      this.transport.sendEvent({ type: "audio:flush" });
-      if (this.assistantMessageId && this.assistantBuffer.length > 0) {
+      if (!signal.aborted) {
+        await this.outbound.push({ kind: "flush" });
+        await this.ttsTail;
+      }
+      if (turnGen !== this.ttsGeneration && !this.assistantMessageId) {
+        return;
+      }
+      if (this.assistantMessageId) {
+        const partial = signal.aborted;
         this.history.addAssistant(this.assistantBuffer, {
           id: this.assistantMessageId,
-          partial: true,
+          partial
         });
         this.transport.sendEvent({
           type: "bot:text:done",
           text: this.assistantBuffer,
           messageId: this.assistantMessageId,
-          partial: true,
+          partial
         });
         this.assistantMessageId = null;
         this.assistantBuffer = "";
       }
-    }
-    setState(next) {
-      if (this.state === next) return;
-      const prev = this.state;
-      this.state = next;
-      this.transport.sendEvent({ type: "state:change", state: next });
-      for (const listener of this.stateListeners) {
-        listener(next, prev);
-      }
-    }
-    handleError(error) {
-      var _a2;
-      const vle = toVoiceLineError("ERR_INTERNAL", error);
-      (_a2 = this.onError) == null ? void 0 : _a2.call(this, vle);
-      this.transport.sendEvent({
-        type: "error",
-        error: { code: vle.code, message: vle.message },
-      });
-    }
-    armMaxDuration() {
-      this.clearTimers();
-      this.maxDurationTimer = setTimeout(() => {
-        void this.close();
-      }, this.sessionConfig.maxDurationMs);
-      this.bumpIdle();
-    }
-    bumpIdle() {
-      if (this.idleTimer) clearTimeout(this.idleTimer);
-      this.idleTimer = setTimeout(() => {
-        void this.close();
-      }, this.sessionConfig.idleTimeoutMs);
-    }
-    armProcessingTimer() {
-      this.clearProcessingTimer();
-      this.processingTimer = setTimeout(() => {
-        if ((this.state === "processing" || this.state === "receiving") && !this.destroyed) {
+      if (!this.destroyed) {
+        if (this.state === "speaking" || this.state === "processing") {
           this.setState("listening");
         }
-        this.processingTimer = null;
-      }, _a.PROCESSING_TIMEOUT_MS);
-    }
-    clearProcessingTimer() {
-      if (this.processingTimer) {
-        clearTimeout(this.processingTimer);
-        this.processingTimer = null;
+      }
+    } catch (err) {
+      if (!signal.aborted) {
+        this.handleError(err instanceof Error ? err : new Error(String(err)));
+        if (!this.destroyed) this.setState("listening");
+      }
+    } finally {
+      this.turnAbort = null;
+      this.assistantMessageId = null;
+      this.assistantBuffer = "";
+      this.outbound.reset();
+      this.bumpIdle();
+      if (this.transcriptQueue.length > 0 && !this.destroyed) {
+        const nextPrompt = this.transcriptQueue.join("\n");
+        this.transcriptQueue = [];
+        void this.runBrainTurn(nextPrompt, true);
       }
     }
-    clearTimers() {
-      if (this.maxDurationTimer) clearTimeout(this.maxDurationTimer);
-      if (this.idleTimer) clearTimeout(this.idleTimer);
-      this.clearProcessingTimer();
-      this.maxDurationTimer = null;
-      this.idleTimer = null;
-    }
-  }) /** Max ms we allow `processing` state before forcibly recovering. */,
-  __publicField$1(_a, "PROCESSING_TIMEOUT_MS", 8e3),
-  _a);
-
-function fromAISDK(options) {
-  return async function* aiSdkBrain(userText, ctx) {
-    var _a;
-    const streamText = (_a = options.streamText) != null ? _a : await loadStreamText();
-    const messages = toCoreMessages(ctx.history, userText);
-    const result = streamText({
-      model: options.model,
-      system: options.system,
-      messages,
-      tools: options.tools,
-      maxTokens: options.maxTokens,
-      temperature: options.temperature,
-      abortSignal: ctx.signal,
-      ...options.extra,
+  }
+  /**
+   * Append a sentence to the serial TTS queue.
+   * Brain tokens keep flowing; audio is always sent in sentence order.
+   */
+  enqueueSentence(text) {
+    const gen = this.ttsGeneration;
+    const stream = eagerStream(this.tts.synthesize(text, this.ttsConfig));
+    this.ttsTail = this.ttsTail.then(async () => {
+      var _a2, _b;
+      if (gen !== this.ttsGeneration || this.destroyed) return;
+      if ((_a2 = this.turnAbort) == null ? void 0 : _a2.signal.aborted) return;
+      for await (const chunk of stream) {
+        if (gen !== this.ttsGeneration || this.destroyed) break;
+        if ((_b = this.turnAbort) == null ? void 0 : _b.signal.aborted) break;
+        this.transport.sendAudio(chunk.data);
+      }
+    }).catch((err) => {
+      var _a2;
+      if (gen !== this.ttsGeneration) return;
+      if ((_a2 = this.turnAbort) == null ? void 0 : _a2.signal.aborted) return;
+      this.handleError(err instanceof Error ? err : new Error(String(err)));
     });
-    for await (const delta of result.textStream) {
-      if (ctx.signal.aborted) break;
-      yield delta;
+  }
+  /**
+   * Interrupt current turn in a single synchronous tick:
+   * abort brain, abort TTS, drop TTS queue, notify client.
+   */
+  interruptTurn() {
+    if (this.turnAbort) {
+      this.turnAbort.abort();
+      this.turnAbort = null;
     }
-  };
-}
-function toCoreMessages(history, userText) {
-  const messages = [];
-  for (const m of history) {
-    messages.push({ role: m.role, content: m.content });
+    this.tts.abort();
+    this.ttsGeneration += 1;
+    this.ttsTail = Promise.resolve();
+    this.outbound.reset();
+    this.transport.sendEvent({ type: "audio:flush" });
+    if (this.assistantMessageId && this.assistantBuffer.length > 0) {
+      this.history.addAssistant(this.assistantBuffer, {
+        id: this.assistantMessageId,
+        partial: true
+      });
+      this.transport.sendEvent({
+        type: "bot:text:done",
+        text: this.assistantBuffer,
+        messageId: this.assistantMessageId,
+        partial: true
+      });
+      this.assistantMessageId = null;
+      this.assistantBuffer = "";
+    }
   }
-  const last = messages[messages.length - 1];
-  if (!last || last.role !== "user" || last.content !== userText) {
-    messages.push({ role: "user", content: userText });
+  setState(next) {
+    if (this.state === next) return;
+    const prev = this.state;
+    this.state = next;
+    this.transport.sendEvent({ type: "state:change", state: next });
+    for (const listener of this.stateListeners) {
+      listener(next, prev);
+    }
   }
-  return messages;
-}
-async function loadStreamText() {
-  const mod = await import("ai");
-  const fn = mod.streamText;
-  if (!fn) {
-    throw new Error("Could not load streamText from 'ai'. Is the AI SDK installed?");
+  handleError(error) {
+    var _a2;
+    const vle = toVoiceLineError("ERR_INTERNAL", error);
+    (_a2 = this.onError) == null ? void 0 : _a2.call(this, vle);
+    this.transport.sendEvent({
+      type: "error",
+      error: { code: vle.code, message: vle.message }
+    });
   }
-  return fn;
-}
+  armMaxDuration() {
+    this.clearTimers();
+    this.maxDurationTimer = setTimeout(() => {
+      void this.close();
+    }, this.sessionConfig.maxDurationMs);
+    this.bumpIdle();
+  }
+  bumpIdle() {
+    if (this.idleTimer) clearTimeout(this.idleTimer);
+    this.idleTimer = setTimeout(() => {
+      void this.close();
+    }, this.sessionConfig.idleTimeoutMs);
+  }
+  armProcessingTimer() {
+    this.clearProcessingTimer();
+    this.processingTimer = setTimeout(() => {
+      if ((this.state === "processing" || this.state === "receiving") && !this.destroyed) {
+        this.setState("listening");
+      }
+      this.processingTimer = null;
+    }, _a.PROCESSING_TIMEOUT_MS);
+  }
+  clearProcessingTimer() {
+    if (this.processingTimer) {
+      clearTimeout(this.processingTimer);
+      this.processingTimer = null;
+    }
+  }
+  clearTimers() {
+    if (this.maxDurationTimer) clearTimeout(this.maxDurationTimer);
+    if (this.idleTimer) clearTimeout(this.idleTimer);
+    this.clearProcessingTimer();
+    this.maxDurationTimer = null;
+    this.idleTimer = null;
+  }
+}, /** Max ms we allow `processing` state before forcibly recovering. */
+__publicField$1(_a, "PROCESSING_TIMEOUT_MS", 8e3), _a);
 
 var __defProp = Object.defineProperty;
-var __defNormalProp = (obj, key, value) =>
-  key in obj
-    ? __defProp(obj, key, { enumerable: true, configurable: true, writable: true, value })
-    : (obj[key] = value);
-var __publicField = (obj, key, value) =>
-  __defNormalProp(obj, typeof key !== "symbol" ? key + "" : key, value);
+var __defNormalProp = (obj, key, value) => key in obj ? __defProp(obj, key, { enumerable: true, configurable: true, writable: true, value }) : obj[key] = value;
+var __publicField = (obj, key, value) => __defNormalProp(obj, typeof key !== "symbol" ? key + "" : key, value);
 var SARVAM_BASE_URL = "https://api.sarvam.ai";
 function resolveApiKey(explicit) {
-  const key =
-    explicit != null
-      ? explicit
-      : typeof process !== "undefined"
-        ? process.env.SARVAM_API_KEY
-        : void 0;
+  const key = explicit != null ? explicit : typeof process !== "undefined" ? process.env.SARVAM_API_KEY : void 0;
   if (!key) {
     throw new Error("Sarvam API key missing. Pass apiKey or set SARVAM_API_KEY.");
   }
@@ -980,7 +958,7 @@ function resolveApiKey(explicit) {
 }
 function authHeaders(apiKey) {
   return {
-    "api-subscription-key": apiKey,
+    "api-subscription-key": apiKey
   };
 }
 var SarvamSTTStream = class {
@@ -996,7 +974,7 @@ var SarvamSTTStream = class {
       transcript: /* @__PURE__ */ new Set(),
       error: /* @__PURE__ */ new Set(),
       speech_start: /* @__PURE__ */ new Set(),
-      speech_end: /* @__PURE__ */ new Set(),
+      speech_end: /* @__PURE__ */ new Set()
     });
     var _a;
     this.options = options;
@@ -1030,7 +1008,8 @@ var SarvamSTTStream = class {
     if (this.ws) {
       try {
         this.ws.close();
-      } catch {}
+      } catch {
+      }
       this.ws = null;
     } else if (this.chunks.length > 0) {
       await this.transcribeRest();
@@ -1041,13 +1020,12 @@ var SarvamSTTStream = class {
   async connectStreaming() {
     var _a, _b, _c;
     if (this.ws || this.options.streaming === false) return;
-    const model =
-      (_b = (_a = this.config.model) != null ? _a : this.options.model) != null ? _b : "saaras:v3";
+    const model = (_b = (_a = this.config.model) != null ? _a : this.options.model) != null ? _b : "saaras:v3";
     const params = new URLSearchParams({
       "api-subscription-key": this.apiKey,
       model,
       "high-vad-sensitivity": "true",
-      "flush-signal": "true",
+      "flush-signal": "true"
     });
     const language = (_c = this.config.language) != null ? _c : this.options.language;
     if (language) params.set("language-code", language);
@@ -1084,8 +1062,8 @@ var SarvamSTTStream = class {
         audio: b64,
         encoding: "audio/wav",
         // pcm sent as raw; API also accepts pcm_s16le
-        sample_rate: sampleRate,
-      }),
+        sample_rate: sampleRate
+      })
     );
   }
   handleWsMessage(msg) {
@@ -1099,28 +1077,14 @@ var SarvamSTTStream = class {
       this.emit("speech_end", void 0);
       return;
     }
-    const text =
-      (typeof msg.transcript === "string" && msg.transcript) ||
-      (typeof msg.text === "string" && msg.text) ||
-      "";
+    const text = typeof msg.transcript === "string" && msg.transcript || typeof msg.text === "string" && msg.text || "";
     if (!text) return;
-    const isFinal =
-      msg.is_final === true ||
-      msg.isFinal === true ||
-      type === "transcript" ||
-      msg.status === "final";
+    const isFinal = msg.is_final === true || msg.isFinal === true || type === "transcript" || msg.status === "final";
     const result = {
       text,
       isFinal: Boolean(isFinal),
-      language: String(
-        (_d =
-          (_c = (_b = msg.language_code) != null ? _b : msg.language) != null
-            ? _c
-            : this.options.language) != null
-          ? _d
-          : "unknown",
-      ),
-      confidence: typeof msg.confidence === "number" ? msg.confidence : 1,
+      language: String((_d = (_c = (_b = msg.language_code) != null ? _b : msg.language) != null ? _c : this.options.language) != null ? _d : "unknown"),
+      confidence: typeof msg.confidence === "number" ? msg.confidence : 1
     };
     this.emit("transcript", result);
   }
@@ -1134,19 +1098,14 @@ var SarvamSTTStream = class {
     try {
       const form = new FormData();
       form.append("file", new Blob([new Uint8Array(wav)], { type: "audio/wav" }), "audio.wav");
-      form.append(
-        "model",
-        (_c = (_b = this.config.model) != null ? _b : this.options.model) != null
-          ? _c
-          : "saaras:v3",
-      );
+      form.append("model", (_c = (_b = this.config.model) != null ? _b : this.options.model) != null ? _c : "saaras:v3");
       form.append("mode", (_d = this.options.mode) != null ? _d : "transcribe");
       const language = (_e = this.config.language) != null ? _e : this.options.language;
       if (language) form.append("language_code", language);
       const res = await fetch(`${this.baseUrl}/speech-to-text`, {
         method: "POST",
         headers: authHeaders(this.apiKey),
-        body: form,
+        body: form
       });
       if (!res.ok) {
         const body = await res.text();
@@ -1158,9 +1117,8 @@ var SarvamSTTStream = class {
         this.emit("transcript", {
           text,
           isFinal: true,
-          language:
-            (_h = (_g = json.language_code) != null ? _g : language) != null ? _h : "unknown",
-          confidence: 1,
+          language: (_h = (_g = json.language_code) != null ? _g : language) != null ? _h : "unknown",
+          confidence: 1
         });
       }
     } catch (err) {
@@ -1224,15 +1182,11 @@ var SarvamTTSProvider = class {
     const signal = this.abortController.signal;
     const body = {
       text: trimmed,
-      target_language_code:
-        (_b = (_a = config.language) != null ? _a : this.options.language) != null ? _b : "en-IN",
-      model:
-        (_d = (_c = config.model) != null ? _c : this.options.model) != null ? _d : "bulbul:v3",
+      target_language_code: (_b = (_a = config.language) != null ? _a : this.options.language) != null ? _b : "en-IN",
+      model: (_d = (_c = config.model) != null ? _c : this.options.model) != null ? _d : "bulbul:v3",
       speaker: (_f = (_e = config.voice) != null ? _e : this.options.voice) != null ? _f : "shubh",
       pace: (_h = (_g = config.pace) != null ? _g : this.options.pace) != null ? _h : 1,
-      speech_sample_rate: String(
-        (_j = (_i = config.sampleRate) != null ? _i : this.options.sampleRate) != null ? _j : 16e3,
-      ),
+      speech_sample_rate: String((_j = (_i = config.sampleRate) != null ? _i : this.options.sampleRate) != null ? _j : 16e3)
     };
     try {
       const streamRes = await fetch(`${this.baseUrl}/text-to-speech/stream`, {
@@ -1240,10 +1194,10 @@ var SarvamTTSProvider = class {
         headers: {
           ...authHeaders(this.apiKey),
           "Content-Type": "application/json",
-          Accept: "audio/wav, application/octet-stream",
+          Accept: "audio/wav, application/octet-stream"
         },
         body: JSON.stringify(body),
-        signal,
+        signal
       });
       if (streamRes.ok && streamRes.body) {
         yield* this.readStream(streamRes.body, config);
@@ -1253,10 +1207,10 @@ var SarvamTTSProvider = class {
         method: "POST",
         headers: {
           ...authHeaders(this.apiKey),
-          "Content-Type": "application/json",
+          "Content-Type": "application/json"
         },
         body: JSON.stringify(body),
-        signal,
+        signal
       });
       if (!res.ok) {
         const errBody = await res.text();
@@ -1267,22 +1221,16 @@ var SarvamTTSProvider = class {
       if (!b64) return;
       let data = base64ToArrayBuffer(b64);
       const view = new Uint8Array(data);
-      if (
-        view.length >= 44 &&
-        view[0] === 82 && // R
-        view[1] === 73 && // I
-        view[2] === 70 && // F
-        view[3] === 70
-      ) {
+      if (view.length >= 44 && view[0] === 82 && // R
+      view[1] === 73 && // I
+      view[2] === 70 && // F
+      view[3] === 70) {
         data = data.slice(44);
       }
       yield {
         data,
-        sampleRate:
-          (_m = (_l = config.sampleRate) != null ? _l : this.options.sampleRate) != null
-            ? _m
-            : 16e3,
-        format: (_n = config.format) != null ? _n : "pcm16",
+        sampleRate: (_m = (_l = config.sampleRate) != null ? _l : this.options.sampleRate) != null ? _m : 16e3,
+        format: (_n = config.format) != null ? _n : "pcm16"
       };
     } catch (err) {
       if (signal.aborted) return;
@@ -1299,8 +1247,7 @@ var SarvamTTSProvider = class {
   async *readStream(body, config) {
     var _a, _b, _c;
     const reader = body.getReader();
-    const sampleRate =
-      (_b = (_a = config.sampleRate) != null ? _a : this.options.sampleRate) != null ? _b : 16e3;
+    const sampleRate = (_b = (_a = config.sampleRate) != null ? _a : this.options.sampleRate) != null ? _b : 16e3;
     let pending = new Uint8Array(0);
     let headerHandled = false;
     try {
@@ -1311,20 +1258,17 @@ var SarvamTTSProvider = class {
         let currentChunk = value;
         if (!headerHandled) {
           headerHandled = true;
-          if (
-            currentChunk.length >= 4 &&
-            currentChunk[0] === 82 && // R
-            currentChunk[1] === 73 && // I
-            currentChunk[2] === 70 && // F
-            currentChunk[3] === 70
-          ) {
+          if (currentChunk.length >= 4 && currentChunk[0] === 82 && // R
+          currentChunk[1] === 73 && // I
+          currentChunk[2] === 70 && // F
+          currentChunk[3] === 70) {
             const headerSize = 44;
             if (currentChunk.length <= headerSize) continue;
             currentChunk = currentChunk.subarray(headerSize);
           }
         }
         const totalLength = pending.length + currentChunk.length;
-        const validBytes = totalLength - (totalLength % 2);
+        const validBytes = totalLength - totalLength % 2;
         if (validBytes === 0) {
           const newPending = new Uint8Array(totalLength);
           newPending.set(pending);
@@ -1346,7 +1290,7 @@ var SarvamTTSProvider = class {
         yield {
           data: toYield.buffer,
           sampleRate,
-          format: (_c = config.format) != null ? _c : "pcm16",
+          format: (_c = config.format) != null ? _c : "pcm16"
         };
       }
     } finally {
@@ -1370,7 +1314,7 @@ var sarvam = {
   },
   tts(options = {}) {
     return new SarvamTTSProvider(options);
-  },
+  }
 };
 
 function createVoiceStack(env) {
@@ -1392,20 +1336,20 @@ function createVoiceStack(env) {
     language: "unknown",
     model: "saaras:v3",
     mode: "transcribe",
-    streaming: true,
+    streaming: true
   });
   const tts = sarvam.tts({
     apiKey: env.sarvamApiKey || void 0,
     voice: "shubh",
     language: "en-IN",
     model: "bulbul:v3",
-    sampleRate: 16e3,
+    sampleRate: 16e3
   });
   let brain;
   if (env.ollamaApiKey) {
     const ollama = createOllama({
       apiKey: env.ollamaApiKey,
-      baseURL: env.ollamaBaseUrl || "https://ollama.com",
+      baseURL: env.ollamaBaseUrl || "https://ollama.com"
     });
     const modelName = env.ollamaModel || "gemma4:31b-cloud";
     brain = fromAISDK({
@@ -1414,18 +1358,17 @@ function createVoiceStack(env) {
         "You are a helpful voice assistant.",
         "Keep answers short and conversational \u2014 ideally 1\u20133 sentences.",
         "Do not use markdown, bullet lists, or code blocks unless asked.",
-        "Speak naturally; the user is listening, not reading.",
+        "Speak naturally; the user is listening, not reading."
       ].join(" "),
       temperature: 0.7,
-      streamText: (opts) =>
-        streamText({
-          model: opts.model,
-          system: opts.system,
-          messages: opts.messages,
-          temperature: opts.temperature,
-          abortSignal: opts.abortSignal,
-          tools: opts.tools,
-        }),
+      streamText: (opts) => streamText({
+        model: opts.model,
+        system: opts.system,
+        messages: opts.messages,
+        temperature: opts.temperature,
+        abortSignal: opts.abortSignal,
+        tools: opts.tools
+      })
     });
   } else {
     brain = async function* echoBrain(userText) {
@@ -1436,5 +1379,5 @@ function createVoiceStack(env) {
   return { stt, tts, brain, ready, warnings };
 }
 
-export { Session as S, createVoiceStack as c };
+export { createVoiceStack as c };
 //# sourceMappingURL=voice-stack.mjs.map
