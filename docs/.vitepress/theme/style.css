@@ -3,17 +3,17 @@
 /* Vercel Theme (Geist Design System) */
 
 :root {
-  /* Core Vercel Tokens */
-  --vercel-bg: #000000;
-  --vercel-accents-1: #111111;
-  --vercel-accents-2: #333333;
-  --vercel-accents-3: #444444;
-  --vercel-accents-4: #666666;
-  --vercel-accents-5: #888888;
-  --vercel-accents-6: #999999;
-  --vercel-accents-7: #eaeaea;
-  --vercel-accents-8: #fafafa;
-  --vercel-foreground: #ffffff;
+  /* Core Vercel Tokens (Light Mode) */
+  --vercel-bg: #ffffff;
+  --vercel-accents-1: #fafafa;
+  --vercel-accents-2: #eaeaea;
+  --vercel-accents-3: #999999;
+  --vercel-accents-4: #888888;
+  --vercel-accents-5: #666666;
+  --vercel-accents-6: #444444;
+  --vercel-accents-7: #333333;
+  --vercel-accents-8: #111111;
+  --vercel-foreground: #000000;
 
   /* VitePress Overrides */
   --vp-c-bg: var(--vercel-bg);
@@ -23,8 +23,8 @@
   --vp-c-border: var(--vercel-accents-2);
   
   --vp-sidebar-bg-color: var(--vercel-bg);
-  --vp-code-block-bg: var(--vercel-bg);
-  --vp-code-bg: var(--vercel-accents-1);
+  --vp-code-block-bg: var(--vercel-accents-1);
+  --vp-code-bg: var(--vercel-accents-2);
   
   --vp-c-brand-1: var(--vercel-foreground);
   --vp-c-brand-2: var(--vercel-accents-7);
@@ -42,6 +42,23 @@
   --vp-home-hero-name-background: transparent;
   --vp-home-hero-image-background-image: none;
   --vp-home-hero-image-filter: none;
+}
+
+.dark {
+  /* Core Vercel Tokens (Dark Mode) */
+  --vercel-bg: #000000;
+  --vercel-accents-1: #111111;
+  --vercel-accents-2: #333333;
+  --vercel-accents-3: #444444;
+  --vercel-accents-4: #666666;
+  --vercel-accents-5: #888888;
+  --vercel-accents-6: #999999;
+  --vercel-accents-7: #eaeaea;
+  --vercel-accents-8: #fafafa;
+  --vercel-foreground: #ffffff;
+  
+  --vp-code-block-bg: var(--vercel-bg);
+  --vp-code-bg: var(--vercel-accents-1);
 }
 
 /* Feature Cards - Vercel Style */
@@ -132,14 +149,15 @@
   line-height: 38px !important;
   font-size: 14px !important;
   letter-spacing: -0.01em !important;
-  transition: background 0.15s ease, color 0.15s ease !important;
+  transition: opacity 0.15s ease !important;
 }
 
 .VPButton.brand:hover {
-  background: #ccc !important;
-  border-color: #ccc !important;
+  opacity: 0.8 !important;
   transform: none !important;
   box-shadow: none !important;
+  background: var(--vercel-foreground) !important;
+  border-color: var(--vercel-foreground) !important;
 }
 
 /* Secondary Button - Vercel Ghost CTA */
@@ -164,11 +182,6 @@
 }
 
 /* Navbar */
-.VPNavBar {
-  background-color: var(--vercel-bg) !important;
-  border-bottom: 1px solid var(--vercel-accents-2) !important;
-}
-
 .VPNavBarMenuLink {
   font-weight: 400 !important;
   font-size: 14px !important;
