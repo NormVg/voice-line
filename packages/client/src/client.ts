@@ -22,6 +22,7 @@ export interface VoiceLineClientOptions {
 export interface VoiceLineClientEvents {
   state: (state: ClientState) => void;
   message: (message: Message) => void;
+  messages: (messages: Message[]) => void;
   partialTranscript: (text: string) => void;
   error: (error: Error) => void;
 }
@@ -159,6 +160,11 @@ export class VoiceLineClient {
     this.transport.sendEvent({ type: "text:send", text: trimmed });
   }
 
+  private setMessages(messages: Message[]) {
+    this.messages = messages;
+    this.emit("messages", messages);
+  }
+
   private handleServerEvent(event: VoiceLineEvent): void {
     switch (event.type) {
       case "session:ready":
@@ -174,7 +180,6 @@ export class VoiceLineClient {
         break;
 
       case "transcript:final": {
-        // Dedupe if the same message id is ever sent twice
         if (this.messages.some((m) => m.id === event.messageId)) break;
         const msg: Message = {
           id: event.messageId,
@@ -183,36 +188,53 @@ export class VoiceLineClient {
           timestamp: Date.now(),
           partial: false,
         };
-        this.messages = [...this.messages, msg];
+        this.setMessages([...this.messages, msg]);
         this.emit("message", msg);
         break;
       }
 
-      case "bot:text:delta":
-        if (!this.currentAssistantId) {
-          this.currentAssistantId = event.messageId;
-          this.currentAssistantText = "";
+      case "bot:text:delta": {
+        const idx = this.messages.findIndex(m => m.id === event.messageId);
+        if (idx === -1) {
+          const msg: Message = {
+            id: event.messageId,
+            role: "assistant",
+            content: event.delta,
+            timestamp: Date.now(),
+            partial: true,
+          };
+          this.setMessages([...this.messages, msg]);
+        } else {
+          const updated = [...this.messages];
+          const oldMsg = updated[idx];
+          if (oldMsg) {
+            updated[idx] = { ...oldMsg, content: oldMsg.content + event.delta };
+          }
+          this.setMessages(updated);
         }
-        this.currentAssistantText += event.delta;
         break;
+      }
 
       case "bot:text:done": {
-        if (this.messages.some((m) => m.id === event.messageId)) {
-          this.currentAssistantId = null;
-          this.currentAssistantText = "";
-          break;
+        const idx = this.messages.findIndex(m => m.id === event.messageId);
+        if (idx === -1) {
+          const msg: Message = {
+            id: event.messageId,
+            role: "assistant",
+            content: event.text,
+            timestamp: Date.now(),
+            partial: event.partial,
+          };
+          this.setMessages([...this.messages, msg]);
+          this.emit("message", msg);
+        } else {
+          const updated = [...this.messages];
+          const oldMsg = updated[idx];
+          if (oldMsg) {
+            updated[idx] = { ...oldMsg, content: event.text, partial: event.partial };
+          }
+          this.setMessages(updated);
         }
-        const msg: Message = {
-          id: event.messageId,
-          role: "assistant",
-          content: event.text,
-          timestamp: Date.now(),
-          partial: event.partial,
-        };
-        this.messages = [...this.messages, msg];
-        this.emit("message", msg);
-        this.currentAssistantId = null;
-        this.currentAssistantText = "";
         break;
       }
 

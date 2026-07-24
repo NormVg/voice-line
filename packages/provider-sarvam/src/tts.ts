@@ -114,6 +114,8 @@ export class SarvamTTSProvider implements TTSProvider {
     const reader = body.getReader();
     const sampleRate = config.sampleRate ?? this.options.sampleRate ?? 16_000;
     let pending = new Uint8Array(0);
+    let skipped = 0;
+    const HEADER_SIZE = 44; // Standard WAV header size
 
     try {
       while (true) {
@@ -121,13 +123,21 @@ export class SarvamTTSProvider implements TTSProvider {
         if (done) break;
         if (!value || value.byteLength === 0) continue;
 
-        const totalLength = pending.length + value.length;
+        let currentChunk = value;
+        if (skipped < HEADER_SIZE) {
+          const toSkip = Math.min(HEADER_SIZE - skipped, currentChunk.length);
+          skipped += toSkip;
+          if (toSkip === currentChunk.length) continue;
+          currentChunk = currentChunk.subarray(toSkip);
+        }
+
+        const totalLength = pending.length + currentChunk.length;
         const validBytes = totalLength - (totalLength % 2);
 
         if (validBytes === 0) {
           const newPending = new Uint8Array(totalLength);
           newPending.set(pending);
-          newPending.set(value, pending.length);
+          newPending.set(currentChunk, pending.length);
           pending = newPending;
           continue;
         }
@@ -137,11 +147,11 @@ export class SarvamTTSProvider implements TTSProvider {
 
         if (pending.length > 0) {
           toYield.set(pending);
-          toYield.set(value.subarray(0, validBytes - pending.length), pending.length);
-          nextPending.set(value.subarray(validBytes - pending.length));
+          toYield.set(currentChunk.subarray(0, validBytes - pending.length), pending.length);
+          nextPending.set(currentChunk.subarray(validBytes - pending.length));
         } else {
-          toYield.set(value.subarray(0, validBytes));
-          nextPending.set(value.subarray(validBytes));
+          toYield.set(currentChunk.subarray(0, validBytes));
+          nextPending.set(currentChunk.subarray(validBytes));
         }
 
         pending = nextPending;

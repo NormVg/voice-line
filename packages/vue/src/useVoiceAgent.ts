@@ -46,8 +46,8 @@ export function useVoiceAgent(options: UseVoiceAgentOptions): UseVoiceAgentRetur
     c.on("state", (s) => {
       state.value = s;
     });
-    c.on("message", (m) => {
-      messages.value = [...messages.value, m];
+    c.on("messages", (msgs) => {
+      messages.value = msgs;
     });
     client.value = c;
     return c;
