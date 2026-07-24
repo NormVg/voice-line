@@ -71,19 +71,6 @@
   --vp-c-text-3: var(--vercel-accents-5) !important;
 }
 
-/* Force unbroken Navbar bottom border */
-.VPNavBar {
-  border-bottom: 1px solid var(--vercel-accents-2) !important;
-}
-.VPNavBar .divider,
-.VPNavBar .divider-line {
-  display: none !important;
-}
-.VPNavBarTitle,
-.VPNavBarContent {
-  border-bottom: none !important;
-}
-
 /* Feature Cards - Vercel Style */
 .VPFeatures {
   padding: 0 24px;
