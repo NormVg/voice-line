@@ -201,7 +201,7 @@ export class VoiceLineClient {
             role: "assistant",
             content: event.delta,
             timestamp: Date.now(),
-            partial: true,
+            partial: false,
           };
           this.setMessages([...this.messages, msg]);
         } else {
