@@ -119,6 +119,4 @@ export function createStatelessHandler(config: StatelessHandlerConfig) {
 }
 
 export { createServer } from "./server.js";
-export { dualBrain } from "./dual-brain.js";
-export type { DualBrainOptions, HandoffDecision, HandoffFn, HandoffMode } from "./dual-brain.js";
 export type { VoiceLineServerConfig } from "./config.js";

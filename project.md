@@ -482,95 +482,54 @@ function VoiceChat() {
 
 ---
 
-## Dual-Brain Pattern
+## Multi-Agent Strategy with AI SDK
 
-The biggest killer of voice UX is latency. A heavy LLM takes 2-5 seconds to start generating. In a voice conversation, 2 seconds of silence feels like an eternity.
+The biggest killer of voice UX is latency. A heavy LLM with tool calling takes 2-5 seconds to start generating. In a voice conversation, 2 seconds of silence feels like an eternity.
 
-voice-line solves this with a built-in `dualBrain` orchestrator that dispatches user text to two brains in parallel:
+Instead of building proprietary orchestration layers, `voice-line` relies on the powerful primitives already built into the Vercel AI SDK. We recommend the "Fast / Background" agent strategy:
 
-```
-User: "Can you book me a flight to Mumbai tomorrow?"
-
-         ┌──────────── STT ─────────────┐
-         │                              │
-         ▼                              ▼
-  ┌──────────────┐              ┌──────────────┐
-  │  Fast Brain  │              │  Heavy Brain │
-  │              │              │              │
-  │  GPT-4o-mini │              │  Eve Agent   │
-  │  ~200ms TTFB │              │  Tools + RAG │
-  │              │              │  ~3-10s      │
-  │  "Sure! Let  │              │  Searches    │
-  │   me check   │              │  flights,    │
-  │   flights    │              │  compares    │
-  │   for you.." │              │  prices...   │
-  └──────┬───────┘              └──────┬───────┘
-         │                             │
-         ▼                             ▼
-    TTS plays                    When ready:
-    immediately                  interrupts fast brain,
-    (zero dead air)              delivers real answer
-```
-
-### How it works
-
-1. User speaks → voice-line transcribes it
-2. The same text is sent to both brains simultaneously
-3. **Fast Brain** (small, cheap model) responds instantly with a natural acknowledgement → goes straight to TTS
-4. **Heavy Brain** (large model, tools, agent workflows) does the real work in the background
-5. When the Heavy Brain finishes, it interrupts the Fast Brain and delivers the substantive answer
-
-### Code
+1. **The Fast Brain** (e.g., `gpt-4o-mini` or `Llama-3-8B`) handles the immediate conversational layer. It acknowledges the user instantly ("Sure, let me check that...").
+2. **The Background Tools** spawn async workers or call long-running sub-agents.
+3. **The Handoff**: Once the background tool completes, it can push an event to the client or inject context into the conversation history, prompting the Fast Brain to summarize the result.
 
 ```typescript
 // server/api/voice.post.ts (Nuxt Nitro)
-import { createEventHandler, dualBrain } from '@voice-line/server/nitro'
+import { createEventHandler } from '@voice-line/server/nitro'
 import { fromAISDK } from '@voice-line/adapter-ai-sdk'
-import { fromEve } from '@voice-line/adapter-eve'
 import { openai } from '@ai-sdk/openai'
+import { streamText, tool } from 'ai'
+import { z } from 'zod'
 
 export default createEventHandler({
   transport: ably({ apiKey: process.env.ABLY_API_KEY }),
   stt: sarvam.stt({ language: 'en-IN' }),
   tts: sarvam.tts({ voice: 'anushka' }),
 
-  brain: dualBrain({
-    // Responds in ~200ms. Keeps the conversation alive.
-    fast: fromAISDK({
-      model: openai('gpt-4o-mini'),
-      system: `You are the fast-response layer of a voice assistant.
-        Acknowledge the user's request naturally in 1-2 sentences.
-        Never give a final answer — just buy time while the heavy brain works.`,
-    }),
+  // The Brain Adapter delegates everything to the AI SDK
+  brain: fromAISDK({
+    model: openai('gpt-4o-mini'), // Fast response model
+    system: 'You are a fast voice assistant. Use background tools for heavy tasks.',
+    tools: {
+      searchFlights: tool({
+        description: 'Searches for flights in the background. Acknowledges instantly.',
+        parameters: z.object({ destination: z.string() }),
+        execute: async ({ destination }) => {
+          // 1. Acknowledge immediately in the tool response so the Fast Brain can speak
+          
+          // 2. Spawn the heavy background task (sub-agent) asynchronously
+          runHeavyAgentTask(destination).then(result => {
+             // Push an event to the client or update the session history here
+          })
 
-    // Does the real work. Interrupts the fast brain when ready.
-    heavy: fromEve({ agentId: 'main-agent' }),
-
-    // When the heavy brain finishes:
-    // 'interrupt' — stop the fast brain, deliver real answer (default)
-    // 'wait'      — let the fast brain finish, then deliver real answer
-    // function    — custom handoff logic
-    handoff: 'interrupt',
-  }),
-})
-```
-
-### Custom Handoff
-
-```typescript
-brain: dualBrain({
-  fast: fromAISDK({ model: openai('gpt-4o-mini') }),
-  heavy: fromEve({ agentId: 'main-agent' }),
-
-  handoff: async (fastResult, heavyResult, ctx) => {
-    // Simple questions don't need the heavy brain
-    if (!heavyResult.usedTools && ctx.history.length < 4) {
-      return 'keep-fast'
+          return `I'm looking up flights to ${destination} right now...`
+        }
+      })
     }
-    return 'interrupt'
-  },
+  })
 })
 ```
+
+By delegating multi-agent architectures to the AI SDK, your voice pipelines stay lightweight and un-opinionated.
 
 ---
 
@@ -735,7 +694,6 @@ voice-line/
 │   │   └── src/
 │   │       ├── server.ts         # createServer() — entry point
 │   │       ├── session-manager.ts # Creates/destroys sessions
-│   │       └── dual-brain.ts     # dualBrain() orchestrator
 │   │
 │   ├── client/                   # Browser runtime (framework-agnostic)
 │   │   └── src/
@@ -779,7 +737,7 @@ voice-line/
 │   ├── standalone/               # Minimal: callback brain + Ably + Sarvam
 │   ├── with-ai-sdk/              # AI SDK brain + tool calling
 │   ├── with-eve/                 # Eve agent brain
-│   ├── dual-brain/               # Fast + heavy brain pattern
+│   ├── multi-agent/              # Multi-agent fast/heavy pattern via AI SDK
 │   └── nuxt-app/                 # Full Nuxt app with voice-line/vue
 │
 ├── package.json
@@ -805,14 +763,12 @@ voice-line/
 - [x] `@voice-line/adapter-ai-sdk` — Vercel AI SDK brain adapter
 - [ ] `@voice-line/adapter-eve` — Eve brain adapter
 
-### Phase 3 — Dual-Brain & Polish
-- [x] `dualBrain()` orchestrator in `@voice-line/server`
+### Phase 3 — Polish
 - [x] Custom handoff logic
 - [x] `@voice-line/transport-ws` — raw WebSocket client + `fromWebSocket` server accept path
 - [x] WS integration tests (events, audio, full session text/voice turns, interrupt)
-- [x] `examples/standalone` — minimal WS demo (mock STT/TTS + callback brain)
 - [x] `examples/nuxt-app` — Nuxt + WebSocket + Sarvam + AI SDK
-- [ ] `examples/` — remaining demo apps (eve, dual-brain, Ably)
+- [ ] `examples/` — remaining demo apps (eve, multi-agent, Ably)
 
 ### Phase 4 — Ecosystem & Utilities
 - [x] `@voice-line/transport-ws` — raw WebSocket adapter
