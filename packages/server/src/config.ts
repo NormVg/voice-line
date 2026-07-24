@@ -1,0 +1,35 @@
+import type {
+  AudioConfig,
+  Brain,
+  ChunkerConfig,
+  SessionConfig,
+  STTConfig,
+  STTProvider,
+  Transport,
+  TTSConfig,
+  TTSProvider,
+  VADConfig,
+} from "@voice-line/core";
+import type { Session } from "@voice-line/core";
+
+/**
+ * Server configuration. Concrete transports/providers are injected —
+ * server never imports their packages.
+ */
+export interface VoiceLineServerConfig {
+  transport: Transport | ((sessionId: string) => Transport | Promise<Transport>);
+  stt: STTProvider;
+  tts: TTSProvider;
+  brain: Brain;
+
+  audio?: Partial<AudioConfig>;
+  sttConfig?: STTConfig;
+  ttsConfig?: TTSConfig;
+  vad?: Partial<VADConfig>;
+  chunker?: Partial<ChunkerConfig>;
+  session?: Partial<SessionConfig>;
+
+  onSessionStart?: (session: Session) => void;
+  onSessionEnd?: (session: Session) => void;
+  onError?: (error: Error, session?: Session) => void;
+}

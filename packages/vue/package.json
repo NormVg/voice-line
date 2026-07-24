@@ -1,0 +1,35 @@
+{
+  "name": "@voice-line/vue",
+  "version": "0.1.0",
+  "description": "Vue 3 composables for voice-line",
+  "license": "MIT",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "files": ["dist"],
+  "sideEffects": false,
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsup --watch",
+    "typecheck": "tsc --noEmit",
+    "clean": "rm -rf dist"
+  },
+  "dependencies": {
+    "@voice-line/client": "workspace:*",
+    "@voice-line/core": "workspace:*"
+  },
+  "peerDependencies": {
+    "vue": "^3.4.0"
+  },
+  "devDependencies": {
+    "vue": "^3.5.13",
+    "tsup": "^8.3.6",
+    "typescript": "^5.7.3"
+  }
+}

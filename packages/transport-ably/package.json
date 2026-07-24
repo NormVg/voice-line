@@ -1,0 +1,38 @@
+{
+  "name": "@voice-line/transport-ably",
+  "version": "0.1.0",
+  "description": "Ably realtime transport for voice-line",
+  "license": "MIT",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "sideEffects": false,
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsup --watch",
+    "test": "vitest run --passWithNoTests",
+    "typecheck": "tsc --noEmit",
+    "clean": "rm -rf dist"
+  },
+  "dependencies": {
+    "@voice-line/core": "workspace:*"
+  },
+  "peerDependencies": {
+    "ably": "^2.0.0"
+  },
+  "devDependencies": {
+    "ably": "^2.6.3",
+    "tsup": "^8.3.6",
+    "typescript": "^5.7.3",
+    "vitest": "^3.0.5"
+  }
+}
