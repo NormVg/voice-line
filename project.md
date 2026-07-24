@@ -292,6 +292,49 @@ This happens in a single synchronous tick on the server. There is no race condit
 
 ---
 
+## Stateless Processing
+
+While real-time WebSockets are the core of `voice-line`, sometimes you just need a simple push-to-talk HTTP endpoint or a standalone text-to-speech API. `voice-line` provides stateless orchestrators for these scenarios.
+
+### Standalone TTS API
+
+Expose your configured `TTSProvider` as a REST API endpoint.
+
+```typescript
+// server/api/tts.post.ts (Nuxt Nitro example)
+import { createTTSHandler } from '@voice-line/server/nitro'
+import { sarvam } from '@voice-line/provider-sarvam'
+
+export default createTTSHandler({
+  tts: sarvam.tts({ voice: 'anushka' }),
+  // Client POSTs { text: "Hello" }
+  // Server responds with audio/pcm stream
+})
+```
+
+### Stateless Push-to-Talk
+
+Process a single audio file through the STT → Brain → TTS pipeline in one shot, returning the AI's audio response over HTTP.
+
+```typescript
+// server/api/talk.post.ts (Nuxt Nitro example)
+import { createStatelessHandler } from '@voice-line/server/nitro'
+import { sarvam } from '@voice-line/provider-sarvam'
+import { fromAISDK } from '@voice-line/adapter-ai-sdk'
+import { openai } from '@ai-sdk/openai'
+
+export default createStatelessHandler({
+  stt: sarvam.stt({ language: 'en-IN' }),
+  tts: sarvam.tts({ voice: 'anushka' }),
+  brain: fromAISDK({
+    model: openai('gpt-4o-mini'),
+    system: 'Keep responses concise.'
+  })
+})
+```
+
+---
+
 ## Usage
 
 ### Next.js App Router (API Route)
@@ -771,8 +814,10 @@ voice-line/
 - [x] `examples/nuxt-app` — Nuxt + WebSocket + Sarvam + AI SDK
 - [ ] `examples/` — remaining demo apps (eve, dual-brain, Ably)
 
-### Phase 4 — Ecosystem
+### Phase 4 — Ecosystem & Utilities
 - [x] `@voice-line/transport-ws` — raw WebSocket adapter
+- [ ] `@voice-line/server` — `createTTSHandler` standalone API generator
+- [ ] `@voice-line/server` — `createStatelessHandler` push-to-talk API generator
 - [ ] `@voice-line/provider-elevenlabs` — ElevenLabs TTS
 
 

@@ -1,5 +1,5 @@
 import process from 'node:process';globalThis._importMeta_={url:import.meta.url,env:process.env};import { tmpdir } from 'node:os';
-import { defineEventHandler, handleCacheHeaders, splitCookiesString, createEvent, fetchWithEvent, isEvent, eventHandler, setHeaders, createError, sendRedirect, proxyRequest, getRequestHeader, setResponseHeaders, setResponseStatus, send, getRequestHeaders, setResponseHeader, appendResponseHeader, getRequestURL, getResponseHeader, removeResponseHeader, getQuery as getQuery$1, readBody, createApp, createRouter as createRouter$1, toNodeListener, lazyEventHandler, getResponseStatus, getRouterParam, getResponseStatusText } from 'file:///Users/vishnu_mac/Desktop/room/tao.hq/voice-line/node_modules/.pnpm/h3@1.15.11/node_modules/h3/dist/index.mjs';
+import { defineEventHandler, handleCacheHeaders, splitCookiesString, createEvent, fetchWithEvent, isEvent, eventHandler, setHeaders, createError, sendRedirect, proxyRequest, getRequestHeader, setResponseHeaders, setResponseStatus, send, getRequestHeaders, setResponseHeader, appendResponseHeader, getRequestURL, getResponseHeader, removeResponseHeader, getQuery as getQuery$1, readBody, createApp, createRouter as createRouter$1, toNodeListener, lazyEventHandler, getResponseStatus, getRouterParam, readRawBody, getResponseStatusText } from 'file:///Users/vishnu_mac/Desktop/room/tao.hq/voice-line/node_modules/.pnpm/h3@1.15.11/node_modules/h3/dist/index.mjs';
 import { Server } from 'node:http';
 import { resolve, join, dirname } from 'node:path';
 import crypto$1 from 'node:crypto';
@@ -9,11 +9,12 @@ import viteNodeEntry_mjs from 'file:///Users/vishnu_mac/Desktop/room/tao.hq/voic
 import { viteNodeFetch } from 'file:///Users/vishnu_mac/Desktop/room/tao.hq/voice-line/node_modules/.pnpm/@nuxt+vite-builder@3.21.9_@biomejs+biome@1.9.4_@types+node@22.20.1_magicast@0.5.3_nuxt@3.21.9_n3kcbty5a2at7rkdsb7vqjrble/node_modules/@nuxt/vite-builder/dist/vite-node.mjs';
 import { AblyTransport } from '@voice-line/transport-ably';
 import { Session } from '@voice-line/core';
+import Ably from 'file:///Users/vishnu_mac/Desktop/room/tao.hq/voice-line/node_modules/.pnpm/ably@2.26.0_react@19.2.8/node_modules/ably/build/ably-node.js';
+import { createStatelessHandler, createTTSHandler } from 'file:///Users/vishnu_mac/Desktop/room/tao.hq/voice-line/packages/server/dist/nitro.js';
 import { fromAISDK } from '@voice-line/adapter-ai-sdk';
 import { sarvam } from '@voice-line/provider-sarvam';
 import { streamText } from 'file:///Users/vishnu_mac/Desktop/room/tao.hq/voice-line/node_modules/.pnpm/ai@7.0.37_zod@3.25.76/node_modules/ai/dist/index.js';
 import { createOllama } from 'file:///Users/vishnu_mac/Desktop/room/tao.hq/voice-line/node_modules/.pnpm/ai-sdk-ollama@4.0.0_ai@7.0.37_zod@3.25.76__zod@3.25.76/node_modules/ai-sdk-ollama/dist/index.js';
-import Ably from 'file:///Users/vishnu_mac/Desktop/room/tao.hq/voice-line/node_modules/.pnpm/ably@2.26.0_react@19.2.8/node_modules/ably/build/ably-node.js';
 import { createRenderer, getRequestDependencies, getPreloadLinks, getPrefetchLinks } from 'file:///Users/vishnu_mac/Desktop/room/tao.hq/voice-line/node_modules/.pnpm/vue-bundle-renderer@2.3.1/node_modules/vue-bundle-renderer/dist/runtime.mjs';
 import { parseURL, withoutBase, joinURL, getQuery, withQuery, withTrailingSlash, decodePath, withLeadingSlash, withoutTrailingSlash, encodePath, joinRelativeURL } from 'file:///Users/vishnu_mac/Desktop/room/tao.hq/voice-line/node_modules/.pnpm/ufo@1.6.4/node_modules/ufo/dist/index.mjs';
 import destr, { destr as destr$1 } from 'file:///Users/vishnu_mac/Desktop/room/tao.hq/voice-line/node_modules/.pnpm/destr@2.0.5/node_modules/destr/dist/index.mjs';
@@ -2240,16 +2241,16 @@ _wH6JrtIxmaSoA8lCPWFnE9z4lQeXW6H5z3l5aymEQw
 const assets = {
   "/index.mjs": {
     "type": "text/javascript; charset=utf-8",
-    "etag": "\"1c8fd-DziCmPH6F25q+5zV1oieMVr5mtQ\"",
-    "mtime": "2026-07-24T18:59:36.168Z",
-    "size": 116989,
+    "etag": "\"1d3d8-0oq5d8TbCJ3G6P8gD2NlHuWWhbQ\"",
+    "mtime": "2026-07-24T19:17:07.722Z",
+    "size": 119768,
     "path": "index.mjs"
   },
   "/index.mjs.map": {
     "type": "application/json",
-    "etag": "\"71774-jQ5BG18nJ0q8oxt6TsCFtDph1XU\"",
-    "mtime": "2026-07-24T18:59:36.168Z",
-    "size": 464756,
+    "etag": "\"73697-MW47McNvA1kK1HiFFSOrKc/8s2g\"",
+    "mtime": "2026-07-24T19:17:07.722Z",
+    "size": 472727,
     "path": "index.mjs.map"
   }
 };
@@ -2780,11 +2781,15 @@ async function getIslandContext(event) {
 }
 
 const _lazy_2lBPbb = () => Promise.resolve().then(function () { return session_post$1; });
+const _lazy_wf7m2v = () => Promise.resolve().then(function () { return talk_post$1; });
+const _lazy_7xaln3 = () => Promise.resolve().then(function () { return tts_post$1; });
 const _lazy_gqbL6_ = () => Promise.resolve().then(function () { return renderer; });
 
 const handlers = [
   { route: '', handler: _LtfBSL, lazy: false, middleware: true, method: undefined },
   { route: '/api/session', handler: _lazy_2lBPbb, lazy: true, middleware: false, method: "post" },
+  { route: '/api/talk', handler: _lazy_wf7m2v, lazy: true, middleware: false, method: "post" },
+  { route: '/api/tts', handler: _lazy_7xaln3, lazy: true, middleware: false, method: "post" },
   { route: '/__nuxt_error', handler: _lazy_gqbL6_, lazy: true, middleware: false, method: undefined },
   { route: '/__nuxt_island/**', handler: handler$1, lazy: false, middleware: false, method: undefined },
   { route: '/**', handler: _lazy_gqbL6_, lazy: true, middleware: false, method: undefined }
@@ -3300,6 +3305,75 @@ const session_post = defineEventHandler(async (event) => {
 const session_post$1 = /*#__PURE__*/Object.freeze(/*#__PURE__*/Object.defineProperty({
   __proto__: null,
   default: session_post
+}, Symbol.toStringTag, { value: 'Module' }));
+
+function getHandler$1() {
+  const config = useRuntimeConfig();
+  const stack = createVoiceStack({
+    sarvamApiKey: String(config.sarvamApiKey || ""),
+    ollamaApiKey: String(config.ollamaApiKey || ""),
+    ollamaBaseUrl: String(config.ollamaBaseUrl || "https://ollama.com"),
+    ollamaModel: String(config.ollamaModel || "gemma4:31b-cloud")
+  });
+  return createStatelessHandler({
+    stt: stack.stt,
+    tts: stack.tts,
+    brain: stack.brain,
+    sttConfig: {
+      language: "unknown",
+      sampleRate: 16e3,
+      encoding: "pcm_s16le",
+      model: "saaras:v3"
+    },
+    ttsConfig: {
+      voice: "shubh",
+      language: "en-IN",
+      sampleRate: 16e3,
+      format: "pcm16",
+      model: "bulbul:v3"
+    }
+  });
+}
+const talk_post = defineEventHandler(async (event) => {
+  const rawBody = await readRawBody(event, false);
+  event.context.rawBody = rawBody;
+  const handler = getHandler$1();
+  return handler(event);
+});
+
+const talk_post$1 = /*#__PURE__*/Object.freeze(/*#__PURE__*/Object.defineProperty({
+  __proto__: null,
+  default: talk_post
+}, Symbol.toStringTag, { value: 'Module' }));
+
+function getHandler() {
+  const config = useRuntimeConfig();
+  const stack = createVoiceStack({
+    sarvamApiKey: String(config.sarvamApiKey || ""),
+    ollamaApiKey: String(config.ollamaApiKey || ""),
+    ollamaBaseUrl: String(config.ollamaBaseUrl || "https://ollama.com"),
+    ollamaModel: String(config.ollamaModel || "gemma4:31b-cloud")
+  });
+  return createTTSHandler({
+    tts: stack.tts,
+    defaultConfig: {
+      voice: "shubh",
+      language: "en-IN",
+      sampleRate: 16e3,
+      format: "pcm16",
+      model: "bulbul:v3"
+    }
+  });
+}
+const tts_post = defineEventHandler(async (event) => {
+  event.context.body = await readBody(event).catch(() => ({}));
+  const handler = getHandler();
+  return handler(event);
+});
+
+const tts_post$1 = /*#__PURE__*/Object.freeze(/*#__PURE__*/Object.defineProperty({
+  __proto__: null,
+  default: tts_post
 }, Symbol.toStringTag, { value: 'Module' }));
 
 function renderPayloadResponse(ssrContext) {
