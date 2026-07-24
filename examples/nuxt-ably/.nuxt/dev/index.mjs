@@ -2237,7 +2237,22 @@ _KZyTCarWQs5vgtZuq_5RXCShBMTXwEqN0TIl9Pw5SE,
 _wH6JrtIxmaSoA8lCPWFnE9z4lQeXW6H5z3l5aymEQw
 ];
 
-const assets = {};
+const assets = {
+  "/index.mjs": {
+    "type": "text/javascript; charset=utf-8",
+    "etag": "\"1c8fd-DziCmPH6F25q+5zV1oieMVr5mtQ\"",
+    "mtime": "2026-07-24T18:59:36.168Z",
+    "size": 116989,
+    "path": "index.mjs"
+  },
+  "/index.mjs.map": {
+    "type": "application/json",
+    "etag": "\"71774-jQ5BG18nJ0q8oxt6TsCFtDph1XU\"",
+    "mtime": "2026-07-24T18:59:36.168Z",
+    "size": 464756,
+    "path": "index.mjs.map"
+  }
+};
 
 function readAsset (id) {
   const serverDir = dirname$1(fileURLToPath(globalThis._importMeta_.url));
@@ -3201,8 +3216,10 @@ function getStack() {
   return globalStack;
 }
 const session_post = defineEventHandler(async (event) => {
+  var _a, _b, _c, _d, _e, _f;
   const config = useRuntimeConfig();
   const ablyApiKey = config.ablyApiKey;
+  const body = await readBody(event).catch(() => ({}));
   if (!ablyApiKey) {
     throw createError({
       statusCode: 500,
@@ -3245,9 +3262,9 @@ const session_post = defineEventHandler(async (event) => {
       model: "bulbul:v3"
     },
     vad: {
-      confidence: 0.35,
-      silenceMs: 500,
-      minSpeechMs: 200
+      confidence: Number((_b = (_a = body.vad) == null ? void 0 : _a.confidence) != null ? _b : 0.3),
+      silenceMs: Number((_d = (_c = body.vad) == null ? void 0 : _c.silenceMs) != null ? _d : 1e3),
+      minSpeechMs: Number((_f = (_e = body.vad) == null ? void 0 : _e.minSpeechMs) != null ? _f : 200)
     },
     session: {
       maxDurationMs: 30 * 60 * 1e3,

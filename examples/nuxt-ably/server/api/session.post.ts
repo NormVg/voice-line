@@ -22,6 +22,7 @@ function getStack() {
 export default defineEventHandler(async (event) => {
   const config = useRuntimeConfig();
   const ablyApiKey = config.ablyApiKey as string;
+  const body = await readBody(event).catch(() => ({}));
 
   if (!ablyApiKey) {
     throw createError({
@@ -73,9 +74,9 @@ export default defineEventHandler(async (event) => {
       model: "bulbul:v3",
     },
     vad: {
-      confidence: 0.35,
-      silenceMs: 500,
-      minSpeechMs: 200,
+      confidence: Number(body.vad?.confidence ?? 0.3),
+      silenceMs: Number(body.vad?.silenceMs ?? 1000),
+      minSpeechMs: Number(body.vad?.minSpeechMs ?? 200),
     },
     session: {
       maxDurationMs: 30 * 60 * 1000,

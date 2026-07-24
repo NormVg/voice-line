@@ -10,6 +10,9 @@ const partial = ref("");
 const textInput = ref("");
 const connecting = ref(false);
 
+const vadConfidence = ref(0.4);
+const vadSilenceMs = ref(800);
+
 const state = ref<ClientState>("idle");
 const messages = ref<Message[]>([]);
 const client = shallowRef<VoiceLineClient | null>(null);
@@ -44,7 +47,16 @@ async function onConnect() {
   connecting.value = true;
   try {
     // 1. Ask the server to create a session and give us a token request
-    const response = await fetch("/api/session", { method: "POST" });
+    const response = await fetch("/api/session", { 
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        vad: {
+          confidence: vadConfidence.value,
+          silenceMs: vadSilenceMs.value
+        }
+      })
+    });
     if (!response.ok) {
       const errText = await response.text();
       throw new Error(`Server error: ${errText}`);
@@ -122,6 +134,23 @@ onUnmounted(() => {
     </header>
 
     <p v-if="error" class="error">{{ error }}</p>
+
+    <div v-if="!isConnected" class="settings">
+      <div class="setting-group">
+        <label>
+          <span>VAD Confidence ({{ vadConfidence }})</span>
+          <input type="range" v-model.number="vadConfidence" min="0.1" max="0.9" step="0.05" :disabled="connecting" />
+          <small>Lower = picks up quieter speech, Higher = requires louder speech</small>
+        </label>
+      </div>
+      <div class="setting-group">
+        <label>
+          <span>VAD Silence Timeout ({{ vadSilenceMs }}ms)</span>
+          <input type="range" v-model.number="vadSilenceMs" min="200" max="2000" step="100" :disabled="connecting" />
+          <small>How long to wait after you stop speaking before replying</small>
+        </label>
+      </div>
+    </div>
 
     <div class="controls">
       <button v-if="!isConnected" class="btn primary" :disabled="connecting" type="button" @click="onConnect">
@@ -227,6 +256,37 @@ onUnmounted(() => {
   color: #fca5a5;
   border-bottom: 1px solid rgba(239, 68, 68, 0.2);
   font-size: 0.875rem;
+}
+
+.settings {
+  padding: 1.5rem 1.5rem 0.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  border-bottom: 1px solid var(--border);
+  background: rgba(0, 0, 0, 0.1);
+}
+
+.setting-group label {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  font-size: 0.85rem;
+  color: var(--text);
+}
+
+.setting-group span {
+  font-weight: 500;
+}
+
+.setting-group small {
+  font-size: 0.75rem;
+  color: var(--muted);
+}
+
+.setting-group input[type="range"] {
+  accent-color: #60a5fa;
+  cursor: pointer;
 }
 
 .controls {
