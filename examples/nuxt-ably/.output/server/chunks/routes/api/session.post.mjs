@@ -1,6 +1,5 @@
-import { d as defineEventHandler, c as createError, r as readBody, u as useRuntimeConfig } from '../../nitro/nitro.mjs';
-import { createEventHandler } from '@voice-line/server/nitro';
-import { c as createVoiceStack } from '../../_/voice-stack.mjs';
+import { d as defineEventHandler, u as useRuntimeConfig, c as createError, r as readBody } from '../../nitro/nitro.mjs';
+import { c as createEventHandler, a as createVoiceStack } from '../../_/voice-stack.mjs';
 import 'node:http';
 import 'node:https';
 import 'node:events';
@@ -99,10 +98,20 @@ var AblyTransport = class {
   }
   async disconnect() {
     if (this.channel) {
-      this.channel.unsubscribe();
+      try {
+        await this.channel.unsubscribe();
+      } catch (err) {
+      }
     }
     if (this.client) {
-      this.client.close();
+      try {
+        const p = this.client.close();
+        if (p && typeof p.catch === "function") {
+          p.catch(() => {
+          });
+        }
+      } catch (err) {
+      }
       this.client = null;
     }
     this.channel = null;

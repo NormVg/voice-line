@@ -15,6 +15,7 @@
     "@voice-line/client": "workspace:*",
     "@voice-line/core": "workspace:*",
     "@voice-line/provider-sarvam": "workspace:*",
+    "@voice-line/server": "workspace:^",
     "@voice-line/transport-ws": "workspace:*",
     "@voice-line/vue": "workspace:*",
     "ai": "^7.0.37",

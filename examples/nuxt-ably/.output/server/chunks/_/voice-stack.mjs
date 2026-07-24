@@ -1,50 +1,9 @@
 import { streamText } from 'ai';
 import { createOllama } from 'ai-sdk-ollama';
 
-function fromAISDK(options) {
-  return async function* aiSdkBrain(userText, ctx) {
-    var _a;
-    const streamText = (_a = options.streamText) != null ? _a : await loadStreamText();
-    const messages = toCoreMessages(ctx.history, userText);
-    const result = streamText({
-      model: options.model,
-      system: options.system,
-      messages,
-      tools: options.tools,
-      maxTokens: options.maxTokens,
-      temperature: options.temperature,
-      abortSignal: ctx.signal,
-      ...options.extra
-    });
-    for await (const delta of result.textStream) {
-      if (ctx.signal.aborted) break;
-      yield delta;
-    }
-  };
-}
-function toCoreMessages(history, userText) {
-  const messages = [];
-  for (const m of history) {
-    messages.push({ role: m.role, content: m.content });
-  }
-  const last = messages[messages.length - 1];
-  if (!last || last.role !== "user" || last.content !== userText) {
-    messages.push({ role: "user", content: userText });
-  }
-  return messages;
-}
-async function loadStreamText() {
-  const mod = await import('ai');
-  const fn = mod.streamText;
-  if (!fn) {
-    throw new Error("Could not load streamText from 'ai'. Is the AI SDK installed?");
-  }
-  return fn;
-}
-
-var __defProp$1 = Object.defineProperty;
-var __defNormalProp$1 = (obj, key, value) => key in obj ? __defProp$1(obj, key, { enumerable: true, configurable: true, writable: true, value }) : obj[key] = value;
-var __publicField$1 = (obj, key, value) => __defNormalProp$1(obj, typeof key !== "symbol" ? key + "" : key, value);
+var __defProp$2 = Object.defineProperty;
+var __defNormalProp$2 = (obj, key, value) => key in obj ? __defProp$2(obj, key, { enumerable: true, configurable: true, writable: true, value }) : obj[key] = value;
+var __publicField$2 = (obj, key, value) => __defNormalProp$2(obj, typeof key !== "symbol" ? key + "" : key, value);
 var _a;
 var DEFAULT_AUDIO_CONFIG = {
   sampleRate: 16e3,
@@ -77,9 +36,9 @@ async function* brainToStream(result) {
 }
 var Pipeline = class {
   constructor(processors = []) {
-    __publicField$1(this, "processors");
-    __publicField$1(this, "listeners", /* @__PURE__ */ new Set());
-    __publicField$1(this, "destroyed", false);
+    __publicField$2(this, "processors");
+    __publicField$2(this, "listeners", /* @__PURE__ */ new Set());
+    __publicField$2(this, "destroyed", false);
     this.processors = [...processors];
   }
   get stages() {
@@ -191,13 +150,13 @@ function pcm16ToWav(pcm, sampleRate, channels = 1) {
 }
 var VADProcessor = class {
   constructor(config = {}) {
-    __publicField$1(this, "name", "vad");
-    __publicField$1(this, "config");
-    __publicField$1(this, "speaking", false);
-    __publicField$1(this, "silenceAccumMs", 0);
-    __publicField$1(this, "speechAccumMs", 0);
-    __publicField$1(this, "buffer", []);
-    __publicField$1(this, "sampleRate", 16e3);
+    __publicField$2(this, "name", "vad");
+    __publicField$2(this, "config");
+    __publicField$2(this, "speaking", false);
+    __publicField$2(this, "silenceAccumMs", 0);
+    __publicField$2(this, "speechAccumMs", 0);
+    __publicField$2(this, "buffer", []);
+    __publicField$2(this, "sampleRate", 16e3);
     this.config = { ...DEFAULT_VAD_CONFIG, ...config };
   }
   process(frame) {
@@ -284,9 +243,9 @@ function concatBuffers(chunks) {
 var SENTENCE_END = /[.!?…,;:…。！？،、，\n]/u;
 var SentenceChunker = class {
   constructor(config = {}) {
-    __publicField$1(this, "name", "sentence-chunker");
-    __publicField$1(this, "config");
-    __publicField$1(this, "buffer", "");
+    __publicField$2(this, "name", "sentence-chunker");
+    __publicField$2(this, "config");
+    __publicField$2(this, "buffer", "");
     this.config = { ...DEFAULT_CHUNKER_CONFIG, ...config };
   }
   process(frame) {
@@ -340,13 +299,13 @@ var SentenceChunker = class {
 };
 var STTProcessor = class {
   constructor(options) {
-    __publicField$1(this, "name", "stt");
-    __publicField$1(this, "stream", null);
-    __publicField$1(this, "provider");
-    __publicField$1(this, "config");
-    __publicField$1(this, "onTranscript");
-    __publicField$1(this, "onError");
-    __publicField$1(this, "unsubs", []);
+    __publicField$2(this, "name", "stt");
+    __publicField$2(this, "stream", null);
+    __publicField$2(this, "provider");
+    __publicField$2(this, "config");
+    __publicField$2(this, "onTranscript");
+    __publicField$2(this, "onError");
+    __publicField$2(this, "unsubs", []);
     var _a2;
     this.provider = options.provider;
     this.config = (_a2 = options.config) != null ? _a2 : {};
@@ -422,8 +381,8 @@ var STTProcessor = class {
 var VoiceLineError = class _VoiceLineError extends Error {
   constructor(code, message, cause) {
     super(message);
-    __publicField$1(this, "code");
-    __publicField$1(this, "cause");
+    __publicField$2(this, "code");
+    __publicField$2(this, "cause");
     this.code = code;
     this.cause = cause;
     this.name = "VoiceLineError";
@@ -448,7 +407,7 @@ function createId(prefix = "") {
 }
 var MessageHistory = class {
   constructor() {
-    __publicField$1(this, "messages", []);
+    __publicField$2(this, "messages", []);
   }
   get all() {
     return this.messages;
@@ -541,43 +500,43 @@ function eagerStream(iterable) {
     }
   };
 }
-(_a = class {
+var Session = (_a = class {
   constructor(options) {
-    __publicField$1(this, "id");
-    __publicField$1(this, "history", new MessageHistory());
-    __publicField$1(this, "state", "idle");
-    __publicField$1(this, "transport");
-    __publicField$1(this, "stt");
-    __publicField$1(this, "tts");
-    __publicField$1(this, "brain");
-    __publicField$1(this, "audio");
-    __publicField$1(this, "ttsConfig");
-    __publicField$1(this, "sttConfig");
-    __publicField$1(this, "sessionConfig");
-    __publicField$1(this, "metadata");
-    __publicField$1(this, "onError");
-    __publicField$1(this, "inbound");
-    __publicField$1(this, "outbound");
-    __publicField$1(this, "unsubs", []);
-    __publicField$1(this, "turnAbort", null);
-    __publicField$1(this, "micEnabled", true);
-    __publicField$1(this, "assistantMessageId", null);
-    __publicField$1(this, "assistantBuffer", "");
-    __publicField$1(this, "stateListeners", /* @__PURE__ */ new Set());
-    __publicField$1(this, "maxDurationTimer", null);
-    __publicField$1(this, "idleTimer", null);
-    __publicField$1(this, "destroyed", false);
+    __publicField$2(this, "id");
+    __publicField$2(this, "history", new MessageHistory());
+    __publicField$2(this, "state", "idle");
+    __publicField$2(this, "transport");
+    __publicField$2(this, "stt");
+    __publicField$2(this, "tts");
+    __publicField$2(this, "brain");
+    __publicField$2(this, "audio");
+    __publicField$2(this, "ttsConfig");
+    __publicField$2(this, "sttConfig");
+    __publicField$2(this, "sessionConfig");
+    __publicField$2(this, "metadata");
+    __publicField$2(this, "onError");
+    __publicField$2(this, "inbound");
+    __publicField$2(this, "outbound");
+    __publicField$2(this, "unsubs", []);
+    __publicField$2(this, "turnAbort", null);
+    __publicField$2(this, "micEnabled", true);
+    __publicField$2(this, "assistantMessageId", null);
+    __publicField$2(this, "assistantBuffer", "");
+    __publicField$2(this, "stateListeners", /* @__PURE__ */ new Set());
+    __publicField$2(this, "maxDurationTimer", null);
+    __publicField$2(this, "idleTimer", null);
+    __publicField$2(this, "destroyed", false);
     /**
      * Serial TTS queue: sentences must synthesize/send in order.
      * Fire-and-forget parallel TTS was reordering audio when shorter
      * later sentences finished first.
      */
-    __publicField$1(this, "ttsTail", Promise.resolve());
+    __publicField$2(this, "ttsTail", Promise.resolve());
     /** Bumped on interrupt so in-flight queue items bail out. */
-    __publicField$1(this, "ttsGeneration", 0);
+    __publicField$2(this, "ttsGeneration", 0);
     /** Watchdog timer: if we stay in `processing` too long, snap back to listening. */
-    __publicField$1(this, "processingTimer", null);
-    __publicField$1(this, "transcriptQueue", []);
+    __publicField$2(this, "processingTimer", null);
+    __publicField$2(this, "transcriptQueue", []);
     var _a2, _b;
     this.id = (_a2 = options.id) != null ? _a2 : createId("ses");
     this.transport = options.transport;
@@ -943,7 +902,291 @@ function eagerStream(iterable) {
     this.idleTimer = null;
   }
 }, /** Max ms we allow `processing` state before forcibly recovering. */
-__publicField$1(_a, "PROCESSING_TIMEOUT_MS", 8e3), _a);
+__publicField$2(_a, "PROCESSING_TIMEOUT_MS", 8e3), _a);
+
+function createTTSHandlerBase(config) {
+  return async function handleTTS(text, overrideConfig) {
+    const finalConfig = { ...config.defaultConfig, ...overrideConfig };
+    const stream = config.tts.synthesize(text, finalConfig);
+    return stream;
+  };
+}
+function createStatelessHandlerBase(config) {
+  return async function* handleStateless(audioPayload, overrideSTT, overrideTTS) {
+    var _a;
+    const sttConfig = { ...config.sttConfig, ...overrideSTT };
+    const sttStream = config.stt.createStream(sttConfig);
+    let finalTranscript = "";
+    const transcriptPromise = new Promise((resolve, reject) => {
+      sttStream.on("transcript", (res) => {
+        if (res.isFinal) {
+          finalTranscript = res.text;
+          resolve();
+        }
+      });
+      sttStream.on("error", reject);
+    });
+    sttStream.write(audioPayload);
+    (_a = sttStream.flush) == null ? void 0 : _a.call(sttStream);
+    await transcriptPromise;
+    await sttStream.close();
+    if (!finalTranscript.trim()) {
+      return;
+    }
+    const sessionId = "stl_" + Math.random().toString(36).substring(2, 9);
+    const abortController = new AbortController();
+    const brainResult = config.brain(finalTranscript, {
+      sessionId,
+      history: [],
+      interrupt: () => {
+        abortController.abort();
+      },
+      signal: abortController.signal,
+      metadata: {}
+    });
+    const stream = brainToStream(brainResult);
+    const chunker = new SentenceChunker();
+    const processFrame = async function* (frame) {
+      const outFrames = chunker.process(frame);
+      if (outFrames && Array.isArray(outFrames)) {
+        for (const out of outFrames) {
+          if (out.kind === "sentence" && out.text) {
+            const ttsStream = config.tts.synthesize(out.text, {
+              ...config.ttsConfig,
+              ...overrideTTS
+            });
+            for await (const audioChunk of ttsStream) {
+              yield audioChunk.data;
+            }
+          }
+        }
+      }
+    };
+    for await (const token of stream) {
+      yield* processFrame({ kind: "text", text: token });
+    }
+    yield* processFrame({ kind: "flush" });
+  };
+}
+
+var __defProp$1 = Object.defineProperty;
+var __defNormalProp$1 = (obj, key, value) => key in obj ? __defProp$1(obj, key, { enumerable: true, configurable: true, writable: true, value }) : obj[key] = value;
+var __publicField$1 = (obj, key, value) => __defNormalProp$1(obj, typeof key !== "symbol" ? key + "" : key, value);
+var SessionManager = class {
+  constructor(config) {
+    __publicField$1(this, "sessions", /* @__PURE__ */ new Map());
+    __publicField$1(this, "config");
+    this.config = config;
+  }
+  get size() {
+    return this.sessions.size;
+  }
+  get(sessionId) {
+    return this.sessions.get(sessionId);
+  }
+  async create(sessionId) {
+    var _a, _b;
+    const id = sessionId != null ? sessionId : createId("ses");
+    if (this.sessions.has(id)) {
+      throw new Error(`Session already exists: ${id}`);
+    }
+    const { transport, clientPayload } = await resolveTransport(this.config.transport, id);
+    const options = {
+      id,
+      transport,
+      stt: this.config.stt,
+      tts: this.config.tts,
+      brain: this.config.brain,
+      onError: (error) => {
+        var _a2, _b2;
+        return (_b2 = (_a2 = this.config).onError) == null ? void 0 : _b2.call(_a2, error, this.sessions.get(id));
+      },
+      onStateChange: (state) => {
+        var _a2, _b2;
+        if (state === "closed") {
+          const closed = this.sessions.get(id);
+          this.sessions.delete(id);
+          if (closed) (_b2 = (_a2 = this.config).onSessionEnd) == null ? void 0 : _b2.call(_a2, closed);
+        }
+      }
+    };
+    if (this.config.audio) options.audio = this.config.audio;
+    if (this.config.vad) options.vad = this.config.vad;
+    if (this.config.chunker) options.chunker = this.config.chunker;
+    if (this.config.session) options.session = this.config.session;
+    if (this.config.sttConfig) options.sttConfig = this.config.sttConfig;
+    if (this.config.ttsConfig) options.ttsConfig = this.config.ttsConfig;
+    const session = new Session(options);
+    this.sessions.set(id, session);
+    await session.start();
+    (_b = (_a = this.config).onSessionStart) == null ? void 0 : _b.call(_a, session);
+    if (clientPayload !== void 0) {
+      return { session, clientPayload };
+    }
+    return { session };
+  }
+  async destroy(sessionId) {
+    const session = this.sessions.get(sessionId);
+    if (!session) return;
+    await session.close();
+    this.sessions.delete(sessionId);
+  }
+  async destroyAll() {
+    const all = [...this.sessions.values()];
+    this.sessions.clear();
+    await Promise.all(all.map((s) => s.close()));
+  }
+};
+async function resolveTransport(transport, sessionId) {
+  if (typeof transport === "function") {
+    const result = await transport(sessionId);
+    if ("transport" in result) {
+      return result;
+    }
+    return { transport: result };
+  }
+  return { transport };
+}
+function createServer(config) {
+  const sessions = new SessionManager(config);
+  return {
+    sessions,
+    createSession: (sessionId) => sessions.create(sessionId),
+    getSession: (sessionId) => sessions.get(sessionId),
+    close: () => sessions.destroyAll()
+  };
+}
+
+function createEventHandler(configOrFactory) {
+  const staticServer = typeof configOrFactory === "function" ? null : createServer(configOrFactory);
+  return async (event) => {
+    var _a, _b, _c;
+    let currentConfig;
+    if (typeof configOrFactory === "function") {
+      currentConfig = await configOrFactory(event);
+    } else {
+      currentConfig = configOrFactory;
+    }
+    const server = staticServer != null ? staticServer : createServer(currentConfig);
+    try {
+      const body = (_b = (_a = event.context) == null ? void 0 : _a.body) != null ? _b : null;
+      const { session, clientPayload } = await server.createSession(body == null ? void 0 : body.sessionId);
+      return { sessionId: session.id, ...clientPayload };
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err);
+      (_c = currentConfig == null ? void 0 : currentConfig.onError) == null ? void 0 : _c.call(currentConfig, err instanceof Error ? err : new Error(message));
+      throw err;
+    }
+  };
+}
+function createTTSHandler(config) {
+  const base = createTTSHandlerBase(config);
+  return async (event) => {
+    var _a, _b, _c;
+    let text = "";
+    if ((_b = (_a = event.context) == null ? void 0 : _a.body) == null ? void 0 : _b.text) text = event.context.body.text;
+    else if ((_c = event.node) == null ? void 0 : _c.req) {
+      throw new Error(
+        "createTTSHandler must receive a parsed body with { text: string } via context, or you can wrap it to pass text directly."
+      );
+    }
+    if (!text) throw new Error("Missing 'text' in request body");
+    const stream = await base(text);
+    const readable = new ReadableStream({
+      async start(controller) {
+        try {
+          for await (const chunk of stream) {
+            controller.enqueue(new Uint8Array(chunk.data));
+          }
+          controller.close();
+        } catch (err) {
+          controller.error(err);
+        }
+      }
+    });
+    return new Response(readable, {
+      headers: {
+        "Content-Type": "audio/pcm"
+      }
+    });
+  };
+}
+function createStatelessHandler(config) {
+  const base = createStatelessHandlerBase(config);
+  return async (event) => {
+    var _a, _b;
+    let audio;
+    if (((_a = event.context) == null ? void 0 : _a.rawBody) instanceof ArrayBuffer) {
+      audio = event.context.rawBody;
+    } else if (((_b = event.context) == null ? void 0 : _b.rawBody) instanceof Buffer) {
+      const b = event.context.rawBody;
+      audio = b.buffer.slice(b.byteOffset, b.byteOffset + b.byteLength);
+    } else {
+      throw new Error(
+        "createStatelessHandler requires raw binary body. Use readRawBody() in Nuxt and pass to event.context.rawBody."
+      );
+    }
+    const stream = base(audio);
+    const readable = new ReadableStream({
+      async start(controller) {
+        try {
+          for await (const chunk of stream) {
+            controller.enqueue(new Uint8Array(chunk));
+          }
+          controller.close();
+        } catch (err) {
+          controller.error(err);
+        }
+      }
+    });
+    return new Response(readable, {
+      headers: {
+        "Content-Type": "audio/pcm"
+      }
+    });
+  };
+}
+
+function fromAISDK(options) {
+  return async function* aiSdkBrain(userText, ctx) {
+    var _a;
+    const streamText = (_a = options.streamText) != null ? _a : await loadStreamText();
+    const messages = toCoreMessages(ctx.history, userText);
+    const result = streamText({
+      model: options.model,
+      system: options.system,
+      messages,
+      tools: options.tools,
+      maxTokens: options.maxTokens,
+      temperature: options.temperature,
+      abortSignal: ctx.signal,
+      ...options.extra
+    });
+    for await (const delta of result.textStream) {
+      if (ctx.signal.aborted) break;
+      yield delta;
+    }
+  };
+}
+function toCoreMessages(history, userText) {
+  const messages = [];
+  for (const m of history) {
+    messages.push({ role: m.role, content: m.content });
+  }
+  const last = messages[messages.length - 1];
+  if (!last || last.role !== "user" || last.content !== userText) {
+    messages.push({ role: "user", content: userText });
+  }
+  return messages;
+}
+async function loadStreamText() {
+  const mod = await import('ai');
+  const fn = mod.streamText;
+  if (!fn) {
+    throw new Error("Could not load streamText from 'ai'. Is the AI SDK installed?");
+  }
+  return fn;
+}
 
 var __defProp = Object.defineProperty;
 var __defNormalProp = (obj, key, value) => key in obj ? __defProp(obj, key, { enumerable: true, configurable: true, writable: true, value }) : obj[key] = value;
@@ -1361,14 +1604,17 @@ function createVoiceStack(env) {
         "Speak naturally; the user is listening, not reading."
       ].join(" "),
       temperature: 0.7,
-      streamText: (opts) => streamText({
-        model: opts.model,
-        system: opts.system,
-        messages: opts.messages,
-        temperature: opts.temperature,
-        abortSignal: opts.abortSignal,
-        tools: opts.tools
-      })
+      streamText: (opts) => {
+        var _a;
+        return streamText({
+          model: opts.model,
+          system: opts.system,
+          messages: (_a = opts.messages) != null ? _a : [],
+          temperature: opts.temperature,
+          abortSignal: opts.abortSignal,
+          tools: opts.tools
+        });
+      }
     });
   } else {
     brain = async function* echoBrain(userText) {
@@ -1379,5 +1625,5 @@ function createVoiceStack(env) {
   return { stt, tts, brain, ready, warnings };
 }
 
-export { createVoiceStack as c };
+export { createVoiceStack as a, createStatelessHandler as b, createEventHandler as c, createTTSHandler as d };
 //# sourceMappingURL=voice-stack.mjs.map

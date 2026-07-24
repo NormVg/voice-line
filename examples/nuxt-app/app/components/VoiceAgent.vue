@@ -34,7 +34,7 @@ const {
   sendText,
   client,
 } = useVoiceAgent({
-  transport: transport.value,
+  session: { transport: transport.value },
   sampleRate: props.sampleRate ?? 16_000,
   autoMic: true,
 });

@@ -24,7 +24,7 @@ function getHandler() {
 }
 
 // Wrapping it in defineEventHandler so we can instantiate the stack per-request or cache it
-export default defineEventHandler(async (event) => {
+export default defineEventHandler(async (event: any) => {
   event.context.body = await readBody(event).catch(() => ({}));
   const handler = getHandler();
   return handler(event);

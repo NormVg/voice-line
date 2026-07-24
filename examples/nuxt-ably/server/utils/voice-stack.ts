@@ -69,13 +69,13 @@ export function createVoiceStack(env: {
       temperature: 0.7,
       streamText: (opts) =>
         streamText({
-          model: opts.model as Parameters<typeof streamText>[0]["model"],
-          system: opts.system as string | undefined,
-          messages: opts.messages as Parameters<typeof streamText>[0]["messages"],
-          temperature: opts.temperature as number | undefined,
-          abortSignal: opts.abortSignal as AbortSignal | undefined,
-          tools: opts.tools as Parameters<typeof streamText>[0]["tools"],
-        }) as unknown as { textStream: AsyncIterable<string> },
+          model: opts.model,
+          system: opts.system,
+          messages: opts.messages ?? [],
+          temperature: opts.temperature,
+          abortSignal: opts.abortSignal,
+          tools: opts.tools,
+        } as any) as unknown as { textStream: AsyncIterable<string> },
     });
   } else {
     brain = async function* echoBrain(userText: string) {

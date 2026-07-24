@@ -17,7 +17,14 @@ import type { Session } from "@voice-line/core";
  * server never imports their packages.
  */
 export interface VoiceLineServerConfig {
-  transport: Transport | ((sessionId: string) => Transport | Promise<Transport>);
+  transport: 
+    | Transport 
+    | ((sessionId: string) => 
+        | Transport 
+        | Promise<Transport> 
+        | { transport: Transport; clientPayload?: Record<string, unknown> }
+        | Promise<{ transport: Transport; clientPayload?: Record<string, unknown> }>
+      );
   stt: STTProvider;
   tts: TTSProvider;
   brain: Brain;

@@ -12,13 +12,13 @@
       "types": "./dist/index.d.ts",
       "import": "./dist/index.js"
     },
-    "./next": {
-      "types": "./dist/next.d.ts",
-      "import": "./dist/next.js"
-    },
     "./nitro": {
       "types": "./dist/nitro.d.ts",
       "import": "./dist/nitro.js"
+    },
+    "./next": {
+      "types": "./dist/next.d.ts",
+      "import": "./dist/next.js"
     }
   },
   "files": [

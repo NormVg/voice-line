@@ -20,11 +20,7 @@ export function createEventHandler(
   // If static config, create the server once globally.
   const staticServer = typeof configOrFactory === "function" ? null : createServer(configOrFactory);
 
-  return async (event: {
-    node?: { req?: { method?: string } };
-    method?: string;
-    context?: { body?: { sessionId?: string } };
-  }) => {
+  return async (event: any) => {
     let currentConfig: VoiceLineServerConfig;
     if (typeof configOrFactory === "function") {
       currentConfig = await configOrFactory(event);

@@ -30,7 +30,7 @@ function getHandler() {
   });
 }
 
-export default defineEventHandler(async (event) => {
+export default defineEventHandler(async (event: any) => {
   // readRawBody reads the binary Buffer from the request in Nitro
   const rawBody = await readRawBody(event, false);
   event.context.rawBody = rawBody; // createStatelessHandler expects this in context

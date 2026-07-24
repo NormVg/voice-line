@@ -35,7 +35,7 @@ wss.on("connection", async (socket, req) => {
   });
 
   session = new Session({
-    id: sessionId,
+    ...(sessionId ? { id: sessionId } : {}),
     transport,
     stt: new DemoSTT(),
     tts: new DemoTTS(),

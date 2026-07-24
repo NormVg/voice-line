@@ -1,6 +1,5 @@
 import { d as defineEventHandler, a as readRawBody, u as useRuntimeConfig } from '../../nitro/nitro.mjs';
-import { createStatelessHandler } from '@voice-line/server/nitro';
-import { c as createVoiceStack } from '../../_/voice-stack.mjs';
+import { a as createVoiceStack, b as createStatelessHandler } from '../../_/voice-stack.mjs';
 import 'node:http';
 import 'node:https';
 import 'node:events';

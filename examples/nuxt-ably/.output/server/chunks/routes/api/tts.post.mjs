@@ -1,6 +1,5 @@
 import { d as defineEventHandler, r as readBody, u as useRuntimeConfig } from '../../nitro/nitro.mjs';
-import { createTTSHandler } from '@voice-line/server/nitro';
-import { c as createVoiceStack } from '../../_/voice-stack.mjs';
+import { a as createVoiceStack, d as createTTSHandler } from '../../_/voice-stack.mjs';
 import 'node:http';
 import 'node:https';
 import 'node:events';

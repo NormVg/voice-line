@@ -46,7 +46,7 @@ transport.onEvent((event: VoiceLineEvent) => {
       console.log("[event] audio flush");
       break;
     case "error":
-      console.error(`[event] error: ${event.message}`);
+      console.error(`[event] error: ${event.error.message}`);
       break;
     default:
       console.log(`[event] ${event.type}`);

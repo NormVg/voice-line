@@ -18,7 +18,7 @@ function getStack(config: ReturnType<typeof useRuntimeConfig>) {
 
 // createEventHandler returns a handler compatible with h3
 export default defineEventHandler(
-  createEventHandler(async (event) => {
+  createEventHandler(async (event: any) => {
     const config = useRuntimeConfig();
     const ablyApiKey = config.ablyApiKey as string;
 
@@ -64,10 +64,10 @@ export default defineEventHandler(
         idleTimeoutMs: 5 * 60 * 1000,  // 5 mins
         bargeIn: "interrupt",
       },
-      onStateChange: (state, prev) => {
+      onStateChange: (state: any, prev: any) => {
         console.log(`[session] ${prev} → ${state}`);
       },
-      onError: (err) => {
+      onError: (err: any) => {
         console.error(`[session error]`, err.message);
       },
     };

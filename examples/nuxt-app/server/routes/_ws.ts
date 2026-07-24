@@ -18,7 +18,7 @@ function getStack() {
 }
 
 export default defineWebSocketHandler(
-  createNitroWebSocketHandler((peer) => {
+  createNitroWebSocketHandler((peer: any) => {
     const stack = getStack();
 
     return {
@@ -53,10 +53,10 @@ export default defineWebSocketHandler(
         maxDurationMs: 30 * 60 * 1000,
         idleTimeoutMs: 5 * 60 * 1000,
       },
-      onSessionStart: (session) => {
+      onSessionStart: (session: any) => {
         console.log(`[voice-line] Started WS session: ${session.id}`);
       },
-      onError: (err, session) => {
+      onError: (err: any, session: any) => {
         console.error(`[voice-line ${session?.id}]`, err.message);
       },
     };

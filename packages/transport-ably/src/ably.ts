@@ -137,10 +137,21 @@ export class AblyTransport implements Transport {
 
   async disconnect(): Promise<void> {
     if (this.channel) {
-      this.channel.unsubscribe();
+      try {
+        await this.channel.unsubscribe();
+      } catch (err) {
+        // ignore unsubscribe errors during teardown
+      }
     }
     if (this.client) {
-      this.client.close();
+      try {
+        const p = this.client.close();
+        if (p && typeof p.catch === "function") {
+          p.catch(() => {});
+        }
+      } catch (err) {
+        // ignore close errors
+      }
       this.client = null;
     }
     this.channel = null;

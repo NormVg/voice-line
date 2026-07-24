@@ -362,7 +362,7 @@ const _sfc_main = {
     });
     return (_ctx, _push, _parent, _attrs) => {
       const _component_NuxtLink = __nuxt_component_0;
-      _push(`<div${ssrRenderAttrs(mergeProps({ class: "antialiased bg-white dark:bg-black dark:text-white font-sans grid min-h-screen overflow-hidden place-content-center text-black" }, _attrs))} data-v-f90b7799><div class="fixed left-0 right-0 spotlight z-10" data-v-f90b7799></div><div class="max-w-520px text-center z-20" data-v-f90b7799><h1 class="font-medium mb-8 sm:text-10xl text-8xl" data-v-f90b7799>${ssrInterpolate(__props.status)}</h1><p class="font-light leading-tight mb-16 px-8 sm:px-0 sm:text-4xl text-xl" data-v-f90b7799>${ssrInterpolate(__props.description)}</p><div class="flex items-center justify-center w-full" data-v-f90b7799>`);
+      _push(`<div${ssrRenderAttrs(mergeProps({ class: "antialiased bg-white dark:bg-black dark:text-white font-sans grid min-h-screen overflow-hidden place-content-center text-black" }, _attrs))} data-v-3943939b><div class="fixed left-0 right-0 spotlight z-10" data-v-3943939b></div><div class="max-w-520px text-center z-20" data-v-3943939b><h1 class="font-medium mb-8 sm:text-10xl text-8xl" data-v-3943939b>${ssrInterpolate(__props.status)}</h1><p class="font-light leading-tight mb-16 px-8 sm:px-0 sm:text-4xl text-xl" data-v-3943939b>${ssrInterpolate(__props.description)}</p><div class="flex items-center justify-center w-full" data-v-3943939b>`);
       _push(ssrRenderComponent(_component_NuxtLink, {
         to: "/",
         class: "cursor-pointer gradient-border px-4 py-2 sm:px-6 sm:py-3 sm:text-xl text-md"
@@ -385,10 +385,10 @@ const _sfc_main = {
 const _sfc_setup = _sfc_main.setup;
 _sfc_main.setup = (props, ctx) => {
   const ssrContext = useSSRContext();
-  (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add("../../../node_modules/.pnpm/nuxt@3.21.9_@biomejs+biome@1.9.4_@types+node@22.20.1_@vue+compiler-sfc@3.5.40_cac@6.7.14_db0@_eachidmypsudlfp3yvbkwoxude/node_modules/nuxt/dist/app/components/error-404.vue");
+  (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add("../../../node_modules/.pnpm/nuxt@3.21.9_@biomejs+biome@1.9.4_@types+node@22.20.1_@vue+compiler-sfc@3.5.40_cac@6.7.14_db0@_wuiyuwwsbls5ffpnzpojhenl6i/node_modules/nuxt/dist/app/components/error-404.vue");
   return _sfc_setup ? _sfc_setup(props, ctx) : void 0;
 };
-const error404 = /* @__PURE__ */ _export_sfc(_sfc_main, [["__scopeId", "data-v-f90b7799"]]);
+const error404 = /* @__PURE__ */ _export_sfc(_sfc_main, [["__scopeId", "data-v-3943939b"]]);
 
 export { error404 as default };
-//# sourceMappingURL=error-404-u28sHMUw.mjs.map
+//# sourceMappingURL=error-404-C3X_G4Ql.mjs.map
