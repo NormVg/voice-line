@@ -17,14 +17,23 @@ function getStack() {
   return globalStack;
 }
 
+interface PeerContext {
+  listeners: Record<string, Function[]>;
+  session?: Session;
+}
+const peerContexts = new WeakMap<any, PeerContext>();
+
 export default defineWebSocketHandler({
   open(peer) {
     const url = new URL(peer.url, "http://localhost");
     const sessionId = url.searchParams.get("session") ?? undefined;
     console.log(`[voice-line] client connected session=${sessionId ?? peer.id}`);
 
+    const ctx: PeerContext = { listeners: {} };
+    peerContexts.set(peer, ctx);
+
     // Provide an EventEmitter-like interface for fromWebSocket
-    const listeners: Record<string, Function[]> = {};
+    const listeners = ctx.listeners;
     const wsLike = {
       readyState: 1, // WS_OPEN
       send: (data: any) => peer.send(data),
@@ -46,9 +55,6 @@ export default defineWebSocketHandler({
         listeners[type] = listeners[type].filter(l => l !== listener);
       }
     };
-
-    // Store in peer context so we can route messages
-    peer.ctx.listeners = listeners;
 
     const stack = getStack();
 
@@ -105,7 +111,7 @@ export default defineWebSocketHandler({
         console.error("[voice-line] failed to start session:", err);
         peer.close();
       });
-      peer.ctx.session = session;
+      ctx.session = session;
     } catch (err) {
       console.error("[voice-line] failed to initialize session:", err);
       peer.close();
@@ -116,7 +122,8 @@ export default defineWebSocketHandler({
     const isBinary = typeof message.rawData !== "string";
     const data = isBinary ? message.arrayBuffer() : message.text();
     
-    const listeners = peer.ctx.listeners?.message || [];
+    const ctx = peerContexts.get(peer);
+    const listeners = ctx?.listeners?.message || [];
     listeners.forEach((l: any) => {
       // attachSocket uses addEventListener if present, so it expects { data }
       l({ data });
@@ -124,14 +131,16 @@ export default defineWebSocketHandler({
   },
   
   close(peer) {
-    const listeners = peer.ctx.listeners?.close || [];
+    const ctx = peerContexts.get(peer);
+    const listeners = ctx?.listeners?.close || [];
     listeners.forEach((l: any) => l());
-    const session = peer.ctx.session as Session | undefined;
+    const session = ctx?.session;
     void session?.close();
   },
   
   error(peer, error) {
-    const listeners = peer.ctx.listeners?.error || [];
+    const ctx = peerContexts.get(peer);
+    const listeners = ctx?.listeners?.error || [];
     listeners.forEach((l: any) => l(error));
   }
 });
