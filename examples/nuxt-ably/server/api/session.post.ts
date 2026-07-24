@@ -97,10 +97,13 @@ export default defineEventHandler(async (event) => {
   sessionStore.set(sessionId, session);
 
   // Start the session (this connects the transport)
-  session.start().catch((err) => {
+  try {
+    await session.start();
+  } catch (err) {
     console.error(`[session ${sessionId}] failed to start:`, err);
     sessionStore.delete(sessionId);
-  });
+    throw createError({ statusCode: 500, message: "Failed to start Ably session" });
+  }
 
   // 4. Return the ID and token request to the client
   return {

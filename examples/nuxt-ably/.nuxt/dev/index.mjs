@@ -2237,22 +2237,7 @@ _KZyTCarWQs5vgtZuq_5RXCShBMTXwEqN0TIl9Pw5SE,
 _wH6JrtIxmaSoA8lCPWFnE9z4lQeXW6H5z3l5aymEQw
 ];
 
-const assets = {
-  "/index.mjs": {
-    "type": "text/javascript; charset=utf-8",
-    "etag": "\"1c80c-Kxemnxs+2XQcv/25UxIbnEHrjao\"",
-    "mtime": "2026-07-24T15:29:15.536Z",
-    "size": 116748,
-    "path": "index.mjs"
-  },
-  "/index.mjs.map": {
-    "type": "application/json",
-    "etag": "\"71408-a7xZX4EqXONumCbNmmAIPjDSHrk\"",
-    "mtime": "2026-07-24T15:29:15.535Z",
-    "size": 463880,
-    "path": "index.mjs.map"
-  }
-};
+const assets = {};
 
 function readAsset (id) {
   const serverDir = dirname$1(fileURLToPath(globalThis._importMeta_.url));
@@ -3280,10 +3265,13 @@ const session_post = defineEventHandler(async (event) => {
     }
   });
   sessionStore.set(sessionId, session);
-  session.start().catch((err) => {
+  try {
+    await session.start();
+  } catch (err) {
     console.error(`[session ${sessionId}] failed to start:`, err);
     sessionStore.delete(sessionId);
-  });
+    throw createError({ statusCode: 500, message: "Failed to start Ably session" });
+  }
   return {
     sessionId,
     tokenRequest

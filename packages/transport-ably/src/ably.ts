@@ -90,7 +90,9 @@ export class AblyTransport implements Transport {
 
         void this.channel.subscribe(this.subscribeJsonEvent, (msg: { data: unknown }) => {
           if (msg.data && typeof msg.data === "object") {
-            for (const h of this.eventHandlers) h(msg.data as VoiceLineEvent);
+            const evt = msg.data as VoiceLineEvent;
+            console.log(`[AblyTransport:${this.options.role}] received event on ${this.subscribeJsonEvent}:`, evt.type);
+            for (const h of this.eventHandlers) h(evt);
           }
         });
 
@@ -136,6 +138,7 @@ export class AblyTransport implements Transport {
 
   sendEvent(event: VoiceLineEvent): void {
     if (!this.channel || this.stateValue !== "connected") return;
+    console.log(`[AblyTransport:${this.options.role}] sending event to ${this.publishJsonEvent}:`, event.type);
     void this.channel.publish(this.publishJsonEvent, event);
   }
 

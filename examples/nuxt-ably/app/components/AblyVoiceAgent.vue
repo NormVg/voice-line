@@ -43,13 +43,9 @@ async function onConnect() {
   error.value = null;
   connecting.value = true;
   try {
-    // 1. Ask the server to create a session and give us a token request
-    const response = await fetch("/api/session", { method: "POST" });
-    if (!response.ok) {
-      const errText = await response.text();
-      throw new Error(`Server error: ${errText}`);
-    }
-    const { sessionId, tokenRequest } = await response.json();
+    // 1. Request a new session and Ably token from the server
+    const response = await $fetch<{ sessionId: string; tokenRequest: any }>("/api/session", { method: "POST" });
+    const { sessionId, tokenRequest } = response;
 
     // 2. Create the Ably transport using the token request
     const transport = new AblyTransport({
