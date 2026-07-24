@@ -99,6 +99,13 @@ export class AblyTransport implements Transport {
       });
     });
 
+    realtime.connection.on((stateChange: any) => {
+      console.log(`[AblyTransport:${this.options.role}] Connection state changed:`, stateChange.current, stateChange.reason);
+      if (stateChange.current === "closed" || stateChange.current === "failed" || stateChange.current === "suspended") {
+        this.stateValue = "disconnected";
+      }
+    });
+
     this.client = realtime;
     const name = this.options.channelName
       ? this.options.channelName(sessionId)
@@ -115,12 +122,14 @@ export class AblyTransport implements Transport {
         }
       }),
       this.channel.subscribe(this.subscribeJsonEvent, (msg: { data: unknown }) => {
+        console.log(`[AblyTransport:${this.options.role}] Received event`, msg.data);
         if (msg.data && typeof msg.data === "object") {
           for (const h of this.eventHandlers) h(msg.data as VoiceLineEvent);
         }
       }),
     ]);
 
+    console.log(`[AblyTransport:${this.options.role}] Connected and subscribed`);
     this.stateValue = "connected";
   }
 
@@ -158,6 +167,7 @@ export class AblyTransport implements Transport {
 
   sendEvent(event: VoiceLineEvent): void {
     if (!this.channel || this.stateValue !== "connected") return;
+    console.log(`[AblyTransport:${this.options.role}] Sending event`, event);
     void this.channel.publish(this.publishJsonEvent, event);
   }
 

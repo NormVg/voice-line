@@ -110,6 +110,7 @@ export class VoiceLineClient {
 
     this.unsubs.push(
       this.transport.onEvent((event) => {
+        console.log(`[VoiceLineClient] Received server event:`, event.type);
         this.dispatcher.dispatch(event);
         this.handleServerEvent(event);
       }),
@@ -130,6 +131,7 @@ export class VoiceLineClient {
       await this.mic?.start();
     }
 
+    console.log(`[VoiceLineClient] Connected, setting state to listening`);
     this.setState("listening");
   }
 

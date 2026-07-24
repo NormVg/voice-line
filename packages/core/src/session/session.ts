@@ -214,8 +214,12 @@ export class Session {
     await this.transport.connect(this.id);
     this.setState("connected");
 
+    let audioCount = 0;
     this.unsubs.push(
       this.transport.onAudio((chunk) => {
+        audioCount++;
+        if (audioCount % 10 === 0) console.log(`[session ${this.id}] Received 10 audio chunks (${chunk.byteLength} bytes each)`);
+        
         if (!this.micEnabled || this.destroyed) return;
         void this.inbound.push({
           kind: "audio",

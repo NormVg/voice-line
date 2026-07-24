@@ -1,30 +1,56 @@
-const Ably = require('ably');
-const apiKey = "VLU4xA.Upxw-Q:1HLFfGi1UNkqkfQTqjliqP27nXM8oxODY7e-3yy7qaI";
+const Ably = require("ably");
 
-async function main() {
+async function run() {
+  const apiKey = process.env.ABLY_API_KEY;
+  if (!apiKey) throw new Error("No API key");
+
   const rest = new Ably.Rest(apiKey);
+  const sessionId = "ses_test123";
+  const channelName = `voice-line:${sessionId}`;
+
   console.log("Creating token request...");
   const tokenRequest = await rest.auth.createTokenRequest({
-    clientId: "test_client",
+    clientId: `client_${sessionId}`,
     capability: {
-      "voice-line:test": ["publish", "subscribe"]
+      [channelName]: ["publish", "subscribe", "presence"]
     }
   });
 
-  console.log("Connecting with token request...");
-  const realtime = new Ably.Realtime({
-    authCallback: (_, cb) => cb(null, tokenRequest)
+  console.log("Token request created. Connecting client...");
+  
+  const client = new Ably.Realtime({
+    authCallback: (tokenParams, callback) => {
+      callback(null, tokenRequest);
+    }
   });
 
-  realtime.connection.on('connected', () => {
-    console.log("Connected successfully via TokenRequest!");
-    realtime.close();
+  await new Promise((resolve, reject) => {
+    client.connection.once("connected", resolve);
+    client.connection.once("failed", reject);
   });
 
-  realtime.connection.on('failed', (err) => {
-    console.error("Connection failed:", err);
-    process.exit(1);
-  });
+  console.log("Client connected. Subscribing...");
+
+  const channel = client.channels.get(channelName);
+  await Promise.all([
+    channel.subscribe("audio:server", () => {}),
+    channel.subscribe("event:server", () => {})
+  ]);
+
+  console.log("Subscribed! Publishing...");
+
+  await channel.publish("event:client", { type: "client:ready" });
+  
+  console.log("Published! Waiting a bit...");
+  
+  await new Promise(r => setTimeout(r, 2000));
+  
+  console.log("Closing...");
+  client.close();
+  console.log("Done.");
 }
 
-main().catch(console.error);
+run().catch(err => {
+  console.error("Test failed:", err);
+  process.exit(1);
+});

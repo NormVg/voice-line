@@ -105,7 +105,10 @@ export default defineEventHandler(async (event) => {
   //    Even if session:ready is lost (it's informational), the client:ready handshake
   //    is what actually starts the conversation.
   setImmediate(() => {
-    session.start().catch((err) => {
+    console.log(`[session.post.ts] calling session.start() for ${sessionId}...`);
+    session.start().then(() => {
+      console.log(`[session.post.ts] session.start() finished for ${sessionId}`);
+    }).catch((err) => {
       console.error(`[session ${sessionId}] failed to start:`, err);
       sessionStore.delete(sessionId);
     });
