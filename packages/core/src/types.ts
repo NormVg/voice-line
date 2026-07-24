@@ -75,7 +75,7 @@ export interface VADConfig {
 
 export const DEFAULT_VAD_CONFIG: VADConfig = {
   confidence: 0.7,
-  silenceMs: 500,
+  silenceMs: 400,
   minSpeechMs: 200,
 };
 
@@ -86,7 +86,7 @@ export interface ChunkerConfig {
 }
 
 export const DEFAULT_CHUNKER_CONFIG: ChunkerConfig = {
-  maxChars: 150,
+  maxChars: 80,
   flushOnPunctuation: true,
 };
 

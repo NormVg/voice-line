@@ -1,7 +1,7 @@
 import type { Frame, Processor } from "../interfaces/processor.js";
 import { DEFAULT_CHUNKER_CONFIG, type ChunkerConfig } from "../types.js";
 
-const SENTENCE_END = /[.!?…。！？\n]/u;
+const SENTENCE_END = /[.!?…,;:…。！？،、，\n]/u;
 
 /**
  * Buffers streaming text tokens into sentence-sized chunks for natural TTS.
