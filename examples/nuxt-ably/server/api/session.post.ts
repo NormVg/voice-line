@@ -48,6 +48,7 @@ export default defineEventHandler(async (event) => {
   
   // The server uses the full API key to connect to Ably
   const transport = new AblyTransport({
+    role: "server",
     apiKey: ablyApiKey,
     channelName: () => channelName,
     Realtime: Ably.Realtime,

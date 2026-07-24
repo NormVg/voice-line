@@ -773,9 +773,8 @@ voice-line/
 
 ### Phase 4 — Ecosystem
 - [x] `@voice-line/transport-ws` — raw WebSocket adapter
-- [ ] `@voice-line/provider-deepgram` — Deepgram STT
 - [ ] `@voice-line/provider-elevenlabs` — ElevenLabs TTS
-- [ ] `@voice-line/provider-openai` — Whisper STT + OpenAI TTS
+
 
 ---
 

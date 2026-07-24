@@ -53,6 +53,7 @@ async function onConnect() {
 
     // 2. Create the Ably transport using the token request
     const transport = new AblyTransport({
+      role: "client",
       authCallback: (_, callback) => {
         callback(null, tokenRequest);
       },

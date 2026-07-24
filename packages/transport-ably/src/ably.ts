@@ -12,6 +12,8 @@ export interface AblyTransportOptions {
   authUrl?: string;
   /** Auth callback returning a token request / token details. */
   authCallback?: (tokenParams: unknown, callback: (err: Error | null, tokenOrDetails: unknown) => void) => void;
+  /** Role of this transport to separate upstream/downstream pub-sub traffic */
+  role: "client" | "server";
   /** Channel name factory. Default: `voice-line:{sessionId}` */
   channelName?: (sessionId: string) => string;
   /**
@@ -52,57 +54,66 @@ export class AblyTransport implements Transport {
     return this.stateValue;
   }
 
+  private get publishAudioEvent() { return `audio:${this.options.role}`; }
+  private get subscribeAudioEvent() { return this.options.role === "client" ? "audio:server" : "audio:client"; }
+  private get publishJsonEvent() { return `event:${this.options.role}`; }
+  private get subscribeJsonEvent() { return this.options.role === "client" ? "event:server" : "event:client"; }
+
   async connect(sessionId: string): Promise<void> {
-    if (this.stateValue === "connected" || this.stateValue === "connecting") return;
+    if (this.stateValue === "connected" || this.stateValue === "connecting") {
+      return;
+    }
     this.stateValue = "connecting";
 
     const Realtime = this.options.Realtime ?? (await importAblyRealtime());
-    const clientOptions: Record<string, unknown> = {
-      echoMessages: false,
-    };
+    const clientOptions: Record<string, unknown> = {};
     if (this.options.apiKey) clientOptions.key = this.options.apiKey;
     if (this.options.authUrl) clientOptions.authUrl = this.options.authUrl;
     if (this.options.authCallback) clientOptions.authCallback = this.options.authCallback;
 
-    this.client = new Realtime(clientOptions);
+    const realtime = new Realtime(clientOptions);
 
-    await new Promise<void>((resolve, reject) => {
-      this.client.connection.once("connected", () => resolve());
-      this.client.connection.once("failed", (err: Error) => reject(err));
+    return new Promise((resolve, reject) => {
+      realtime.connection.once("connected", () => {
+        this.client = realtime;
+        const name = this.options.channelName
+          ? this.options.channelName(sessionId)
+          : `voice-line:${sessionId}`;
+        this.channel = realtime.channels.get(name);
+
+        void this.channel.subscribe(this.subscribeAudioEvent, (msg: { data: unknown }) => {
+          const pcm = decodeAudio(msg.data);
+          if (pcm) {
+            for (const h of this.audioHandlers) h(pcm);
+          }
+        });
+
+        void this.channel.subscribe(this.subscribeJsonEvent, (msg: { data: unknown }) => {
+          if (msg.data && typeof msg.data === "object") {
+            for (const h of this.eventHandlers) h(msg.data as VoiceLineEvent);
+          }
+        });
+
+        this.stateValue = "connected";
+        resolve();
+      });
+
+      realtime.connection.once("failed", (err: Error) => {
+        this.stateValue = "disconnected";
+        reject(err);
+      });
     });
-
-    const name =
-      this.options.channelName?.(sessionId) ?? `voice-line:${sessionId}`;
-    this.channel = this.client.channels.get(name);
-
-    this.channel.subscribe(AUDIO_EVENT, (msg: { data: unknown }) => {
-      const buf = decodeAudio(msg.data);
-      if (buf) {
-        for (const h of this.audioHandlers) h(buf);
-      }
-    });
-
-    this.channel.subscribe(JSON_EVENT, (msg: { data: unknown }) => {
-      if (msg.data && typeof msg.data === "object") {
-        const event = msg.data as VoiceLineEvent;
-        for (const h of this.eventHandlers) h(event);
-      }
-    });
-
-    this.stateValue = "connected";
   }
 
   async disconnect(): Promise<void> {
-    try {
-      this.channel?.unsubscribe();
-      this.client?.close();
-    } finally {
-      this.channel = null;
+    if (this.client) {
+      this.client.close();
       this.client = null;
-      this.stateValue = "disconnected";
-      this.audioHandlers.clear();
-      this.eventHandlers.clear();
     }
+    this.channel = null;
+    this.stateValue = "disconnected";
+    this.audioHandlers.clear();
+    this.eventHandlers.clear();
   }
 
   sendAudio(chunk: ArrayBuffer): void {
@@ -112,7 +123,7 @@ export class AblyTransport implements Transport {
     const MAX_BYTES = 32 * 1024;
     for (let offset = 0; offset < chunk.byteLength; offset += MAX_BYTES) {
       const slice = chunk.slice(offset, offset + MAX_BYTES);
-      void this.channel.publish(AUDIO_EVENT, encodeAudio(slice));
+      void this.channel.publish(this.publishAudioEvent, encodeAudio(slice));
     }
   }
 
@@ -125,7 +136,7 @@ export class AblyTransport implements Transport {
 
   sendEvent(event: VoiceLineEvent): void {
     if (!this.channel || this.stateValue !== "connected") return;
-    void this.channel.publish(JSON_EVENT, event);
+    void this.channel.publish(this.publishJsonEvent, event);
   }
 
   onEvent(handler: EventHandler): Unsubscribe {
