@@ -16,12 +16,6 @@ export default defineNuxtConfig({
     ollamaApiKey: process.env.OLLAMA_API_KEY ?? "",
     ollamaBaseUrl: process.env.OLLAMA_BASE_URL ?? "https://ollama.com",
     ollamaModel: process.env.OLLAMA_MODEL ?? "gemma4:31b-cloud",
-    voiceWsPort: process.env.VOICE_WS_PORT ?? "3001",
-    // public (browser)
-    public: {
-      voiceWsUrl:
-        process.env.NUXT_PUBLIC_VOICE_WS_URL ?? "ws://127.0.0.1:3001/voice",
-    },
   },
 
   vite: {
@@ -31,6 +25,9 @@ export default defineNuxtConfig({
   },
 
   nitro: {
+    experimental: {
+      websocket: true,
+    },
     // voice-line packages are ESM
     externals: {
       inline: [
