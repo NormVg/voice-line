@@ -1,18 +1,19 @@
 <script setup lang="ts">
-const { data, error, pending } = await useFetch<{
-  wsUrl: string;
-  sampleRate: number;
-}>("/api/voice/config");
+import { ref, onMounted } from 'vue';
+
+const wsUrl = ref("");
+const sampleRate = 16_000;
+
+onMounted(() => {
+  const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
+  wsUrl.value = `${protocol}//${window.location.host}/_ws`;
+});
 </script>
 
 <template>
   <main>
-    <p v-if="pending" class="boot">Loading voice config…</p>
-    <p v-else-if="error" class="boot error">
-      Failed to load voice config: {{ error.message }}
-    </p>
-    <ClientOnly v-else-if="data">
-      <VoiceAgent :ws-url="data.wsUrl" :sample-rate="data.sampleRate" />
+    <ClientOnly>
+      <VoiceAgent v-if="wsUrl" :ws-url="wsUrl" :sample-rate="sampleRate" />
       <template #fallback>
         <p class="boot">Starting client…</p>
       </template>
