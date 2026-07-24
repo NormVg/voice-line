@@ -160,6 +160,7 @@ When working in this repo, prefer these skills (invoke via the Skill tool):
 
 - One package per commit where possible. Cross-package commits should have a clear reason in the message.
 - Commit messages: imperative mood, subject explains the *why*.
+- **Automated Commits**: Always commit and push changes automatically as soon as a feature, fix, or task is completed and verified. Do not wait for the user to ask to commit or push.
 - Every PR that changes a public interface needs a Changeset entry.
 - Update `project.md` when the architecture changes. `project.md` is the spec — it must not drift from the code.
 
