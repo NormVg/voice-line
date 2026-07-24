@@ -1,32 +1,22 @@
-# voice-line
+<div align="center">
+  <h1>🎙️ voice-line</h1>
+  <p><b>The real-time voice layer for AI agents. You bring the brain — we handle the ears and mouth.</b></p>
+  <p><i>No WebRTC. No infrastructure. Just WebSockets.</i></p>
+</div>
 
-**Real-time voice layer for AI agents. You bring the brain — we handle the ears and mouth.**
+<br/>
 
-> No WebRTC. No infrastructure. Just WebSockets.
+`voice-line` is a transport-agnostic TypeScript framework for building conversational voice agents. It sits perfectly between the microphone and the speaker, handling the audio pipeline while you focus on the intelligence.
 
-`voice-line` is a TypeScript monorepo that sits between the microphone and the speaker. It handles audio capture, streaming, Voice Activity Detection (VAD), Speech-to-Text (STT), Text-to-Speech (TTS), playback, and intelligent interruptions. 
+### 🌟 Why voice-line?
 
-**It does not include an LLM.** The brain is yours. `voice-line` gives you transcribed text and expects text back.
-
-Full architecture: [project.md](./project.md) · Agent rules: [AGENTS.md](./AGENTS.md)
-
----
-
-## Philosophy & The Problem We Solve
-
-Building real-time voice agents is exceptionally difficult. Developers often find themselves wrestling with WebRTC signaling, deciphering complex state machines to handle human interruptions, and dealing with massive, opinionated orchestrators that lock them into specific LLM ecosystems.
-
-`voice-line` was built to solve this by embracing three core principles:
-
-1. **Do One Thing Best**: We handle the audio pipeline—Speech-to-Text (STT), Text-to-Speech (TTS), Voice Activity Detection (VAD), and interruptions. We leave the intelligence to you.
-2. **Bring Your Own Brain**: `voice-line` does not dictate how you manage your LLM, tools, or memory. By exposing a simple text-in/text-out interface, it integrates effortlessly with the tools you already use, such as the Vercel AI SDK or custom backend frameworks.
-3. **No WebRTC**: WebRTC is notorious for its complex infrastructure and restrictive NAT traversal requirements. `voice-line` relies purely on WebSockets and robust pub/sub transports (like Ably), enabling highly scalable voice applications without the overhead of STUN/TURN servers.
-
-By isolating the real-time audio complexity, `voice-line` empowers developers to focus entirely on designing the conversational intelligence of their agents.
+- **Bring Your Own Brain**: Seamlessly integrates with the Vercel AI SDK, LangChain, or your own custom LLM orchestration. We give you text, you give us text.
+- **Zero WebRTC Headaches**: WebRTC introduces complex NAT traversal and STUN/TURN requirements. We rely purely on WebSockets and pub/sub (like Ably) for massive scalability.
+- **Do One Thing Best**: We handle Voice Activity Detection (VAD), Speech-to-Text (STT), Text-to-Speech (TTS), audio chunking, and human interruptions. You build the agent.
 
 ---
 
-## Architecture
+## 🏗️ Architecture
 
 `voice-line` is built on a stateless, transport-agnostic pipeline.
 

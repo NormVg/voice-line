@@ -9,3 +9,7 @@ coverage
 .turbo
 *.log
 .vite
+
+# Antigravity Agents
+.agents/
+AGENTS.md
