@@ -114,8 +114,7 @@ export class SarvamTTSProvider implements TTSProvider {
     const reader = body.getReader();
     const sampleRate = config.sampleRate ?? this.options.sampleRate ?? 16_000;
     let pending = new Uint8Array(0);
-    let skipped = 0;
-    const HEADER_SIZE = 44; // Standard WAV header size
+    let headerHandled = false;
 
     try {
       while (true) {
@@ -124,11 +123,22 @@ export class SarvamTTSProvider implements TTSProvider {
         if (!value || value.byteLength === 0) continue;
 
         let currentChunk = value;
-        if (skipped < HEADER_SIZE) {
-          const toSkip = Math.min(HEADER_SIZE - skipped, currentChunk.length);
-          skipped += toSkip;
-          if (toSkip === currentChunk.length) continue;
-          currentChunk = currentChunk.subarray(toSkip);
+
+        // On first data: detect and skip WAV header if present
+        if (!headerHandled) {
+          headerHandled = true;
+          // WAV files start with ASCII "RIFF"
+          if (
+            currentChunk.length >= 4 &&
+            currentChunk[0] === 0x52 && // R
+            currentChunk[1] === 0x49 && // I
+            currentChunk[2] === 0x46 && // F
+            currentChunk[3] === 0x46    // F
+          ) {
+            const headerSize = 44;
+            if (currentChunk.length <= headerSize) continue;
+            currentChunk = currentChunk.subarray(headerSize);
+          }
         }
 
         const totalLength = pending.length + currentChunk.length;
