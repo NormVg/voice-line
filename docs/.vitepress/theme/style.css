@@ -17,10 +17,14 @@
 
   /* VitePress Overrides */
   --vp-c-bg: var(--vercel-bg);
-  --vp-c-bg-alt: var(--vercel-accents-1);
+  --vp-c-bg-alt: var(--vercel-bg); /* Sidebar background */
   --vp-c-bg-elv: var(--vercel-accents-1);
   --vp-c-divider: var(--vercel-accents-2);
   --vp-c-border: var(--vercel-accents-2);
+  
+  --vp-sidebar-bg-color: var(--vercel-bg);
+  --vp-code-block-bg: var(--vercel-bg);
+  --vp-code-bg: var(--vercel-accents-1);
   
   --vp-c-brand-1: var(--vercel-foreground);
   --vp-c-brand-2: var(--vercel-accents-7);
@@ -167,5 +171,17 @@
 
 /* Global Background Lock */
 .Layout {
+  background-color: var(--vercel-bg) !important;
+}
+
+/* Code Blocks */
+div[class*="language-"] {
+  background-color: var(--vercel-bg) !important;
+  border: 1px solid var(--vercel-accents-2) !important;
+  border-radius: 6px !important;
+}
+
+/* Sidebar and page background fix */
+.VPSidebar, .VPContent {
   background-color: var(--vercel-bg) !important;
 }
