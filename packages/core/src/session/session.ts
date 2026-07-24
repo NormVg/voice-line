@@ -28,6 +28,52 @@ import {
 import { createId } from "../utils/id.js";
 import { MessageHistory } from "./history.js";
 
+function eagerStream<T>(iterable: AsyncIterable<T>): AsyncIterable<T> {
+  const queue: (T | Error)[] = [];
+  let done = false;
+  const state: { resolveWaiting: (() => void) | null } = { resolveWaiting: null };
+  
+  void (async () => {
+    try {
+      for await (const item of iterable) {
+        queue.push(item);
+        if (state.resolveWaiting) {
+          const rw = state.resolveWaiting;
+          state.resolveWaiting = null;
+          rw();
+        }
+      }
+    } catch (err) {
+      queue.push(err instanceof Error ? err : new Error(String(err)));
+    } finally {
+      done = true;
+      if (state.resolveWaiting) {
+        const rw = state.resolveWaiting;
+        state.resolveWaiting = null;
+        rw();
+      }
+    }
+  })();
+  
+  return {
+    async *[Symbol.asyncIterator]() {
+      while (true) {
+        if (queue.length > 0) {
+          const item = queue.shift();
+          if (item instanceof Error) throw item;
+          yield item as T;
+        } else if (done) {
+          break;
+        } else {
+          await new Promise<void>(resolve => {
+            state.resolveWaiting = resolve;
+          });
+        }
+      }
+    }
+  };
+}
+
 export interface SessionOptions {
   id?: string;
   transport: Transport;
@@ -366,12 +412,13 @@ export class Session {
    */
   private enqueueSentence(text: string): void {
     const gen = this.ttsGeneration;
+    const stream = eagerStream(this.tts.synthesize(text, this.ttsConfig));
     this.ttsTail = this.ttsTail
       .then(async () => {
         if (gen !== this.ttsGeneration || this.destroyed) return;
         if (this.turnAbort?.signal.aborted) return;
 
-        for await (const chunk of this.tts.synthesize(text, this.ttsConfig)) {
+        for await (const chunk of stream) {
           if (gen !== this.ttsGeneration || this.destroyed) break;
           if (this.turnAbort?.signal.aborted) break;
           this.transport.sendAudio(chunk.data);
