@@ -23,13 +23,4 @@ features:
     details: We handle Voice Activity Detection (VAD), STT streaming, TTS chunking, and human interruptions out of the box. You just build the agent.
   - title: Zero-Boilerplate React & Vue
     details: Ships with useVoiceAgent hooks that handle token fetching, transport instantiation, and state management in a single line.
----
 
-<div class="image-bg"></div>
-
-<style>
-:root {
-  --vp-home-hero-name-color: transparent;
-  --vp-home-hero-name-background: -webkit-linear-gradient(120deg, #bd34fe 30%, #41d1ff);
-}
-</style>
