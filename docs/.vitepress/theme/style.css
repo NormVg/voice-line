@@ -71,6 +71,32 @@
   --vp-c-text-3: var(--vercel-accents-5) !important;
 }
 
+/* Force unbroken Navbar bottom border with perfect alignment */
+.VPNavBar {
+  box-shadow: inset 0 -1px 0 0 var(--vercel-accents-2) !important;
+  border-bottom: none !important;
+}
+.VPNavBar .wrapper,
+.VPNavBar .container,
+.VPNavBar .title,
+.VPNavBar .content,
+.VPNavBar .content-body,
+.VPNavBar .divider,
+.VPNavBar .divider-line,
+.VPNavBarTitle,
+.VPNavBarContent {
+  border-bottom: none !important;
+  box-shadow: none !important;
+}
+.VPNavBar .divider,
+.VPNavBar .divider-line {
+  display: none !important;
+  opacity: 0 !important;
+}
+.VPSidebar {
+  border-top: none !important;
+}
+
 /* Feature Cards - Vercel Style */
 .VPFeatures {
   padding: 0 24px;
