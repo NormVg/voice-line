@@ -6,6 +6,10 @@
 
 <br/>
 
+> 🚧 **Work in Progress**: `voice-line` is under active development. APIs are subject to change as we approach our stable `v1.0` release.
+
+<br/>
+
 `voice-line` is a transport-agnostic TypeScript framework for building conversational voice agents. It sits perfectly between the microphone and the speaker, handling the audio pipeline while you focus on the intelligence.
 
 ### 🌟 Why voice-line?
