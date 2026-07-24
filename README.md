@@ -17,6 +17,7 @@
 - **Bring Your Own Brain**: Seamlessly integrates with the Vercel AI SDK, LangChain, or your own custom LLM orchestration. We give you text, you give us text.
 - **Zero WebRTC Headaches**: WebRTC introduces complex NAT traversal and STUN/TURN requirements. We rely purely on WebSockets and pub/sub (like Ably) for massive scalability.
 - **Do One Thing Best**: We handle Voice Activity Detection (VAD), Speech-to-Text (STT), Text-to-Speech (TTS), audio chunking, and human interruptions. You build the agent.
+- **🔌 Extensible by Design**: Don't like our defaults? `voice-line` is built entirely on interfaces. You can easily write your own custom plugins for Transports (e.g., Socket.io), STT, or TTS providers in just a few lines of code.
 
 ---
 
