@@ -7,7 +7,7 @@ import { streamText } from 'ai';
 
 // This handles the WebSocket upgrade directly within Nuxt Nitro
 export default defineWebSocketHandler(
-  createNitroWebSocketHandler((peer: any, url) => {
+  createNitroWebSocketHandler((peer: any, url, wsListeners) => {
     const config = useRuntimeConfig();
     const hasOllama = !!config.ollamaApiKey;
     let brain;
@@ -42,7 +42,7 @@ Speak in a confident, direct, and slightly technical tone.`,
     }
 
     return {
-      transport: fromWebSocket(nitroToWs(peer, {})),
+      transport: fromWebSocket(nitroToWs(peer, wsListeners)),
       stt: sarvam.stt({ 
         apiKey: config.sarvamApiKey || undefined, 
         language: 'en-IN',

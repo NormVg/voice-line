@@ -18,7 +18,7 @@ function getStack() {
 }
 
 export default defineWebSocketHandler(
-  createNitroWebSocketHandler((peer: any, url) => {
+  createNitroWebSocketHandler((peer: any, url, wsListeners) => {
     // We can't log here because we need to log inside the message handler
     // We will do it in nitro.ts instead
     const env = useRuntimeConfig();
@@ -26,7 +26,8 @@ export default defineWebSocketHandler(
 
     return {
       // 1. Pass the Nitro peer through our polyfill into the standard WS transport
-      transport: fromWebSocket(nitroToWs(peer, {})),
+      //    wsListeners is the SAME object the message dispatcher writes to
+      transport: fromWebSocket(nitroToWs(peer, wsListeners)),
       
       // 2. Attach providers and brain
       stt: stack.stt,

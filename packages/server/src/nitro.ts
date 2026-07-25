@@ -176,7 +176,7 @@ export function nitroToWs(peer: any, listeners: Record<string, Function[]>): any
  * @returns An object compatible with Nitro's `defineWebSocketHandler`.
  */
 export function createNitroWebSocketHandler(
-  configFactory: (peer: any, url: URL) => VoiceLineServerConfig | Promise<VoiceLineServerConfig>
+  configFactory: (peer: any, url: URL, wsListeners: Record<string, Function[]>) => VoiceLineServerConfig | Promise<VoiceLineServerConfig>
 ) {
   // Store peer contexts to route messages and handle closures
   const peerContexts = new WeakMap<any, { listeners: Record<string, Function[]>; server?: ReturnType<typeof createServer>; session?: any }>();
@@ -188,7 +188,7 @@ export function createNitroWebSocketHandler(
       peerContexts.set(peer, ctx);
 
       try {
-        const config = await configFactory(peer, url);
+        const config = await configFactory(peer, url, ctx.listeners);
         const server = createServer(config);
         ctx.server = server;
         
