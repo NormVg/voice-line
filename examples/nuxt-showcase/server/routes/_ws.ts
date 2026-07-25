@@ -16,8 +16,8 @@ export default defineWebSocketHandler(
 
     return {
       transport: fromWebSocket(nitroToWs(peer, {})),
-      stt: sarvam.stt({ apiKey: String(config.sarvamApiKey || ''), language: 'en-IN' }),
-      tts: sarvam.tts({ apiKey: String(config.sarvamApiKey || ''), voice: 'anushka' }),
+      stt: sarvam.stt({ apiKey: config.sarvamApiKey || undefined, language: 'en-IN' }),
+      tts: sarvam.tts({ apiKey: config.sarvamApiKey || undefined, voice: 'anushka' }),
       brain: fromAISDK({
         model: ollama('gpt-oss:20b-cloud'),
         system: `You are the voice of 'voice-line', a high-performance, real-time voice layer for AI agents. 
