@@ -142,36 +142,47 @@ const stateDisplay = computed(() => {
 
         <!-- Hardware Controls -->
         <div class="p-6 border-t border-zinc-800 bg-zinc-900/30">
-          <div class="flex items-center gap-4">
-            <!-- Connect/Disconnect Toggle -->
-            <button 
-              @click="isConnected ? disconnect() : connectSession()"
-              class="flex-1 h-12 flex items-center justify-center gap-2 border transition-all duration-200 active:scale-[0.98]"
-              :class="isConnected 
-                ? 'border-red-500/50 bg-red-500/10 text-red-500 hover:bg-red-500/20' 
-                : 'border-white bg-white text-zinc-950 hover:bg-zinc-200'"
-            >
-              <PhStopCircle v-if="isConnected" class="w-5 h-5" weight="fill" />
-              <PhPlugsConnected v-else class="w-5 h-5" weight="bold" />
-              <span class="font-medium tracking-wide uppercase text-sm">
-                {{ isConnected ? 'End Session' : 'Initialize Session' }}
-              </span>
-            </button>
+          <ClientOnly>
+            <div class="flex items-center gap-4">
+              <!-- Connect/Disconnect Toggle -->
+              <button 
+                @click="isConnected ? disconnect() : connectSession()"
+                class="flex-1 h-12 flex items-center justify-center gap-2 border transition-all duration-200 active:scale-[0.98]"
+                :class="isConnected 
+                  ? 'border-red-500/50 bg-red-500/10 text-red-500 hover:bg-red-500/20' 
+                  : 'border-white bg-white text-zinc-950 hover:bg-zinc-200'"
+              >
+                <PhStopCircle v-if="isConnected" class="w-5 h-5" weight="fill" />
+                <PhPlugsConnected v-else class="w-5 h-5" weight="bold" />
+                <span class="font-medium tracking-wide uppercase text-sm">
+                  {{ isConnected ? 'End Session' : 'Initialize Session' }}
+                </span>
+              </button>
 
-            <!-- Mic Toggle -->
-            <button 
-              @click="handleToggleMic"
-              :disabled="!isConnected"
-              class="w-16 h-12 flex items-center justify-center border transition-all duration-200"
-              :class="[
-                !isConnected ? 'border-zinc-800 text-zinc-800 cursor-not-allowed' : '',
-                isConnected && micActive ? 'border-zinc-700 bg-zinc-800 text-white hover:bg-zinc-700' : '',
-                isConnected && !micActive ? 'border-red-500/50 bg-red-500/10 text-red-500' : ''
-              ]"
-            >
-              <PhMicrophoneStage class="w-5 h-5" :weight="micActive ? 'regular' : 'fill'" />
-            </button>
-          </div>
+              <!-- Mic Toggle -->
+              <button 
+                @click="handleToggleMic"
+                :disabled="!isConnected"
+                class="w-16 h-12 flex items-center justify-center border transition-all duration-200"
+                :class="[
+                  !isConnected ? 'border-zinc-800 text-zinc-800 cursor-not-allowed' : '',
+                  isConnected && micActive ? 'border-zinc-700 bg-zinc-800 text-white hover:bg-zinc-700' : '',
+                  isConnected && !micActive ? 'border-red-500/50 bg-red-500/10 text-red-500' : ''
+                ]"
+              >
+                <PhMicrophoneStage class="w-5 h-5" :weight="micActive ? 'regular' : 'fill'" />
+              </button>
+            </div>
+            
+            <template #fallback>
+              <div class="flex items-center gap-4 opacity-50 pointer-events-none">
+                <div class="flex-1 h-12 flex items-center justify-center gap-2 border border-zinc-800 bg-zinc-900/50">
+                  <PhCircleNotch class="w-5 h-5 text-zinc-500 animate-spin" />
+                  <span class="font-medium tracking-wide uppercase text-sm text-zinc-500">Loading Client...</span>
+                </div>
+              </div>
+            </template>
+          </ClientOnly>
         </div>
       </section>
     </main>
