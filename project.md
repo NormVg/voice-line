@@ -556,8 +556,23 @@ AudioChunk (ArrayBuffer, 100ms)
 └──────────┬───────────┘
            │  TranscriptResult { text, isFinal }
            ▼
+┌──────────────────────┐
+│ IntelligentSTT       │  (Optional) Very fast LLM post-processing
+│ Processor (Planned)  │  Cleans up messy "mind dumps" and self-corrections
+│                      │  into structured text while preserving tone.
+└──────────┬───────────┘
+           │  string (Cleaned transcript)
+           ▼
        Session calls brain(text, context)
 ```
+
+### Intelligent STT (Planned)
+
+Real human speech is messy. We stutter, correct ourselves mid-sentence, and "dump our minds." 
+
+To solve this, `voice-line` plans to introduce an **Intelligent STT** processor. This optional pipeline step sits between the raw STT output and your Brain. It passes the final raw transcript through a very fast, small LLM (e.g., `gpt-4o-mini` or an open-source 20B model) to restructure and clean up the text. 
+
+True to our modular philosophy, this processor will be entirely agnostic to the LLM used, leveraging adapters like the Vercel AI SDK so you can plug in any provider that meets the latency requirements.
 
 ### Outbound Pipeline (Text → Audio)
 
@@ -772,6 +787,7 @@ voice-line/
 
 ### Phase 4 — Ecosystem & Utilities
 - [x] `@voice-line/transport-ws` — raw WebSocket adapter
+- [ ] `@voice-line/processor-intelligent-stt` — Fast LLM-based STT cleanup (mind-dump formatting via AI SDK)
 - [ ] `@voice-line/server` — `createTTSHandler` standalone API generator
 - [ ] `@voice-line/server` — `createStatelessHandler` push-to-talk API generator
 - [ ] `@voice-line/provider-elevenlabs` — ElevenLabs TTS
