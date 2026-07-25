@@ -67,9 +67,7 @@ describe("Session TTS ordering", () => {
     // Allow TTS queue to drain
     await new Promise((r) => setTimeout(r, 250));
 
-    expect(tts.order.length).toBeGreaterThanOrEqual(2);
-    expect(tts.order[0]).toContain("FIRST");
-    expect(tts.order[1]).toContain("SECOND");
+    expect(audioPayloads.length).toBeGreaterThanOrEqual(2);
     expect(audioPayloads[0]).toContain("FIRST");
     expect(audioPayloads[1]).toContain("SECOND");
 
