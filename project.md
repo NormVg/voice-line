@@ -572,6 +572,8 @@ Real human speech is messy. We stutter, correct ourselves mid-sentence, and "dum
 
 To solve this, `voice-line` plans to introduce an **Intelligent STT** processor. This optional pipeline step sits between the raw STT output and your Brain. It passes the final raw transcript through a very fast, small LLM (we recommend using the `gpt-oss:20b` model) to restructure and clean up the text. 
 
+Because this processor is fully integrated into the Session, it can also **optionally inject context**—such as recent chat history or custom instructions about the current topic. This allows the lightweight LLM to automatically fix hallucinated or misheard words from the raw STT by inferring what the user *actually* meant based on the ongoing conversation.
+
 True to our modular philosophy, this processor will be entirely agnostic to the LLM used, leveraging adapters like the Vercel AI SDK so you can plug in any provider that meets the latency requirements.
 
 ### Outbound Pipeline (Text → Audio)
