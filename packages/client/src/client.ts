@@ -17,6 +17,8 @@ export interface VoiceLineClientOptions {
   sampleRate?: number;
   chunkDurationMs?: number;
   autoMic?: boolean;
+  /** Whether the user can interrupt the bot while it's speaking. Default false (half-duplex) to prevent echo loops. */
+  bargeIn?: boolean;
 }
 
 export interface VoiceLineErrorPayload {
@@ -43,6 +45,7 @@ export class VoiceLineClient {
   private readonly transport: Transport;
   private readonly sampleRate: number;
   private readonly autoMic: boolean;
+  private readonly bargeIn: boolean;
   private readonly dispatcher = new EventDispatcher();
   private readonly speaker: Speaker;
   private mic: Microphone | null = null;
@@ -60,13 +63,16 @@ export class VoiceLineClient {
     this.transport = options.transport;
     this.sampleRate = options.sampleRate ?? 16_000;
     this.autoMic = options.autoMic ?? true;
+    this.bargeIn = options.bargeIn ?? false;
     this.speaker = new Speaker(this.sampleRate);
 
     this.mic = new Microphone({
       sampleRate: this.sampleRate,
       chunkDurationMs: options.chunkDurationMs ?? 100,
       onChunk: (pcm) => {
-        if (this.connected) this.transport.sendAudio(pcm);
+        if (!this.connected) return;
+        if (!this.bargeIn && this.isBotSpeaking) return;
+        this.transport.sendAudio(pcm);
       },
       onError: (err) => this.emit("error", err),
     });
