@@ -145,7 +145,7 @@ export class SarvamSTTStream implements STTStream {
     this.ws.send(
       JSON.stringify({
         audio: b64,
-        encoding: "audio/wav", // pcm sent as raw; API also accepts pcm_s16le
+        encoding: "pcm_s16le",
         sample_rate: sampleRate,
       }),
     );

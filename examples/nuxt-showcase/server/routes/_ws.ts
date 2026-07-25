@@ -19,8 +19,8 @@ export default defineWebSocketHandler(
       });
       brain = fromAISDK({
         model: ollama('gpt-oss:20b-cloud'),
-        system: `You are the voice of 'voice-line', a high-performance, real-time voice layer for AI agents. 
-You are speaking to a developer who is testing this showcase application. 
+        system: `You are the voice of 'voice-line', a high-performance, real-time voice layer for AI agents.
+You are speaking to a developer who is testing this showcase application.
 Keep your responses extremely concise (1-2 sentences maximum).
 Never use markdown or lists.
 Speak in a confident, direct, and slightly technical tone.`,
@@ -43,11 +43,11 @@ Speak in a confident, direct, and slightly technical tone.`,
 
     return {
       transport: fromWebSocket(nitroToWs(peer, wsListeners)),
-      stt: sarvam.stt({ 
-        apiKey: config.sarvamApiKey || undefined, 
+      stt: sarvam.stt({
+        apiKey: config.sarvamApiKey || undefined,
         language: 'en-IN',
         mode: 'transcribe',
-        streaming: true 
+        streaming: true
       }),
       tts: sarvam.tts({ apiKey: config.sarvamApiKey || undefined, voice: 'anushka' }),
       brain,
@@ -55,7 +55,7 @@ Speak in a confident, direct, and slightly technical tone.`,
         maxChars: 120, // slightly shorter for snappy response
       },
       sttConfig: {
-        language: "unknown",
+        language: "en-IN",
         sampleRate: 16_000,
         encoding: "pcm_s16le",
         model: "saaras:v3",

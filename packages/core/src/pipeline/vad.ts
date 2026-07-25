@@ -3,6 +3,12 @@ import { DEFAULT_VAD_CONFIG, type VADConfig } from "../types.js";
 import { pcm16ToFloat32, rmsEnergy } from "../utils/audio.js";
 
 /**
+ * How many silence frames to keep as pre-roll so the start of an
+ * utterance is never clipped. At 100 ms / chunk this is ~1 second.
+ */
+const PRE_ROLL_FRAMES = 10;
+
+/**
  * Energy-based Voice Activity Detection.
  *
  * Emits speech_start / speech_end frames and buffers utterance audio.
@@ -46,6 +52,8 @@ export class VADProcessor implements Processor {
         if (this.speechAccumMs >= this.config.minSpeechMs) {
           this.speaking = true;
           this.silenceAccumMs = 0;
+          // Flush the entire pre-roll buffer so the STT receives the
+          // audio that preceded the speech detection threshold.
           const frames: Frame[] = [{ kind: "speech_start" }];
           for (const b of this.buffer) {
             frames.push({ kind: "audio", data: b, sampleRate: this.sampleRate });
@@ -53,10 +61,12 @@ export class VADProcessor implements Processor {
           return frames;
         }
       } else {
-        this.speechAccumMs = 0;
-        // Keep a small pre-roll; drop older silence
-        if (this.buffer.length > 5) {
-          this.buffer = this.buffer.slice(-3);
+        // Decay instead of hard-reset: a single quiet frame shouldn't
+        // throw away all accumulated evidence of speech onset.
+        this.speechAccumMs = Math.max(0, this.speechAccumMs - chunkMs);
+        // Keep a generous pre-roll so early syllables aren't clipped.
+        if (this.buffer.length > PRE_ROLL_FRAMES) {
+          this.buffer = this.buffer.slice(-PRE_ROLL_FRAMES);
         }
       }
       return null;
