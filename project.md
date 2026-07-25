@@ -566,6 +566,12 @@ AudioChunk (ArrayBuffer, 100ms)
        Session calls brain(text, context)
 ```
 
+### Intelligent Turn Detection (Planned)
+
+Right now, the `VADProcessor` relies purely on acoustics: if the user is quiet for 500ms, it assumes they are done speaking. This can lead to the agent accidentally cutting the user off when they pause to think.
+
+In the future, we plan to introduce a **Linguistic Turn Detector**. This pipeline step will combine the acoustic `speech_end` trigger with the actual text of the partial transcript. If the user pauses, but the sentence is grammatically incomplete (e.g., "I want to book a flight to..."), the detector will suppress the acoustic silence trigger and keep the session open, waiting for the user to finish their thought.
+
 ### Intelligent STT (Planned)
 
 Real human speech is messy. We stutter, correct ourselves mid-sentence, and "dump our minds." 
@@ -681,6 +687,13 @@ interface VoiceLineServerConfig {
 }
 ```
 
+### Dynamic Context & Biasing (Planned)
+
+To handle mid-call updates and tricky terminology, we plan to expose dynamic context methods directly on the `Session`:
+
+- **Context Biasing**: Pass a custom dictionary of business jargon, acronyms, or names via `STTConfig.keywords`. 
+- **Dynamic Mid-Call Updates**: Expose `session.updateSTTContext({ keywords: [...] })` so if the LLM identifies the caller, you can instantly push their account details to the STT provider mid-conversation to perfectly transcribe their last name.
+
 ---
 
 ## Monorepo Structure
@@ -790,6 +803,8 @@ voice-line/
 ### Phase 4 — Ecosystem & Utilities
 - [x] `@voice-line/transport-ws` — raw WebSocket adapter
 - [ ] `@voice-line/processor-intelligent-stt` — Fast LLM-based STT cleanup (mind-dump formatting via AI SDK)
+- [ ] `@voice-line/processor-turn-detector` — Linguistic Turn Detection (combining acoustic VAD with semantic completeness)
+- [ ] `Session.updateSTTContext()` — Dynamic mid-call STT keyword biasing
 - [ ] `@voice-line/server` — `createTTSHandler` standalone API generator
 - [ ] `@voice-line/server` — `createStatelessHandler` push-to-talk API generator
 - [ ] `@voice-line/provider-elevenlabs` — ElevenLabs TTS
