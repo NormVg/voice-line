@@ -1,8 +1,11 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue';
+
 import { useVoiceAgent } from '@voice-line/vue';
 import { ws } from '@voice-line/transport-ws';
+
 import { PhMicrophoneStage, PhStopCircle, PhPlugsConnected, PhCircleNotch, PhLightning, PhInfo } from '@phosphor-icons/vue';
+
 
 const host = ref('');
 onMounted(() => {
@@ -82,7 +85,7 @@ const stateDisplay = computed(() => {
             Real-time voice, zero infrastructure.
           </h1>
           <p class="text-zinc-400 max-w-[45ch] leading-relaxed text-lg">
-            A production-ready voice layer for your AI agents. 
+            A production-ready voice layer for your AI agents.
             Powered by Sarvam AI, wired with raw WebSockets, and piped directly into the Vercel AI SDK.
           </p>
         </div>
@@ -102,7 +105,7 @@ const stateDisplay = computed(() => {
 
       <!-- Right Panel: Transcript & Controls -->
       <section class="flex-1 flex flex-col bg-zinc-950 min-h-[500px]">
-        
+
         <!-- Status Bar -->
         <div class="flex items-center justify-between px-6 py-3 border-b border-zinc-800 bg-zinc-900/30">
           <div class="flex items-center gap-2">
@@ -111,7 +114,7 @@ const stateDisplay = computed(() => {
             <div v-else class="w-2 h-2 rounded-full" :class="isConnected ? 'bg-zinc-500' : 'bg-zinc-800'"></div>
             <span class="font-mono text-[11px] text-white tracking-widest">{{ stateDisplay }}</span>
           </div>
-          
+
           <div class="font-mono text-[10px] text-zinc-500">
             MSGS: {{ messages.length }}
           </div>
@@ -125,7 +128,7 @@ const stateDisplay = computed(() => {
           </div>
 
           <div v-for="msg in messages" :key="msg.id" class="group flex gap-4 max-w-xl" :class="msg.role === 'user' ? 'ml-auto text-right flex-row-reverse' : ''">
-            
+
             <!-- Avatar -->
             <div class="shrink-0 w-8 h-8 flex items-center justify-center bg-zinc-900 border border-zinc-800 font-mono text-[10px] text-zinc-400">
               {{ msg.role === 'user' ? 'USR' : 'SYS' }}
@@ -133,7 +136,7 @@ const stateDisplay = computed(() => {
 
             <!-- Message Body -->
             <div class="space-y-1">
-              <div class="p-3 text-sm leading-relaxed" 
+              <div class="p-3 text-sm leading-relaxed"
                    :class="msg.role === 'user' ? 'bg-zinc-100 text-zinc-950' : 'bg-transparent border border-zinc-800 text-zinc-300'">
                 {{ msg.content }}
                 <span v-if="msg.partial" class="inline-block ml-2 w-1.5 h-1.5 bg-red-500 rounded-full" title="Interrupted"></span>
@@ -147,11 +150,11 @@ const stateDisplay = computed(() => {
           <ClientOnly>
             <div class="flex items-center gap-4">
               <!-- Connect/Disconnect Toggle -->
-              <button 
+              <button
                 @click="isConnected ? disconnect() : connectSession()"
                 class="flex-1 h-12 flex items-center justify-center gap-2 border transition-all duration-200 active:scale-[0.98]"
-                :class="isConnected 
-                  ? 'border-red-500/50 bg-red-500/10 text-red-500 hover:bg-red-500/20' 
+                :class="isConnected
+                  ? 'border-red-500/50 bg-red-500/10 text-red-500 hover:bg-red-500/20'
                   : 'border-white bg-white text-zinc-950 hover:bg-zinc-200'"
               >
                 <PhStopCircle v-if="isConnected" class="w-5 h-5" weight="fill" />
@@ -162,7 +165,7 @@ const stateDisplay = computed(() => {
               </button>
 
               <!-- Mic Toggle -->
-              <button 
+              <button
                 @click="handleToggleMic"
                 :disabled="!isConnected"
                 class="w-16 h-12 flex items-center justify-center border transition-all duration-200"
@@ -175,7 +178,7 @@ const stateDisplay = computed(() => {
                 <PhMicrophoneStage class="w-5 h-5" :weight="micActive ? 'regular' : 'fill'" />
               </button>
             </div>
-            
+
             <template #fallback>
               <div class="flex items-center gap-4 opacity-50 pointer-events-none">
                 <div class="flex-1 h-12 flex items-center justify-center gap-2 border border-zinc-800 bg-zinc-900/50">

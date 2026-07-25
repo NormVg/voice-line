@@ -145,10 +145,7 @@ export class AblyTransport implements Transport {
     }
     if (this.client) {
       try {
-        const p = this.client.close();
-        if (p && typeof p.catch === "function") {
-          p.catch(() => {});
-        }
+        await this.client.close();
       } catch (err) {
         // ignore close errors
       }

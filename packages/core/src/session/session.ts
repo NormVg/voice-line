@@ -263,9 +263,9 @@ export class Session {
     for (const u of this.unsubs) u();
     this.unsubs = [];
 
-    await this.inbound.destroy();
-    await this.outbound.destroy();
-    await this.transport.disconnect();
+    await this.inbound.destroy().catch(() => {});
+    await this.outbound.destroy().catch(() => {});
+    await this.transport.disconnect().catch(() => {});
   }
 
   /** Inject text as if the user typed it (bypasses STT). */
