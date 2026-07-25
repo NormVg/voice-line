@@ -570,7 +570,7 @@ AudioChunk (ArrayBuffer, 100ms)
 
 Real human speech is messy. We stutter, correct ourselves mid-sentence, and "dump our minds." 
 
-To solve this, `voice-line` plans to introduce an **Intelligent STT** processor. This optional pipeline step sits between the raw STT output and your Brain. It passes the final raw transcript through a very fast, small LLM (e.g., `gpt-4o-mini` or an open-source 20B model) to restructure and clean up the text. 
+To solve this, `voice-line` plans to introduce an **Intelligent STT** processor. This optional pipeline step sits between the raw STT output and your Brain. It passes the final raw transcript through a very fast, small LLM (we recommend using the `gpt-oss:20b` model) to restructure and clean up the text. 
 
 True to our modular philosophy, this processor will be entirely agnostic to the LLM used, leveraging adapters like the Vercel AI SDK so you can plug in any provider that meets the latency requirements.
 
