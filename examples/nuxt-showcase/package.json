@@ -10,7 +10,8 @@
     "postinstall": "nuxt prepare"
   },
   "dependencies": {
-    "@ai-sdk/openai": "^1.1.9",
+    "ai": "^7.0.37",
+    "ai-sdk-ollama": "^4.0.0",
     "@phosphor-icons/vue": "^2.1.2",
     "@voice-line/adapter-ai-sdk": "workspace:*",
     "@voice-line/provider-sarvam": "workspace:*",

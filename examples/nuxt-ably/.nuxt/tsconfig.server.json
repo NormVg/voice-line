@@ -75,7 +75,7 @@
         "../../../node_modules/.pnpm/nitropack@2.13.4_oxc-parser@0.140.0_rolldown@1.2.0_vite@5.4.21_@types+node@22.20.1_lightningcss@1.33.0_terser@5.49.0_/node_modules/nitropack"
       ],
       "vite/client": [
-        "../../../node_modules/.pnpm/vite@5.4.21_@types+node@22.20.1_lightningcss@1.33.0_terser@5.49.0/node_modules/vite/client"
+        "../../../node_modules/.pnpm/vite@8.1.5_@types+node@22.20.1_esbuild@0.28.1_jiti@2.7.0_terser@5.49.0_tsx@4.23.1_yaml@2.9.0/node_modules/vite/client"
       ],
       "nitropack/types": [
         "../../../node_modules/.pnpm/nitropack@2.13.4_oxc-parser@0.140.0_rolldown@1.2.0_vite@5.4.21_@types+node@22.20.1_lightningcss@1.33.0_terser@5.49.0_/node_modules/nitropack/types"
