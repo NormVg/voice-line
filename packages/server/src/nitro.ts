@@ -205,10 +205,37 @@ export function createNitroWebSocketHandler(
         peer.close();
       }
     },
-    message(peer: any, message: any) {
-      const isBinary = typeof message.rawData !== "string";
-      const data = isBinary ? message.arrayBuffer() : message.text();
+    async message(peer: any, message: any) {
+      // crossws Node adapter often loses the isBinary flag and treats text as Buffer
+      let raw = message.rawData;
+      let isBinary = typeof message.isBinary === "boolean" ? message.isBinary : typeof raw !== "string";
       
+      // Fallback: If it's technically a Buffer, check if it's actually a JSON event
+      if (isBinary && raw && typeof raw === "object") {
+        const buf = Buffer.isBuffer(raw) ? raw : new Uint8Array(raw as any);
+        if (buf[0] === 123) { // 123 is '{'
+          try {
+            JSON.parse(new TextDecoder().decode(buf));
+            isBinary = false; // It's valid JSON, so it's a text frame!
+          } catch {
+            // Not valid JSON, keep as binary
+          }
+        }
+      }
+
+      let data = isBinary ? message.arrayBuffer() : message.text();
+      if (data instanceof Promise) {
+        data = await data;
+      }
+      
+      if (!isBinary && typeof data !== "string") {
+        if (Buffer.isBuffer(data)) data = data.toString("utf-8");
+        else if (data instanceof ArrayBuffer) data = new TextDecoder().decode(data);
+        else data = String(data);
+      } else if (isBinary && Buffer.isBuffer(data)) {
+        data = data.buffer.slice(data.byteOffset, data.byteOffset + data.byteLength);
+      }
+
       const ctx = peerContexts.get(peer);
       const listeners = ctx?.listeners?.message || [];
       listeners.forEach((l: any) => l({ data }));

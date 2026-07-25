@@ -18,7 +18,10 @@ function getStack() {
 }
 
 export default defineWebSocketHandler(
-  createNitroWebSocketHandler((peer: any) => {
+  createNitroWebSocketHandler((peer: any, url) => {
+    // We can't log here because we need to log inside the message handler
+    // We will do it in nitro.ts instead
+    const env = useRuntimeConfig();
     const stack = getStack();
 
     return {
