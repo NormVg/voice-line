@@ -91,7 +91,7 @@ const stateDisplay = computed(() => {
             <div class="space-y-1">
               <h3 class="font-mono text-xs uppercase tracking-wider text-zinc-300">Architecture</h3>
               <p class="text-sm text-zinc-500 leading-relaxed text-pretty">
-                This demo connects to a local Nitro WebSocket handler. Audio chunks stream through Silero VAD and Sarvam STT directly into gpt-4o-mini.
+                This demo connects to a local Nitro WebSocket handler. Audio chunks stream through Silero VAD and Sarvam STT directly into gpt-oss:20b-cloud.
               </p>
             </div>
           </div>

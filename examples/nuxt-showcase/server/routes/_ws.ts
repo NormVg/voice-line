@@ -12,7 +12,7 @@ export default defineWebSocketHandler(
       stt: sarvam.stt({ language: 'en-IN' }),
       tts: sarvam.tts({ voice: 'anushka' }),
       brain: fromAISDK({
-        model: openai('gpt-4o-mini'),
+        model: openai('gpt-oss:20b-cloud'),
         system: `You are the voice of 'voice-line', a high-performance, real-time voice layer for AI agents. 
 You are speaking to a developer who is testing this showcase application. 
 Keep your responses extremely concise (1-2 sentences maximum).
