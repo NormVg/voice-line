@@ -27,7 +27,9 @@ const {
       transport: transportFactory(sessionId),
       sessionId,
     };
-  }
+  },
+  sampleRate: 16000,
+  autoMic: true,
 });
 
 const connectSession = () => {
