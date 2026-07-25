@@ -58,9 +58,23 @@ export default defineWebSocketHandler(
       },
       onSessionStart: (session: any) => {
         console.log(`[voice-line] Started WS session: ${session.id}`);
+        session.onStateChange((state) => {
+          console.log(`[voice-line ${session.id}] State changed to: ${state}`);
+        });
+        session.inbound.onFrame((frame) => {
+          if (frame.kind === "text") {
+            console.log(`[voice-line ${session.id}] Inbound text: ${frame.text}`);
+          } else if (frame.kind === "error") {
+            console.error(`[voice-line ${session.id}] Inbound error:`, frame.error);
+          } else if (frame.kind === "audio") {
+            // console.log(`Audio chunk of ${frame.buffer.byteLength} bytes`);
+          } else {
+            console.log(`[voice-line ${session.id}] Inbound frame: ${frame.kind}`);
+          }
+        });
       },
       onError: (err: any, session: any) => {
-        console.error(`[voice-line ${session?.id}]`, err.message);
+        console.error(`[voice-line ${session?.id}] ERROR:`, err);
       },
     };
   })

@@ -232,8 +232,14 @@ export function createNitroWebSocketHandler(
         if (Buffer.isBuffer(data)) data = data.toString("utf-8");
         else if (data instanceof ArrayBuffer) data = new TextDecoder().decode(data);
         else data = String(data);
-      } else if (isBinary && Buffer.isBuffer(data)) {
-        data = data.buffer.slice(data.byteOffset, data.byteOffset + data.byteLength);
+      } else if (isBinary) {
+        if (data instanceof ArrayBuffer) {
+          // already an ArrayBuffer
+        } else if (Buffer.isBuffer(data)) {
+          data = data.buffer.slice(data.byteOffset, data.byteOffset + data.byteLength);
+        } else if (ArrayBuffer.isView(data)) {
+          data = data.buffer.slice(data.byteOffset, data.byteOffset + data.byteLength);
+        }
       }
 
       const ctx = peerContexts.get(peer);
