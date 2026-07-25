@@ -39,6 +39,34 @@ Speak in a confident, direct, and slightly technical tone.`,
       chunker: {
         maxChars: 120, // slightly shorter for snappy response
       },
+      sttConfig: {
+        language: "unknown",
+        sampleRate: 16_000,
+        encoding: "pcm_s16le",
+        model: "saaras:v3",
+      },
+      ttsConfig: {
+        voice: "shubh",
+        language: "en-IN",
+        sampleRate: 16_000,
+        format: "pcm16",
+        model: "bulbul:v3",
+      },
+      vad: {
+        confidence: 0.35,
+        silenceMs: 500,
+        minSpeechMs: 200,
+      },
+      session: {
+        maxDurationMs: 30 * 60 * 1000,
+        idleTimeoutMs: 5 * 60 * 1000,
+      },
+      onSessionStart: (session: any) => {
+        console.log(`[voice-line] Started WS session: ${session.id}`);
+      },
+      onError: (err: any, session: any) => {
+        console.error(`[voice-line ${session?.id}]`, err.message);
+      },
     };
   })
 );
