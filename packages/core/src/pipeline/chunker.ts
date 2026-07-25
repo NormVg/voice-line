@@ -13,7 +13,7 @@ export class SentenceChunker implements Processor {
   private readonly config: ChunkerConfig;
   private buffer = "";
   // X words batch limit
-  private readonly WORD_BATCH_SIZE = 15;
+  private readonly WORD_BATCH_SIZE = 6;
 
   constructor(config: Partial<ChunkerConfig> = {}) {
     this.config = { ...DEFAULT_CHUNKER_CONFIG, ...config };
