@@ -1411,7 +1411,7 @@ var SarvamTTSProvider = class {
     __publicField(this, "options");
     __publicField(this, "apiKey");
     __publicField(this, "baseUrl");
-    __publicField(this, "abortController", null);
+    __publicField(this, "activeControllers", /* @__PURE__ */ new Set());
     var _a;
     this.options = options;
     this.apiKey = resolveApiKey(options.apiKey);
@@ -1421,8 +1421,9 @@ var SarvamTTSProvider = class {
     var _a, _b, _c, _d, _e, _f, _g, _h, _i, _j, _k, _l, _m, _n;
     const trimmed = text.trim();
     if (!trimmed) return;
-    this.abortController = new AbortController();
-    const signal = this.abortController.signal;
+    const controller = new AbortController();
+    this.activeControllers.add(controller);
+    const signal = controller.signal;
     const body = {
       text: trimmed,
       target_language_code: (_b = (_a = config.language) != null ? _a : this.options.language) != null ? _b : "en-IN",
@@ -1479,13 +1480,14 @@ var SarvamTTSProvider = class {
       if (signal.aborted) return;
       throw err;
     } finally {
-      this.abortController = null;
+      this.activeControllers.delete(controller);
     }
   }
   abort() {
-    var _a;
-    (_a = this.abortController) == null ? void 0 : _a.abort();
-    this.abortController = null;
+    for (const controller of this.activeControllers) {
+      controller.abort();
+    }
+    this.activeControllers.clear();
   }
   async *readStream(body, config) {
     var _a, _b, _c;

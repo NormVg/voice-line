@@ -18,7 +18,7 @@ export class SarvamTTSProvider implements TTSProvider {
   private readonly options: SarvamTTSOptions;
   private readonly apiKey: string;
   private readonly baseUrl: string;
-  private abortController: AbortController | null = null;
+  private activeControllers = new Set<AbortController>();
 
   constructor(options: SarvamTTSOptions = {}) {
     this.options = options;
@@ -30,8 +30,9 @@ export class SarvamTTSProvider implements TTSProvider {
     const trimmed = text.trim();
     if (!trimmed) return;
 
-    this.abortController = new AbortController();
-    const signal = this.abortController.signal;
+    const controller = new AbortController();
+    this.activeControllers.add(controller);
+    const signal = controller.signal;
 
     const body = {
       text: trimmed,
@@ -101,13 +102,15 @@ export class SarvamTTSProvider implements TTSProvider {
       if (signal.aborted) return;
       throw err;
     } finally {
-      this.abortController = null;
+      this.activeControllers.delete(controller);
     }
   }
 
   abort(): void {
-    this.abortController?.abort();
-    this.abortController = null;
+    for (const controller of this.activeControllers) {
+      controller.abort();
+    }
+    this.activeControllers.clear();
   }
 
   private async *readStream(

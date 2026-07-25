@@ -75,13 +75,14 @@ export class Speaker {
     return this.context;
   }
 
-  async enqueue(pcm: ArrayBuffer, _sampleRate?: number): Promise<void> {
-    await this.ensureContext();
+  enqueue(pcm: ArrayBuffer, _sampleRate?: number): void {
     const samples = pcm16ToFloat32(pcm);
     if (samples.length === 0) return;
     this.fifo.push(samples);
     this._playing = true;
     this.silentRuns = 0;
+    // ensureContext might be async (resume), so we call it without blocking the enqueue
+    void this.ensureContext();
   }
 
   /** Stop all playback immediately (interruption). */
