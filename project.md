@@ -515,7 +515,7 @@ export default createEventHandler({
         parameters: z.object({ destination: z.string() }),
         execute: async ({ destination }) => {
           // 1. Acknowledge immediately in the tool response so the Fast Brain can speak
-          
+
           // 2. Spawn the heavy background task (sub-agent) asynchronously
           runHeavyAgentTask(destination).then(result => {
              // Push an event to the client or update the session history here
@@ -572,11 +572,14 @@ Right now, the `VADProcessor` relies purely on acoustics: if the user is quiet f
 
 In the future, we plan to introduce a **Linguistic Turn Detector**. This pipeline step will combine the acoustic `speech_end` trigger with the actual text of the partial transcript. If the user pauses, but the sentence is grammatically incomplete (e.g., "I want to book a flight to..."), the detector will suppress the acoustic silence trigger and keep the session open, waiting for the user to finish their thought.
 
-### Intelligent STT (Planned)
 
-Real human speech is messy. We stutter, correct ourselves mid-sentence, and "dump our minds." 
 
-To solve this, `voice-line` plans to introduce an **Intelligent STT** processor. This optional pipeline step sits between the raw STT output and your Brain. It passes the final raw transcript through a very fast, small LLM (we recommend using the `gpt-oss:20b` model) to restructure and clean up the text. 
+
+### Contextual Awareness Speech2Text (Planned)
+
+Real human speech is messy. We stutter, correct ourselves mid-sentence, and "dump our minds."
+
+To solve this, `voice-line` plans to introduce an **Intelligent STT** processor. This optional pipeline step sits between the raw STT output and your Brain. It passes the final raw transcript through a very fast, small LLM (we recommend using the `gpt-oss:20b` model) to restructure and clean up the text.
 
 Because this processor is fully integrated into the Session, it can also **optionally inject context**—such as recent chat history or custom instructions about the current topic. This allows the lightweight LLM to automatically fix hallucinated or misheard words from the raw STT by inferring what the user *actually* meant based on the ongoing conversation.
 
@@ -691,7 +694,7 @@ interface VoiceLineServerConfig {
 
 To handle mid-call updates and tricky terminology, we plan to expose dynamic context methods directly on the `Session`:
 
-- **Context Biasing**: Pass a custom dictionary of business jargon, acronyms, or names via `STTConfig.keywords`. 
+- **Context Biasing**: Pass a custom dictionary of business jargon, acronyms, or names via `STTConfig.keywords`.
 - **Dynamic Mid-Call Updates**: Expose `session.updateSTTContext({ keywords: [...] })` so if the LLM identifies the caller, you can instantly push their account details to the STT provider mid-conversation to perfectly transcribe their last name.
 
 ---

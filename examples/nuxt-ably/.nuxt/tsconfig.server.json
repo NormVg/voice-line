@@ -36,13 +36,13 @@
         "../../../node_modules/.pnpm/vue-router@4.6.4_vue@3.5.40_typescript@5.9.3_/node_modules/vue-router/vue-router-auto-routes"
       ],
       "nuxt": [
-        "../../../node_modules/.pnpm/nuxt@3.21.9_@biomejs+biome@1.9.4_@types+node@22.20.1_@vue+compiler-sfc@3.5.40_cac@6.7.14_db0@_wuiyuwwsbls5ffpnzpojhenl6i/node_modules/nuxt"
+        "../../../node_modules/.pnpm/nuxt@3.21.9_@biomejs+biome@1.9.4_@types+node@22.20.1_@vue+compiler-sfc@3.5.40_cac@6.7.14_db0@_2xi6lnvf2o7jgcjolcxfyl2o6u/node_modules/nuxt"
       ],
       "@unhead/vue": [
         "../../../node_modules/.pnpm/@unhead+vue@2.1.16_vue@3.5.40_typescript@5.9.3_/node_modules/@unhead/vue"
       ],
       "@nuxt/devtools": [
-        "../../../node_modules/.pnpm/@nuxt+devtools@3.3.1_db0@0.3.4_ioredis@5.11.1_magic-string@0.30.21_oxc-parser@0.140.0_unplugi_6vthfxgqe4eqr3qyzpykscuvy4/node_modules/@nuxt/devtools"
+        "../../../node_modules/.pnpm/@nuxt+devtools@3.3.1_db0@0.3.4_ioredis@5.11.1_magic-string@0.30.21_oxc-parser@0.140.0_rolldow_zv5ghkntqf6hfn44gpcxc3cayi/node_modules/@nuxt/devtools"
       ],
       "@vue/runtime-core": [
         "../../../node_modules/.pnpm/@vue+runtime-core@3.5.40/node_modules/@vue/runtime-core"
@@ -72,16 +72,16 @@
         "../../../node_modules/.pnpm/unplugin-vue-router@0.19.2_@vue+compiler-sfc@3.5.40_vue-router@4.6.4_vue@3.5.40_typescript@5._x7alh5spsxct7zoecqvb2ptrvu/node_modules/unplugin-vue-router/client"
       ],
       "nitropack": [
-        "../../../node_modules/.pnpm/nitropack@2.13.4_oxc-parser@0.140.0_srvx@0.11.22_vite@7.3.6_@types+node@22.20.1_jiti@2.7.0_te_h7ro5pyeyqdfhoxapjyfr76fze/node_modules/nitropack"
+        "../../../node_modules/.pnpm/nitropack@2.13.4_oxc-parser@0.140.0_rolldown@1.2.0_vite@5.4.21_@types+node@22.20.1_lightningcss@1.33.0_terser@5.49.0_/node_modules/nitropack"
       ],
       "vite/client": [
-        "../../../node_modules/.pnpm/vite@7.3.6_@types+node@22.20.1_jiti@2.7.0_terser@5.49.0_tsx@4.23.1_yaml@2.9.0/node_modules/vite/client"
+        "../../../node_modules/.pnpm/vite@5.4.21_@types+node@22.20.1_lightningcss@1.33.0_terser@5.49.0/node_modules/vite/client"
       ],
       "nitropack/types": [
-        "../../../node_modules/.pnpm/nitropack@2.13.4_oxc-parser@0.140.0_srvx@0.11.22_vite@7.3.6_@types+node@22.20.1_jiti@2.7.0_te_h7ro5pyeyqdfhoxapjyfr76fze/node_modules/nitropack/types"
+        "../../../node_modules/.pnpm/nitropack@2.13.4_oxc-parser@0.140.0_rolldown@1.2.0_vite@5.4.21_@types+node@22.20.1_lightningcss@1.33.0_terser@5.49.0_/node_modules/nitropack/types"
       ],
       "nitropack/runtime": [
-        "../../../node_modules/.pnpm/nitropack@2.13.4_oxc-parser@0.140.0_srvx@0.11.22_vite@7.3.6_@types+node@22.20.1_jiti@2.7.0_te_h7ro5pyeyqdfhoxapjyfr76fze/node_modules/nitropack/runtime"
+        "../../../node_modules/.pnpm/nitropack@2.13.4_oxc-parser@0.140.0_rolldown@1.2.0_vite@5.4.21_@types+node@22.20.1_lightningcss@1.33.0_terser@5.49.0_/node_modules/nitropack/runtime"
       ],
       "#shared": [
         "../shared"
@@ -114,10 +114,10 @@
         "./*"
       ],
       "#internal/nuxt/paths": [
-        "../../../node_modules/.pnpm/@nuxt+nitro-server@3.21.9_db0@0.3.4_esbuild@0.28.1_ioredis@5.11.1_magicast@0.5.3_nuxt@3.21.9__k6rclb24fd7fc6l42jed5aotmy/node_modules/@nuxt/nitro-server/dist/runtime/utils/paths"
+        "../../../node_modules/.pnpm/@nuxt+nitro-server@3.21.9_db0@0.3.4_esbuild@0.28.1_ioredis@5.11.1_magicast@0.5.3_nuxt@3.21.9__hlyidf4u2svq2chvirgegs2iqu/node_modules/@nuxt/nitro-server/dist/runtime/utils/paths"
       ],
       "#unhead/composables": [
-        "../../../node_modules/.pnpm/nuxt@3.21.9_@biomejs+biome@1.9.4_@types+node@22.20.1_@vue+compiler-sfc@3.5.40_cac@6.7.14_db0@_wuiyuwwsbls5ffpnzpojhenl6i/node_modules/nuxt/dist/head/runtime/composables/v4"
+        "../../../node_modules/.pnpm/nuxt@3.21.9_@biomejs+biome@1.9.4_@types+node@22.20.1_@vue+compiler-sfc@3.5.40_cac@6.7.14_db0@_2xi6lnvf2o7jgcjolcxfyl2o6u/node_modules/nuxt/dist/head/runtime/composables/v4"
       ]
     },
     "lib": [
@@ -130,8 +130,8 @@
   },
   "include": [
     "./types/nitro-nuxt.d.ts",
-    "../../../node_modules/.pnpm/@nuxt+devtools@3.3.1_db0@0.3.4_ioredis@5.11.1_magic-string@0.30.21_oxc-parser@0.140.0_unplugi_6vthfxgqe4eqr3qyzpykscuvy4/node_modules/runtime/server",
-    "../../../node_modules/.pnpm/@nuxt+devtools@3.3.1_db0@0.3.4_ioredis@5.11.1_magic-string@0.30.21_oxc-parser@0.140.0_unplugi_6vthfxgqe4eqr3qyzpykscuvy4/node_modules/dist/runtime/server",
+    "../../../node_modules/.pnpm/@nuxt+devtools@3.3.1_db0@0.3.4_ioredis@5.11.1_magic-string@0.30.21_oxc-parser@0.140.0_rolldow_zv5ghkntqf6hfn44gpcxc3cayi/node_modules/runtime/server",
+    "../../../node_modules/.pnpm/@nuxt+devtools@3.3.1_db0@0.3.4_ioredis@5.11.1_magic-string@0.30.21_oxc-parser@0.140.0_rolldow_zv5ghkntqf6hfn44gpcxc3cayi/node_modules/dist/runtime/server",
     "../../../node_modules/.pnpm/@nuxt+telemetry@2.8.0_@nuxt+kit@3.21.9_magicast@0.5.3_/node_modules/runtime/server",
     "../../../node_modules/.pnpm/@nuxt+telemetry@2.8.0_@nuxt+kit@3.21.9_magicast@0.5.3_/node_modules/dist/runtime/server",
     "../server/**/*",
@@ -142,8 +142,8 @@
   "exclude": [
     "../node_modules",
     "../../../node_modules",
-    "../../../node_modules/.pnpm/nuxt@3.21.9_@biomejs+biome@1.9.4_@types+node@22.20.1_@vue+compiler-sfc@3.5.40_cac@6.7.14_db0@_wuiyuwwsbls5ffpnzpojhenl6i/node_modules/nuxt/node_modules",
-    "../../../node_modules/.pnpm/@nuxt+devtools@3.3.1_db0@0.3.4_ioredis@5.11.1_magic-string@0.30.21_oxc-parser@0.140.0_unplugi_6vthfxgqe4eqr3qyzpykscuvy4/node_modules/@nuxt/devtools/node_modules",
+    "../../../node_modules/.pnpm/nuxt@3.21.9_@biomejs+biome@1.9.4_@types+node@22.20.1_@vue+compiler-sfc@3.5.40_cac@6.7.14_db0@_2xi6lnvf2o7jgcjolcxfyl2o6u/node_modules/nuxt/node_modules",
+    "../../../node_modules/.pnpm/@nuxt+devtools@3.3.1_db0@0.3.4_ioredis@5.11.1_magic-string@0.30.21_oxc-parser@0.140.0_rolldow_zv5ghkntqf6hfn44gpcxc3cayi/node_modules/@nuxt/devtools/node_modules",
     "../../../node_modules/.pnpm/@nuxt+telemetry@2.8.0_@nuxt+kit@3.21.9_magicast@0.5.3_/node_modules/@nuxt/telemetry/node_modules",
     "../dist"
   ]

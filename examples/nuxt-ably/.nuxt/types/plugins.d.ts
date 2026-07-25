@@ -6,15 +6,15 @@ type Decorate<T extends Record<string, any>> = { [K in keyof T as K extends stri
 type InjectionType<A extends Plugin> = A extends {default: Plugin<infer T>} ? Decorate<T> : unknown
 
 type NuxtAppInjections = 
-  InjectionType<typeof import("../../../../node_modules/.pnpm/nuxt@3.21.9_@biomejs+biome@1.9.4_@types+node@22.20.1_@vue+compiler-sfc@3.5.40_cac@6.7.14_db0@_wuiyuwwsbls5ffpnzpojhenl6i/node_modules/nuxt/dist/app/plugins/revive-payload.client.js")> &
-  InjectionType<typeof import("../../../../node_modules/.pnpm/nuxt@3.21.9_@biomejs+biome@1.9.4_@types+node@22.20.1_@vue+compiler-sfc@3.5.40_cac@6.7.14_db0@_wuiyuwwsbls5ffpnzpojhenl6i/node_modules/nuxt/dist/head/runtime/plugins/unhead.js")> &
-  InjectionType<typeof import("../../../../node_modules/.pnpm/nuxt@3.21.9_@biomejs+biome@1.9.4_@types+node@22.20.1_@vue+compiler-sfc@3.5.40_cac@6.7.14_db0@_wuiyuwwsbls5ffpnzpojhenl6i/node_modules/nuxt/dist/pages/runtime/plugins/router.js")> &
-  InjectionType<typeof import("../../../../node_modules/.pnpm/nuxt@3.21.9_@biomejs+biome@1.9.4_@types+node@22.20.1_@vue+compiler-sfc@3.5.40_cac@6.7.14_db0@_wuiyuwwsbls5ffpnzpojhenl6i/node_modules/nuxt/dist/app/plugins/payload.client.js")> &
-  InjectionType<typeof import("../../../../node_modules/.pnpm/nuxt@3.21.9_@biomejs+biome@1.9.4_@types+node@22.20.1_@vue+compiler-sfc@3.5.40_cac@6.7.14_db0@_wuiyuwwsbls5ffpnzpojhenl6i/node_modules/nuxt/dist/app/plugins/navigation-repaint.client.js")> &
-  InjectionType<typeof import("../../../../node_modules/.pnpm/nuxt@3.21.9_@biomejs+biome@1.9.4_@types+node@22.20.1_@vue+compiler-sfc@3.5.40_cac@6.7.14_db0@_wuiyuwwsbls5ffpnzpojhenl6i/node_modules/nuxt/dist/app/plugins/check-outdated-build.client.js")> &
-  InjectionType<typeof import("../../../../node_modules/.pnpm/nuxt@3.21.9_@biomejs+biome@1.9.4_@types+node@22.20.1_@vue+compiler-sfc@3.5.40_cac@6.7.14_db0@_wuiyuwwsbls5ffpnzpojhenl6i/node_modules/nuxt/dist/app/plugins/revive-payload.server.js")> &
-  InjectionType<typeof import("../../../../node_modules/.pnpm/nuxt@3.21.9_@biomejs+biome@1.9.4_@types+node@22.20.1_@vue+compiler-sfc@3.5.40_cac@6.7.14_db0@_wuiyuwwsbls5ffpnzpojhenl6i/node_modules/nuxt/dist/app/plugins/chunk-reload.client.js")> &
-  InjectionType<typeof import("../../../../node_modules/.pnpm/nuxt@3.21.9_@biomejs+biome@1.9.4_@types+node@22.20.1_@vue+compiler-sfc@3.5.40_cac@6.7.14_db0@_wuiyuwwsbls5ffpnzpojhenl6i/node_modules/nuxt/dist/pages/runtime/plugins/prefetch.client.js")>
+  InjectionType<typeof import("../../../../node_modules/.pnpm/nuxt@3.21.9_@biomejs+biome@1.9.4_@types+node@22.20.1_@vue+compiler-sfc@3.5.40_cac@6.7.14_db0@_2xi6lnvf2o7jgcjolcxfyl2o6u/node_modules/nuxt/dist/app/plugins/revive-payload.client.js")> &
+  InjectionType<typeof import("../../../../node_modules/.pnpm/nuxt@3.21.9_@biomejs+biome@1.9.4_@types+node@22.20.1_@vue+compiler-sfc@3.5.40_cac@6.7.14_db0@_2xi6lnvf2o7jgcjolcxfyl2o6u/node_modules/nuxt/dist/head/runtime/plugins/unhead.js")> &
+  InjectionType<typeof import("../../../../node_modules/.pnpm/nuxt@3.21.9_@biomejs+biome@1.9.4_@types+node@22.20.1_@vue+compiler-sfc@3.5.40_cac@6.7.14_db0@_2xi6lnvf2o7jgcjolcxfyl2o6u/node_modules/nuxt/dist/pages/runtime/plugins/router.js")> &
+  InjectionType<typeof import("../../../../node_modules/.pnpm/nuxt@3.21.9_@biomejs+biome@1.9.4_@types+node@22.20.1_@vue+compiler-sfc@3.5.40_cac@6.7.14_db0@_2xi6lnvf2o7jgcjolcxfyl2o6u/node_modules/nuxt/dist/app/plugins/payload.client.js")> &
+  InjectionType<typeof import("../../../../node_modules/.pnpm/nuxt@3.21.9_@biomejs+biome@1.9.4_@types+node@22.20.1_@vue+compiler-sfc@3.5.40_cac@6.7.14_db0@_2xi6lnvf2o7jgcjolcxfyl2o6u/node_modules/nuxt/dist/app/plugins/navigation-repaint.client.js")> &
+  InjectionType<typeof import("../../../../node_modules/.pnpm/nuxt@3.21.9_@biomejs+biome@1.9.4_@types+node@22.20.1_@vue+compiler-sfc@3.5.40_cac@6.7.14_db0@_2xi6lnvf2o7jgcjolcxfyl2o6u/node_modules/nuxt/dist/app/plugins/check-outdated-build.client.js")> &
+  InjectionType<typeof import("../../../../node_modules/.pnpm/nuxt@3.21.9_@biomejs+biome@1.9.4_@types+node@22.20.1_@vue+compiler-sfc@3.5.40_cac@6.7.14_db0@_2xi6lnvf2o7jgcjolcxfyl2o6u/node_modules/nuxt/dist/app/plugins/revive-payload.server.js")> &
+  InjectionType<typeof import("../../../../node_modules/.pnpm/nuxt@3.21.9_@biomejs+biome@1.9.4_@types+node@22.20.1_@vue+compiler-sfc@3.5.40_cac@6.7.14_db0@_2xi6lnvf2o7jgcjolcxfyl2o6u/node_modules/nuxt/dist/app/plugins/chunk-reload.client.js")> &
+  InjectionType<typeof import("../../../../node_modules/.pnpm/nuxt@3.21.9_@biomejs+biome@1.9.4_@types+node@22.20.1_@vue+compiler-sfc@3.5.40_cac@6.7.14_db0@_2xi6lnvf2o7jgcjolcxfyl2o6u/node_modules/nuxt/dist/pages/runtime/plugins/prefetch.client.js")>
 
 declare module '#app' {
   interface NuxtApp extends NuxtAppInjections { }
