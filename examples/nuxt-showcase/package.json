@@ -1,0 +1,29 @@
+{
+  "name": "nuxt-showcase",
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "build": "nuxt build",
+    "dev": "nuxt dev",
+    "generate": "nuxt generate",
+    "preview": "nuxt preview",
+    "postinstall": "nuxt prepare"
+  },
+  "dependencies": {
+    "@ai-sdk/openai": "^1.1.9",
+    "@phosphor-icons/vue": "^2.1.2",
+    "@voice-line/adapter-ai-sdk": "workspace:*",
+    "@voice-line/provider-sarvam": "workspace:*",
+    "@voice-line/server": "workspace:*",
+    "@voice-line/transport-ws": "workspace:*",
+    "@voice-line/vue": "workspace:*",
+    "nuxt": "^4.5.0",
+    "vue": "^3.5.40",
+    "vue-router": "^5.2.0"
+  },
+  "devDependencies": {
+    "@tailwindcss/postcss": "4.0.0",
+    "@tailwindcss/vite": "^4.3.3",
+    "tailwindcss": "4.3.3"
+  }
+}
