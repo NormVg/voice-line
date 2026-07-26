@@ -5,6 +5,7 @@ export type ErrorCode =
   | "ERR_TTS"
   | "ERR_BRAIN"
   | "ERR_TIMEOUT"
+  | "ERR_CAPACITY"
   | "ERR_INTERNAL";
 
 export class VoiceLineError extends Error {

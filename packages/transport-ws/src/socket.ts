@@ -5,6 +5,8 @@ import type { VoiceLineEvent } from "@voice-line/core";
  */
 export interface WebSocketLike {
   readonly readyState: number;
+  /** Browser / ws: outbound buffer size in bytes. Used for backpressure. */
+  readonly bufferedAmount?: number;
   send(data: string | ArrayBuffer | Uint8Array | Buffer): void;
   close(code?: number, reason?: string): void;
   binaryType?: string;
@@ -19,6 +21,18 @@ export interface WebSocketLike {
   on?(event: string, listener: (...args: unknown[]) => void): void;
   off?(event: string, listener: (...args: unknown[]) => void): void;
   once?(event: string, listener: (...args: unknown[]) => void): void;
+}
+
+/**
+ * Default max outbound buffer before audio frames are dropped.
+ * ~256 KB ≈ ~8 s of 16 kHz mono PCM16 if fully backed up — enough headroom
+ * without unbounded memory growth under a slow client.
+ */
+export const DEFAULT_MAX_BUFFERED_BYTES = 256 * 1024;
+
+export interface SendAudioOptions {
+  /** Drop audio when socket.bufferedAmount exceeds this (default 256KB). */
+  maxBufferedBytes?: number;
 }
 
 /** Ready-state constants (same values in browser + `ws`). */
@@ -105,19 +119,48 @@ export function attachSocket(socket: WebSocketLike, handlers: SocketHandlers): (
   throw new Error("WebSocket-like object has no event API (addEventListener/on)");
 }
 
-export function sendAudio(socket: WebSocketLike, chunk: ArrayBuffer): void {
-  if (socket.readyState !== WS_OPEN) return;
+/**
+ * Send binary audio with optional backpressure.
+ * @returns true if sent, false if dropped (not open or congested).
+ */
+export function sendAudio(
+  socket: WebSocketLike,
+  chunk: ArrayBuffer,
+  options: SendAudioOptions = {},
+): boolean {
+  if (socket.readyState !== WS_OPEN) return false;
+
+  const maxBuffered = options.maxBufferedBytes ?? DEFAULT_MAX_BUFFERED_BYTES;
+  if (maxBuffered > 0) {
+    const buffered = typeof socket.bufferedAmount === "number" ? socket.bufferedAmount : 0;
+    if (buffered > maxBuffered) {
+      // Drop this frame — better a short audio glitch than OOM / multi-second lag.
+      return false;
+    }
+  }
+
   // Prefer Buffer on Node for reliable binary frames with `ws`
   if (typeof Buffer !== "undefined") {
     socket.send(Buffer.from(new Uint8Array(chunk)));
-    return;
+    return true;
   }
   socket.send(chunk);
+  return true;
 }
 
+/** Events are never dropped for backpressure — control plane must stay reliable. */
 export function sendEvent(socket: WebSocketLike, event: VoiceLineEvent): void {
   if (socket.readyState !== WS_OPEN) return;
   socket.send(JSON.stringify(event));
+}
+
+export function isSocketCongested(
+  socket: WebSocketLike,
+  maxBufferedBytes = DEFAULT_MAX_BUFFERED_BYTES,
+): boolean {
+  if (maxBufferedBytes <= 0) return false;
+  const buffered = typeof socket.bufferedAmount === "number" ? socket.bufferedAmount : 0;
+  return buffered > maxBufferedBytes;
 }
 
 function dispatchIncoming(data: unknown, handlers: SocketHandlers): void {

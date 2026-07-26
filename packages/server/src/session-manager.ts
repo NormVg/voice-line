@@ -1,5 +1,11 @@
-import { createId, Session, type SessionOptions, type Transport } from "@voice-line/core";
-import type { VoiceLineServerConfig } from "./config.js";
+import {
+  createId,
+  Session,
+  VoiceLineError,
+  type SessionOptions,
+  type Transport,
+} from "@voice-line/core";
+import { DEFAULT_MAX_SESSIONS, type VoiceLineServerConfig } from "./config.js";
 
 /**
  * Creates and tracks live Sessions.
@@ -8,20 +14,35 @@ import type { VoiceLineServerConfig } from "./config.js";
 export class SessionManager {
   private readonly sessions = new Map<string, Session>();
   private readonly config: VoiceLineServerConfig;
+  private readonly maxSessions: number;
 
   constructor(config: VoiceLineServerConfig) {
     this.config = config;
+    this.maxSessions = config.maxSessions ?? DEFAULT_MAX_SESSIONS;
   }
 
   get size(): number {
     return this.sessions.size;
   }
 
+  get capacity(): number {
+    return this.maxSessions;
+  }
+
   get(sessionId: string): Session | undefined {
     return this.sessions.get(sessionId);
   }
 
-  async create(sessionId?: string): Promise<{ session: Session; clientPayload?: Record<string, unknown> }> {
+  async create(
+    sessionId?: string,
+  ): Promise<{ session: Session; clientPayload?: Record<string, unknown> }> {
+    if (this.maxSessions > 0 && this.sessions.size >= this.maxSessions) {
+      throw new VoiceLineError(
+        "ERR_CAPACITY",
+        `Session limit reached (${this.maxSessions}). Try again later.`,
+      );
+    }
+
     const id = sessionId ?? createId("ses");
     if (this.sessions.has(id)) {
       throw new Error(`Session already exists: ${id}`);
@@ -55,9 +76,19 @@ export class SessionManager {
     const session = new Session(options);
 
     this.sessions.set(id, session);
-    await session.start();
+    try {
+      await session.start();
+    } catch (err) {
+      this.sessions.delete(id);
+      try {
+        await session.close();
+      } catch {
+        /* ignore */
+      }
+      throw err;
+    }
     this.config.onSessionStart?.(session);
-    
+
     if (clientPayload !== undefined) {
       return { session, clientPayload };
     }
@@ -74,7 +105,7 @@ export class SessionManager {
   async destroyAll(): Promise<void> {
     const all = [...this.sessions.values()];
     this.sessions.clear();
-    await Promise.all(all.map((s) => s.close()));
+    await Promise.all(all.map((s) => s.close().catch(() => {})));
   }
 }
 

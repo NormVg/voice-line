@@ -1,6 +1,7 @@
 import type { Transport, TransportState, Unsubscribe, VoiceLineEvent } from "@voice-line/core";
 import {
   attachSocket,
+  DEFAULT_MAX_BUFFERED_BYTES,
   sendAudio,
   sendEvent,
   type AudioHandler,
@@ -23,6 +24,11 @@ export interface WsTransportOptions {
     protocols?: string | string[],
   ) => WebSocketLike;
   protocols?: string | string[];
+  /**
+   * Drop outbound audio when the socket buffer exceeds this many bytes.
+   * Default 256KB. Set 0 to disable backpressure (not recommended).
+   */
+  maxBufferedBytes?: number;
 }
 
 /**
@@ -141,7 +147,8 @@ export class WsTransport implements Transport {
 
   sendAudio(chunk: ArrayBuffer): void {
     if (!this.ws || this.stateValue !== "connected") return;
-    sendAudio(this.ws, chunk);
+    const maxBufferedBytes = this.options.maxBufferedBytes ?? DEFAULT_MAX_BUFFERED_BYTES;
+    sendAudio(this.ws, chunk, { maxBufferedBytes });
   }
 
   onAudio(handler: AudioHandler): Unsubscribe {

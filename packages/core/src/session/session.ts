@@ -357,9 +357,16 @@ export class Session {
   }
 
   private transcriptQueue: string[] = [];
+  /**
+   * When true, STT finals are ignored (processing watchdog fired).
+   * Cleared on the next speech_start so a new utterance can start cleanly.
+   */
+  private dropStaleTranscripts = false;
 
   private async onInboundFrame(frame: Frame): Promise<void> {
     if (frame.kind === "speech_start") {
+      // New utterance — accept STT results again after a prior timeout.
+      this.dropStaleTranscripts = false;
       const isBusy =
         this.state === "speaking" || this.state === "processing" || this.turnAbort !== null;
       if (isBusy) {
@@ -388,6 +395,9 @@ export class Session {
 
   private async handleTranscript(frame: Extract<Frame, { kind: "transcript" }>): Promise<void> {
     if (this.destroyed || this.closing) return;
+
+    // Processing timeout already recovered — ignore late STT results from the dead stream.
+    if (this.dropStaleTranscripts) return;
 
     if (!frame.isFinal) {
       this.safeSendEvent({ type: "transcript:partial", text: frame.text });
@@ -692,6 +702,14 @@ export class Session {
     this.processingTimer = setTimeout(() => {
       // Only fire if we're still stuck in processing — i.e. the STT never resolved.
       if ((this.state === "processing" || this.state === "receiving") && !this.destroyed) {
+        // Drop late finals from the hung STT stream and tear it down so we
+        // don't surprise-start a brain turn after UI already recovered.
+        this.dropStaleTranscripts = true;
+        try {
+          this.inbound.reset();
+        } catch {
+          /* ignore */
+        }
         this.setState("listening");
       }
       this.processingTimer = null;

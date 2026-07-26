@@ -36,7 +36,17 @@ export interface VoiceLineServerConfig {
   chunker?: Partial<ChunkerConfig>;
   session?: Partial<SessionConfig>;
 
+  /**
+   * Max concurrent live sessions for this server instance.
+   * Further create() calls throw VoiceLineError ERR_CAPACITY.
+   * Default: 100. Set 0 for unlimited (not recommended in production).
+   */
+  maxSessions?: number;
+
   onSessionStart?: (session: Session) => void;
   onSessionEnd?: (session: Session) => void;
   onError?: (error: Error, session?: Session) => void;
 }
+
+/** Default concurrent session cap when `maxSessions` is omitted. */
+export const DEFAULT_MAX_SESSIONS = 100;

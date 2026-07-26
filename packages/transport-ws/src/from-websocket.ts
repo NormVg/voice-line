@@ -1,6 +1,7 @@
 import type { Transport, TransportState, Unsubscribe, VoiceLineEvent } from "@voice-line/core";
 import {
   attachSocket,
+  DEFAULT_MAX_BUFFERED_BYTES,
   sendAudio,
   sendEvent,
   WS_OPEN,
@@ -16,6 +17,11 @@ export interface FromWebSocketOptions {
    */
   onClose?: () => void;
   onError?: (error: Error) => void;
+  /**
+   * Drop outbound audio when the socket buffer exceeds this many bytes.
+   * Default 256KB. Set 0 to disable.
+   */
+  maxBufferedBytes?: number;
 }
 
 /**
@@ -48,6 +54,7 @@ export function fromWebSocket(
 class BoundWebSocketTransport implements Transport {
   private stateValue: TransportState;
   private readonly socket: WebSocketLike;
+  private readonly maxBufferedBytes: number;
   private readonly audioHandlers = new Set<AudioHandler>();
   private readonly eventHandlers = new Set<EventHandler>();
   private dispose: (() => void) | null = null;
@@ -55,6 +62,7 @@ class BoundWebSocketTransport implements Transport {
 
   constructor(socket: WebSocketLike, options: FromWebSocketOptions) {
     this.socket = socket;
+    this.maxBufferedBytes = options.maxBufferedBytes ?? DEFAULT_MAX_BUFFERED_BYTES;
     this.stateValue = socket.readyState === WS_OPEN ? "connected" : "connecting";
 
     const finishOpen = () => {
@@ -124,7 +132,7 @@ class BoundWebSocketTransport implements Transport {
 
   sendAudio(chunk: ArrayBuffer): void {
     if (this.stateValue !== "connected") return;
-    sendAudio(this.socket, chunk);
+    sendAudio(this.socket, chunk, { maxBufferedBytes: this.maxBufferedBytes });
   }
 
   onAudio(handler: AudioHandler): Unsubscribe {
