@@ -1,4 +1,5 @@
 import { float32ToPcm16, resample } from "@voice-line/core";
+import { resumeAudioContext } from "./audio-context.js";
 
 export interface MicOptions {
   /** Target sample rate for outbound PCM (default 16000). */
@@ -7,10 +8,15 @@ export interface MicOptions {
   chunkDurationMs?: number;
   onChunk: (pcm: ArrayBuffer) => void;
   onError?: (error: Error) => void;
+  /**
+   * Shared AudioContext (preferred — same graph as Speaker for better AEC).
+   * When omitted, Mic creates and owns its own context.
+   */
+  context?: AudioContext;
 }
 
 /**
- * Microphone capture via MediaStream + AudioWorklet-free ScriptProcessor fallback.
+ * Microphone capture via MediaStream + ScriptProcessor.
  * Emits PCM16 LE chunks at the target sample rate.
  */
 export class Microphone {
@@ -18,11 +24,14 @@ export class Microphone {
   private readonly chunkDurationMs: number;
   private readonly onChunk: (pcm: ArrayBuffer) => void;
   private readonly onError: ((error: Error) => void) | undefined;
+  private readonly externalContext: AudioContext | null;
 
   private stream: MediaStream | null = null;
   private context: AudioContext | null = null;
+  private ownsContext = false;
   private processor: ScriptProcessorNode | null = null;
   private source: MediaStreamAudioSourceNode | null = null;
+  private sink: GainNode | null = null;
   private enabled = false;
 
   constructor(options: MicOptions) {
@@ -30,6 +39,7 @@ export class Microphone {
     this.chunkDurationMs = options.chunkDurationMs ?? 100;
     this.onChunk = options.onChunk;
     this.onError = options.onError;
+    this.externalContext = options.context ?? null;
   }
 
   get isEnabled(): boolean {
@@ -52,7 +62,15 @@ export class Microphone {
         },
       });
 
-      this.context = new AudioContext();
+      if (this.externalContext) {
+        this.context = this.externalContext;
+        this.ownsContext = false;
+      } else {
+        this.context = new AudioContext();
+        this.ownsContext = true;
+      }
+      await resumeAudioContext(this.context);
+
       this.source = this.context.createMediaStreamSource(this.stream);
 
       const bufferSize = 4096;
@@ -62,7 +80,7 @@ export class Microphone {
       const samplesPerChunk = Math.floor((this.targetRate * this.chunkDurationMs) / 1000);
 
       this.processor.onaudioprocess = (event) => {
-        // Zero out the output buffer to prevent local mic echo
+        // Zero out the output buffer to prevent local mic echo through the graph
         for (let i = 0; i < event.outputBuffer.numberOfChannels; i++) {
           event.outputBuffer.getChannelData(i).fill(0);
         }
@@ -87,11 +105,11 @@ export class Microphone {
         }
       };
 
-      const gain = this.context.createGain();
-      gain.gain.value = 0;
+      this.sink = this.context.createGain();
+      this.sink.gain.value = 0;
       this.source.connect(this.processor);
-      this.processor.connect(gain);
-      gain.connect(this.context.destination);
+      this.processor.connect(this.sink);
+      this.sink.connect(this.context.destination);
       this.enabled = true;
     } catch (err) {
       this.onError?.(err instanceof Error ? err : new Error(String(err)));
@@ -107,10 +125,15 @@ export class Microphone {
     this.enabled = false;
     this.processor?.disconnect();
     this.source?.disconnect();
+    this.sink?.disconnect();
     this.processor = null;
     this.source = null;
-    await this.context?.close();
+    this.sink = null;
+    if (this.ownsContext) {
+      await this.context?.close().catch(() => {});
+    }
     this.context = null;
+    this.ownsContext = false;
     for (const track of this.stream?.getTracks() ?? []) {
       track.stop();
     }

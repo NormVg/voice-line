@@ -28,7 +28,8 @@ class FakeSTT implements STTProvider {
 }
 
 class FakeTTS implements TTSProvider {
-  async *synthesize(text: string): AsyncIterable<AudioChunk> {
+  async *synthesize(text: string, config?: { signal?: AbortSignal }): AsyncIterable<AudioChunk> {
+    if (config?.signal?.aborted) return;
     const data = new TextEncoder().encode(text).buffer;
     yield { data, sampleRate: 16000, format: "pcm16" };
   }
@@ -139,7 +140,8 @@ describe("Session", () => {
     };
 
     class SlowTTS implements TTSProvider {
-      async *synthesize(text: string): AsyncIterable<AudioChunk> {
+      async *synthesize(text: string, config?: { signal?: AbortSignal }): AsyncIterable<AudioChunk> {
+        if (config?.signal?.aborted) return;
         const data = new TextEncoder().encode(text).buffer;
         yield { data, sampleRate: 16000, format: "pcm16" };
       }

@@ -5,3 +5,4 @@ export type { MicOptions } from "./mic.js";
 export { Speaker } from "./speaker.js";
 export { EventDispatcher } from "./events.js";
 export type { ServerEventHandler } from "./events.js";
+export { createVoiceAudioContext, resumeAudioContext } from "./audio-context.js";

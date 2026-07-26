@@ -13,12 +13,17 @@ export interface SarvamTTSOptions extends SarvamCredentials {
 /**
  * Sarvam Bulbul TTS provider.
  * Uses HTTP streaming when available, REST otherwise.
+ *
+ * Cancellation: prefer `config.signal` (session-scoped). `abort()` only
+ * cancels controllers that were not started with an external signal, so a
+ * shared provider instance is multi-session safe when sessions pass signals.
  */
 export class SarvamTTSProvider implements TTSProvider {
   private readonly options: SarvamTTSOptions;
   private readonly apiKey: string;
   private readonly baseUrl: string;
-  private activeControllers = new Set<AbortController>();
+  /** Controllers for calls without an external signal (bulk abort only). */
+  private orphanControllers = new Set<AbortController>();
 
   constructor(options: SarvamTTSOptions = {}) {
     this.options = options;
@@ -31,7 +36,19 @@ export class SarvamTTSProvider implements TTSProvider {
     if (!trimmed) return;
 
     const controller = new AbortController();
-    this.activeControllers.add(controller);
+    const external = config.signal;
+    const hasExternal = !!external;
+
+    if (external?.aborted) return;
+    let removeExternal: (() => void) | undefined;
+    if (external) {
+      const onAbort = () => controller.abort();
+      external.addEventListener("abort", onAbort, { once: true });
+      removeExternal = () => external.removeEventListener("abort", onAbort);
+    } else {
+      this.orphanControllers.add(controller);
+    }
+
     const signal = controller.signal;
 
     const body = {
@@ -57,7 +74,7 @@ export class SarvamTTSProvider implements TTSProvider {
       });
 
       if (streamRes.ok && streamRes.body) {
-        yield* this.readStream(streamRes.body, config);
+        yield* this.readStream(streamRes.body, config, signal);
         return;
       }
 
@@ -93,6 +110,8 @@ export class SarvamTTSProvider implements TTSProvider {
         data = data.slice(44);
       }
 
+      if (signal.aborted) return;
+
       yield {
         data,
         sampleRate: config.sampleRate ?? this.options.sampleRate ?? 16_000,
@@ -102,20 +121,23 @@ export class SarvamTTSProvider implements TTSProvider {
       if (signal.aborted) return;
       throw err;
     } finally {
-      this.activeControllers.delete(controller);
+      removeExternal?.();
+      if (!hasExternal) this.orphanControllers.delete(controller);
     }
   }
 
   abort(): void {
-    for (const controller of this.activeControllers) {
+    // Only bulk-cancel work that has no session-scoped signal.
+    for (const controller of this.orphanControllers) {
       controller.abort();
     }
-    this.activeControllers.clear();
+    this.orphanControllers.clear();
   }
 
   private async *readStream(
     body: ReadableStream<Uint8Array>,
     config: TTSConfig,
+    signal: AbortSignal,
   ): AsyncIterable<AudioChunk> {
     const reader = body.getReader();
     const sampleRate = config.sampleRate ?? this.options.sampleRate ?? 16_000;
@@ -124,6 +146,7 @@ export class SarvamTTSProvider implements TTSProvider {
 
     try {
       while (true) {
+        if (signal.aborted) break;
         const { done, value } = await reader.read();
         if (done) break;
         if (!value || value.byteLength === 0) continue;
@@ -178,7 +201,11 @@ export class SarvamTTSProvider implements TTSProvider {
         };
       }
     } finally {
-      reader.releaseLock();
+      try {
+        reader.releaseLock();
+      } catch {
+        /* already released */
+      }
     }
   }
 }

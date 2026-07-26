@@ -162,6 +162,11 @@ export class Session {
   private activeTurn: Promise<void> = Promise.resolve();
   /** True while close() is running — suppresses late error/event side effects. */
   private closing = false;
+  /**
+   * Per-turn TTS abort. Shared providers must not use global abort() —
+   * only this signal cancels synthesis for the active turn on this session.
+   */
+  private ttsTurnAbort: AbortController | null = null;
 
   constructor(options: SessionOptions) {
     this.id = options.id ?? createId("ses");
@@ -448,6 +453,8 @@ export class Session {
     this.setState("processing");
     this.turnAbort = new AbortController();
     const signal = this.turnAbort.signal;
+    // Fresh TTS scope for this turn (interruptTurn cleared the previous one).
+    this.ttsTurnAbort = new AbortController();
     // Own this turn's audio epoch. Late tokens from a prior aborted turn
     // close over a different epoch and cannot reattach after barge-in.
     const turnGen = this.ttsGeneration;
@@ -547,7 +554,12 @@ export class Session {
   private enqueueSentence(text: string, epoch: number): void {
     if (epoch < 0 || epoch !== this.ttsGeneration || this.destroyed) return;
 
-    const stream = eagerStream(this.tts.synthesize(text, this.ttsConfig));
+    // Pass turn-scoped signal only — never rely on provider-global abort().
+    const ttsConfig: TTSConfig = {
+      ...this.ttsConfig,
+      ...(this.ttsTurnAbort ? { signal: this.ttsTurnAbort.signal } : {}),
+    };
+    const stream = eagerStream(this.tts.synthesize(text, ttsConfig));
     this.ttsTail = this.ttsTail
       .then(async () => {
         if (epoch !== this.ttsGeneration || this.destroyed) return;
@@ -570,17 +582,21 @@ export class Session {
 
   /**
    * Interrupt current turn in a single synchronous tick:
-   * abort brain, abort TTS, drop TTS queue, notify client.
+   * abort brain, abort this session's TTS turn, drop queue, notify client.
+   * Does NOT call `tts.abort()` — that would cancel other sessions sharing the provider.
    */
   private interruptTurn(): void {
     if (this.turnAbort) {
       this.turnAbort.abort();
       this.turnAbort = null;
     }
-    try {
-      this.tts.abort();
-    } catch {
-      /* provider abort must never throw out of interrupt */
+    if (this.ttsTurnAbort) {
+      try {
+        this.ttsTurnAbort.abort();
+      } catch {
+        /* ignore */
+      }
+      this.ttsTurnAbort = null;
     }
     // Invalidate every in-flight TTS item and revoke outbound ownership.
     this.ttsGeneration += 1;

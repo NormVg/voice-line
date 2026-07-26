@@ -7,6 +7,7 @@ import type {
   VoiceLineEvent,
 } from "@voice-line/core";
 import { createId } from "@voice-line/core";
+import { createVoiceAudioContext } from "./audio-context.js";
 import { EventDispatcher } from "./events.js";
 import { Microphone } from "./mic.js";
 import { Speaker } from "./speaker.js";
@@ -44,6 +45,7 @@ export class VoiceLineClient {
   private readonly sampleRate: number;
   private readonly autoMic: boolean;
   private readonly dispatcher = new EventDispatcher();
+  private readonly audioContext: AudioContext;
   private readonly speaker: Speaker;
   private mic: Microphone | null = null;
 
@@ -52,8 +54,6 @@ export class VoiceLineClient {
   private sessionId: string | null = null;
   private unsubs: Unsubscribe[] = [];
   private listeners = new Map<EventKey, Set<AnyHandler>>();
-  private currentAssistantId: string | null = null;
-  private currentAssistantText = "";
   private connected = false;
   /**
    * When false, inbound audio is dropped. Set false on audio:flush so
@@ -66,11 +66,15 @@ export class VoiceLineClient {
     this.transport = options.transport;
     this.sampleRate = options.sampleRate ?? 16_000;
     this.autoMic = options.autoMic ?? true;
-    this.speaker = new Speaker(this.sampleRate);
+
+    // One AudioContext for mic + speaker — better AEC correlation than dual graphs.
+    this.audioContext = createVoiceAudioContext();
+    this.speaker = new Speaker(this.sampleRate, this.audioContext);
 
     this.mic = new Microphone({
       sampleRate: this.sampleRate,
       chunkDurationMs: options.chunkDurationMs ?? 100,
+      context: this.audioContext,
       onChunk: (pcm) => {
         if (this.connected) this.transport.sendAudio(pcm);
       },
@@ -121,7 +125,6 @@ export class VoiceLineClient {
 
     this.unsubs.push(
       this.transport.onEvent((event) => {
-        console.log(`[VoiceLineClient] Received server event:`, event.type);
         this.dispatcher.dispatch(event);
         this.handleServerEvent(event);
       }),
@@ -144,7 +147,6 @@ export class VoiceLineClient {
       await this.mic?.start();
     }
 
-    console.log(`[VoiceLineClient] Connected, setting state to listening`);
     this.setState("listening");
   }
 
@@ -154,6 +156,13 @@ export class VoiceLineClient {
     this.unsubs = [];
     await this.mic?.stop();
     await this.speaker.destroy();
+    try {
+      if (this.audioContext.state !== "closed") {
+        await this.audioContext.close();
+      }
+    } catch {
+      /* ignore */
+    }
     await this.transport.disconnect();
     this.setState("idle");
   }
@@ -256,6 +265,8 @@ export class VoiceLineClient {
             updated[idx] = { ...oldMsg, content: event.text, partial: event.partial };
           }
           this.setMessages(updated);
+          const done = updated[idx];
+          if (done) this.emit("message", done);
         }
         break;
       }

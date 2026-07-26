@@ -124,4 +124,10 @@ export interface TTSConfig {
   model?: string;
   pace?: number;
   metadata?: Record<string, unknown>;
+  /**
+   * Optional abort signal for this synthesis only.
+   * Prefer this over `TTSProvider.abort()` so multi-session servers
+   * don't cancel other users' in-flight TTS.
+   */
+  signal?: AbortSignal;
 }

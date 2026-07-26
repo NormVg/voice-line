@@ -31,6 +31,7 @@ export function useVoiceAgent(options: UseVoiceAgentOptions): UseVoiceAgentRetur
   const [state, setState] = useState<ClientState>("idle");
   const [messages, setMessages] = useState<Message[]>([]);
   const [error, setError] = useState<(Error & { code?: string }) | null>(null);
+  const [isBotSpeaking, setIsBotSpeaking] = useState(false);
   const clientRef = useRef<VoiceLineClient | null>(null);
   const activeSessionId = useRef<string | undefined>(undefined);
   const optionsRef = useRef(options);
@@ -53,17 +54,24 @@ export function useVoiceAgent(options: UseVoiceAgentOptions): UseVoiceAgentRetur
         if (opts.autoMic !== undefined) clientOptions.autoMic = opts.autoMic;
 
         const c = new VoiceLineClient(clientOptions);
-        c.on("state", setState);
-        c.on("message", (m) => setMessages((prev) => [...prev, m]));
+        // Full history snapshot — required for streaming assistant deltas.
+        // Listening only to "message" drops bot:text:delta rows.
+        c.on("state", (s) => {
+          setState(s);
+          setIsBotSpeaking(c.isBotSpeaking);
+        });
+        c.on("messages", setMessages);
         c.on("error", setError);
 
         clientRef.current = c;
       }
 
       await clientRef.current.connect(activeSessionId.current);
+      setIsBotSpeaking(clientRef.current.isBotSpeaking);
     } catch (err) {
       setError(err instanceof Error ? err : new Error(String(err)));
       setState("idle");
+      setIsBotSpeaking(false);
     }
   }, []);
 
@@ -71,6 +79,7 @@ export function useVoiceAgent(options: UseVoiceAgentOptions): UseVoiceAgentRetur
     await clientRef.current?.disconnect();
     clientRef.current = null;
     setState("idle");
+    setIsBotSpeaking(false);
   }, []);
 
   const toggleMic = useCallback(async (enabled?: boolean) => {
@@ -87,13 +96,27 @@ export function useVoiceAgent(options: UseVoiceAgentOptions): UseVoiceAgentRetur
 
   useEffect(() => {
     return () => {
-      void clientRef.current?.disconnect();
+      void clientRef.current?.disconnect().catch(() => {});
       clientRef.current = null;
     };
   }, []);
 
+  // Keep isBotSpeaking in sync while speaker FIFO may still be draining
+  // after session state leaves "speaking".
+  useEffect(() => {
+    if (state === "idle" || state === "connecting") {
+      setIsBotSpeaking(false);
+      return;
+    }
+    const id = window.setInterval(() => {
+      const c = clientRef.current;
+      if (!c) return;
+      setIsBotSpeaking(c.isBotSpeaking);
+    }, 100);
+    return () => window.clearInterval(id);
+  }, [state]);
+
   const isConnected = state !== "idle" && state !== "connecting";
-  const isBotSpeaking = state === "speaking";
 
   return useMemo(
     () => ({

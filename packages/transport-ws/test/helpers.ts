@@ -87,10 +87,13 @@ export class MockTTS implements TTSProvider {
   private aborted = false;
   public synthesized: string[] = [];
 
-  async *synthesize(text: string): AsyncIterable<AudioChunk> {
+  async *synthesize(
+    text: string,
+    config?: { signal?: AbortSignal },
+  ): AsyncIterable<AudioChunk> {
     this.aborted = false;
     this.synthesized.push(text);
-    if (this.aborted) return;
+    if (this.aborted || config?.signal?.aborted) return;
     // 20ms of silence-ish PCM16 at 16kHz
     const samples = 320;
     const buf = new ArrayBuffer(samples * 2);
