@@ -136,8 +136,17 @@ export class Session {
    * later sentences finished first.
    */
   private ttsTail: Promise<void> = Promise.resolve();
-  /** Bumped on interrupt so in-flight queue items bail out. */
+  /**
+   * Monotonic audio epoch. Bumped on every interrupt / turn teardown so
+   * in-flight TTS work from a previous turn can never send audio again.
+   */
   private ttsGeneration = 0;
+  /**
+   * Epoch owned by the turn currently allowed to push outbound audio.
+   * Captured at turn start; late tokens from an aborted turn must not
+   * re-bind to a newer generation (that was the barge-in regression).
+   */
+  private outboundEpoch = -1;
   /** Watchdog timer: if we stay in `processing` too long, snap back to listening. */
   private processingTimer: ReturnType<typeof setTimeout> | null = null;
   /** Max ms we allow `processing` state before forcibly recovering. */
@@ -190,10 +199,11 @@ export class Session {
     });
 
     // Queue sentence frames without blocking the brain token stream.
-    // Audio order is preserved by `ttsTail`.
+    // Audio order is preserved by `ttsTail`. Epoch is captured at enqueue
+    // time from `outboundEpoch` (the turn that is allowed to speak).
     this.outbound.onFrame((frame) => {
       if (frame.kind === "sentence") {
-        this.enqueueSentence(frame.text);
+        this.enqueueSentence(frame.text, this.outboundEpoch);
       }
     });
   }
@@ -380,7 +390,10 @@ export class Session {
     this.setState("processing");
     this.turnAbort = new AbortController();
     const signal = this.turnAbort.signal;
+    // Own this turn's audio epoch. Late tokens from a prior aborted turn
+    // close over a different epoch and cannot reattach after barge-in.
     const turnGen = this.ttsGeneration;
+    this.outboundEpoch = turnGen;
 
     this.assistantMessageId = createId("msg");
     this.assistantBuffer = "";
@@ -398,7 +411,10 @@ export class Session {
       this.setState("speaking");
 
       for await (const token of stream) {
-        if (signal.aborted || this.destroyed) break;
+        // Epoch check is required: abort alone is not enough if a token was
+        // already past the signal check when interrupt ran, or if a new turn
+        // has already claimed outboundEpoch.
+        if (signal.aborted || this.destroyed || turnGen !== this.ttsGeneration) break;
         this.assistantBuffer += token;
         this.transport.sendEvent({
           type: "bot:text:delta",
@@ -408,12 +424,13 @@ export class Session {
         await this.outbound.push({ kind: "text", text: token });
       }
 
-      if (!signal.aborted) {
+      if (!signal.aborted && turnGen === this.ttsGeneration) {
         await this.outbound.push({ kind: "flush" });
         await this.ttsTail;
       }
 
-      if (turnGen !== this.ttsGeneration && !this.assistantMessageId) {
+      // Interrupted and partial already finalized by interruptTurn.
+      if (turnGen !== this.ttsGeneration) {
         return;
       }
 
@@ -439,21 +456,25 @@ export class Session {
         }
       }
     } catch (err) {
-      if (!signal.aborted) {
+      if (!signal.aborted && turnGen === this.ttsGeneration) {
         this.handleError(err instanceof Error ? err : new Error(String(err)));
         if (!this.destroyed) this.setState("listening");
       }
     } finally {
-      this.turnAbort = null;
-      this.assistantMessageId = null;
-      this.assistantBuffer = "";
-      this.outbound.reset();
-      this.bumpIdle();
+      // Only the active turn may clear shared turn fields / drain the queue.
+      if (turnGen === this.ttsGeneration) {
+        this.turnAbort = null;
+        this.assistantMessageId = null;
+        this.assistantBuffer = "";
+        this.outboundEpoch = -1;
+        this.outbound.reset();
+        this.bumpIdle();
 
-      if (this.transcriptQueue.length > 0 && !this.destroyed) {
-        const nextPrompt = this.transcriptQueue.join("\n");
-        this.transcriptQueue = [];
-        void this.runBrainTurn(nextPrompt, true);
+        if (this.transcriptQueue.length > 0 && !this.destroyed) {
+          const nextPrompt = this.transcriptQueue.join("\n");
+          this.transcriptQueue = [];
+          void this.runBrainTurn(nextPrompt, true);
+        }
       }
     }
   }
@@ -461,24 +482,23 @@ export class Session {
   /**
    * Append a sentence to the serial TTS queue.
    * Brain tokens keep flowing; audio is always sent in sentence order.
+   * `epoch` is the turn that produced this sentence — never the live counter.
    */
-  private enqueueSentence(text: string): void {
-    const gen = this.ttsGeneration;
+  private enqueueSentence(text: string, epoch: number): void {
+    if (epoch < 0 || epoch !== this.ttsGeneration || this.destroyed) return;
+
     const stream = eagerStream(this.tts.synthesize(text, this.ttsConfig));
     this.ttsTail = this.ttsTail
       .then(async () => {
-        if (gen !== this.ttsGeneration || this.destroyed) return;
-        if (this.turnAbort?.signal.aborted) return;
+        if (epoch !== this.ttsGeneration || this.destroyed) return;
 
         for await (const chunk of stream) {
-          if (gen !== this.ttsGeneration || this.destroyed) break;
-          if (this.turnAbort?.signal.aborted) break;
+          if (epoch !== this.ttsGeneration || this.destroyed) break;
           this.transport.sendAudio(chunk.data);
         }
       })
       .catch((err: unknown) => {
-        if (gen !== this.ttsGeneration) return;
-        if (this.turnAbort?.signal.aborted) return;
+        if (epoch !== this.ttsGeneration) return;
         this.handleError(err instanceof Error ? err : new Error(String(err)));
       });
   }
@@ -493,8 +513,9 @@ export class Session {
       this.turnAbort = null;
     }
     this.tts.abort();
-    // Invalidate in-flight queue items and reset the chain
+    // Invalidate every in-flight TTS item and revoke outbound ownership.
     this.ttsGeneration += 1;
+    this.outboundEpoch = -1;
     this.ttsTail = Promise.resolve();
     this.outbound.reset();
     this.transport.sendEvent({ type: "audio:flush" });

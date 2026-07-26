@@ -55,6 +55,12 @@ export class VoiceLineClient {
   private currentAssistantId: string | null = null;
   private currentAssistantText = "";
   private connected = false;
+  /**
+   * When false, inbound audio is dropped. Set false on audio:flush so
+   * trailing TTS chunks that race past the server interrupt never restart
+   * playback; re-enabled when the next speaking turn begins.
+   */
+  private acceptAudio = true;
 
   constructor(options: VoiceLineClientOptions) {
     this.transport = options.transport;
@@ -123,6 +129,8 @@ export class VoiceLineClient {
 
     this.unsubs.push(
       this.transport.onAudio((chunk) => {
+        // Drop audio that arrives after an interrupt flush until the next turn.
+        if (!this.acceptAudio) return;
         void this.speaker.enqueue(chunk, this.sampleRate);
       }),
     );
@@ -178,9 +186,14 @@ export class VoiceLineClient {
         this.sessionId = event.sessionId;
         break;
 
-      case "state:change":
+      case "state:change": {
+        // A new speaking turn may deliver audio again.
+        if (event.state === "speaking") this.acceptAudio = true;
+        // After barge-in the session goes to receiving — keep rejecting late TTS.
+        if (event.state === "receiving") this.acceptAudio = false;
         this.setState(mapSessionState(event.state));
         break;
+      }
 
       case "transcript:partial":
         this.emit("partialTranscript", event.text);
@@ -201,6 +214,8 @@ export class VoiceLineClient {
       }
 
       case "bot:text:delta": {
+        // Bot started a new response — accept audio for this turn.
+        this.acceptAudio = true;
         const idx = this.messages.findIndex((m) => m.id === event.messageId);
         if (idx === -1) {
           const msg: Message = {
@@ -246,6 +261,7 @@ export class VoiceLineClient {
       }
 
       case "audio:flush":
+        this.acceptAudio = false;
         this.speaker.flush();
         break;
 
