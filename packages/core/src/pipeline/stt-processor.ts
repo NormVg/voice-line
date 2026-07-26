@@ -7,9 +7,8 @@ export type TranscriptHandler = (frame: Extract<Frame, { kind: "transcript" }>) 
 /**
  * Streams audio to an STT provider and emits transcript frames.
  *
- * Note: STT results arrive asynchronously via the stream's event emitter.
- * The processor bridges that into the pipeline by invoking `onTranscript`.
- * Session wiring should listen there and push transcript frames as needed.
+ * Stream open/close is serialized with a generation token so a late
+ * `close()` from a previous utterance cannot tear down a newer stream.
  */
 export class STTProcessor implements Processor {
   readonly name = "stt";
@@ -20,6 +19,10 @@ export class STTProcessor implements Processor {
   private readonly onTranscript: TranscriptHandler;
   private readonly onError: ((error: Error) => void) | undefined;
   private unsubs: Array<() => void> = [];
+  /** Bumped on every reopen/reset so stale close() calls no-op. */
+  private streamGen = 0;
+  /** Chains open/close so concurrent speech_start events cannot race. */
+  private lifecycle: Promise<void> = Promise.resolve();
 
   constructor(options: {
     provider: STTProvider;
@@ -33,25 +36,26 @@ export class STTProcessor implements Processor {
     this.onError = options.onError;
   }
 
-  process(frame: Frame): Frame | null {
+  process(frame: Frame): Frame | Frame[] | null | Promise<Frame | Frame[] | null> {
     if (frame.kind === "speech_start") {
-      void this.closeStream();
-      void this.openStream();
-      return frame;
+      return this.reopenStream().then(() => frame);
     }
 
     if (frame.kind === "audio") {
-      this.ensureStream();
+      if (!this.stream) {
+        this.lifecycle = this.lifecycle
+          .then(() => {
+            if (!this.stream) this.openStream();
+          })
+          .catch((err: unknown) => {
+            this.onError?.(err instanceof Error ? err : new Error(String(err)));
+          });
+      }
       this.stream?.write(frame.data);
-      return null; // audio consumed by STT
+      return null;
     }
 
-    if (frame.kind === "speech_end") {
-      this.stream?.flush?.();
-      return frame;
-    }
-
-    if (frame.kind === "flush") {
+    if (frame.kind === "speech_end" || frame.kind === "flush") {
       this.stream?.flush?.();
       return frame;
     }
@@ -60,24 +64,37 @@ export class STTProcessor implements Processor {
   }
 
   reset(): void {
-    void this.closeStream();
+    const gen = ++this.streamGen;
+    this.lifecycle = this.lifecycle
+      .catch(() => {})
+      .then(() => this.closeIfCurrent(gen));
   }
 
   async destroy(): Promise<void> {
-    await this.closeStream();
+    this.streamGen += 1;
+    await this.lifecycle.catch(() => {});
+    await this.forceClose();
   }
 
-  private ensureStream(): void {
-    if (!this.stream) {
-      void this.openStream();
-    }
+  private async reopenStream(): Promise<void> {
+    const gen = ++this.streamGen;
+    this.lifecycle = this.lifecycle
+      .catch(() => {})
+      .then(async () => {
+        await this.closeIfCurrent(gen);
+        if (gen !== this.streamGen) return;
+        this.openStream();
+      });
+    await this.lifecycle;
   }
 
   private openStream(): void {
     if (this.stream) return;
+    const gen = this.streamGen;
     this.stream = this.provider.createStream(this.config);
     this.unsubs.push(
       this.stream.on("transcript", (result) => {
+        if (gen !== this.streamGen) return;
         this.onTranscript({
           kind: "transcript",
           text: result.text,
@@ -86,23 +103,39 @@ export class STTProcessor implements Processor {
           confidence: result.confidence,
         });
         if (result.isFinal) {
-          void this.closeStream();
+          this.lifecycle = this.lifecycle
+            .catch(() => {})
+            .then(() => this.closeIfCurrent(gen))
+            .catch((err: unknown) => {
+              this.onError?.(err instanceof Error ? err : new Error(String(err)));
+            });
         }
       }),
     );
     this.unsubs.push(
       this.stream.on("error", (error) => {
+        if (gen !== this.streamGen) return;
         this.onError?.(error);
       }),
     );
   }
 
-  private async closeStream(): Promise<void> {
+  /** Close only if `gen` is still the active stream generation. */
+  private async closeIfCurrent(gen: number): Promise<void> {
+    if (gen !== this.streamGen) return;
+    await this.forceClose();
+  }
+
+  private async forceClose(): Promise<void> {
     for (const u of this.unsubs) u();
     this.unsubs = [];
-    if (this.stream) {
-      await this.stream.close();
-      this.stream = null;
+    if (!this.stream) return;
+    const s = this.stream;
+    this.stream = null;
+    try {
+      await s.close();
+    } catch (err) {
+      this.onError?.(err instanceof Error ? err : new Error(String(err)));
     }
   }
 }

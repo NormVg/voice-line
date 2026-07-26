@@ -250,7 +250,10 @@ export function createNitroWebSocketHandler(
       const ctx = peerContexts.get(peer);
       const listeners = ctx?.listeners?.close || [];
       listeners.forEach((l: any) => l());
-      void ctx?.session?.close();
+      // Always catch — unhandled rejections during WS teardown crash Node.
+      void ctx?.session?.close()?.catch((err: unknown) => {
+        console.error("[voice-line] session close failed:", err);
+      });
     },
     error(peer: any, error: any) {
       const ctx = peerContexts.get(peer);

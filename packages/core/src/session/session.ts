@@ -151,6 +151,17 @@ export class Session {
   private processingTimer: ReturnType<typeof setTimeout> | null = null;
   /** Max ms we allow `processing` state before forcibly recovering. */
   private static readonly PROCESSING_TIMEOUT_MS = 8_000;
+  /** Max ms to wait for in-flight work during close before force-teardown. */
+  private static readonly CLOSE_DRAIN_MS = 2_000;
+  /**
+   * Serializes inbound audio through VAD/STT. Concurrent `push` races corrupt
+   * VAD state; always chain through this.
+   */
+  private inboundChain: Promise<void> = Promise.resolve();
+  /** Active brain turn — awaited (with timeout) on close so teardown is clean. */
+  private activeTurn: Promise<void> = Promise.resolve();
+  /** True while close() is running — suppresses late error/event side effects. */
+  private closing = false;
 
   constructor(options: SessionOptions) {
     this.id = options.id ?? createId("ses");
@@ -186,7 +197,7 @@ export class Session {
         provider: this.stt,
         config: this.sttConfig,
         onTranscript: (frame) => {
-          void this.handleTranscript(frame);
+          this.safeVoid(this.handleTranscript(frame));
         },
         onError: (err) => this.handleError(err),
       }),
@@ -195,7 +206,7 @@ export class Session {
     this.outbound = new Pipeline([new SentenceChunker(chunkerConfig)]);
 
     this.inbound.onFrame((frame) => {
-      void this.onInboundFrame(frame);
+      this.safeVoid(this.onInboundFrame(frame));
     });
 
     // Queue sentence frames without blocking the brain token stream.
@@ -225,27 +236,28 @@ export class Session {
     await this.transport.connect(this.id);
     this.setState("connected");
 
-    let audioCount = 0;
     this.unsubs.push(
       this.transport.onAudio((chunk) => {
-        audioCount++;
-        if (audioCount % 10 === 0)
-          console.log(
-            `[session ${this.id}] Received 10 audio chunks (${chunk.byteLength} bytes each)`,
-          );
-
-        if (!this.micEnabled || this.destroyed) return;
-        void this.inbound.push({
-          kind: "audio",
-          data: chunk,
-          sampleRate: this.audio.sampleRate,
-        });
+        if (!this.micEnabled || this.destroyed || this.closing) return;
+        // Serialize so VAD never sees concurrent process() calls.
+        this.inboundChain = this.inboundChain
+          .then(() => {
+            if (this.destroyed || this.closing) return;
+            return this.inbound.push({
+              kind: "audio",
+              data: chunk,
+              sampleRate: this.audio.sampleRate,
+            });
+          })
+          .catch((err: unknown) => {
+            this.handleError(err instanceof Error ? err : new Error(String(err)));
+          });
       }),
     );
 
     this.unsubs.push(
       this.transport.onEvent((event) => {
-        void this.onClientEvent(event);
+        this.safeVoid(this.onClientEvent(event));
       }),
     );
 
@@ -264,18 +276,53 @@ export class Session {
   }
 
   async close(): Promise<void> {
-    if (this.destroyed) return;
+    if (this.destroyed || this.closing) return;
+    this.closing = true;
     this.destroyed = true;
     this.interruptTurn();
     this.clearTimers();
-    this.setState("closed");
 
-    for (const u of this.unsubs) u();
+    // Drain in-flight work so orphaned promises don't reject after teardown.
+    // Hard-cap wait so a stuck provider can't hang close forever.
+    await Promise.race([
+      Promise.all([
+        this.activeTurn.catch(() => {}),
+        this.ttsTail.catch(() => {}),
+        this.inboundChain.catch(() => {}),
+      ]),
+      sleep(Session.CLOSE_DRAIN_MS),
+    ]);
+
+    try {
+      this.setState("closed");
+    } catch {
+      /* transport may already be gone */
+    }
+
+    for (const u of this.unsubs) {
+      try {
+        u();
+      } catch {
+        /* ignore */
+      }
+    }
     this.unsubs = [];
 
-    await this.inbound.destroy();
-    await this.outbound.destroy();
-    await this.transport.disconnect();
+    try {
+      await this.inbound.destroy();
+    } catch {
+      /* ignore */
+    }
+    try {
+      await this.outbound.destroy();
+    } catch {
+      /* ignore */
+    }
+    try {
+      await this.transport.disconnect();
+    } catch {
+      /* ignore */
+    }
   }
 
   /** Inject text as if the user typed it (bypasses STT). */
@@ -335,8 +382,10 @@ export class Session {
   }
 
   private async handleTranscript(frame: Extract<Frame, { kind: "transcript" }>): Promise<void> {
+    if (this.destroyed || this.closing) return;
+
     if (!frame.isFinal) {
-      this.transport.sendEvent({ type: "transcript:partial", text: frame.text });
+      this.safeSendEvent({ type: "transcript:partial", text: frame.text });
       return;
     }
 
@@ -358,7 +407,7 @@ export class Session {
       if (this.sessionConfig.bargeIn === "ignore") return;
       if (this.sessionConfig.bargeIn === "queue") {
         const userMsg = this.history.addUser(trimmed);
-        this.transport.sendEvent({
+        this.safeSendEvent({
           type: "transcript:final",
           text: trimmed,
           messageId: userMsg.id,
@@ -372,15 +421,24 @@ export class Session {
   }
 
   private async runBrainTurn(userText: string, alreadyInHistory = false): Promise<void> {
-    if (this.destroyed) return;
+    if (this.destroyed || this.closing) return;
 
+    const turn = this.executeBrainTurn(userText, alreadyInHistory);
+    // Track for close() drain; swallow so activeTurn never becomes a rejection source.
+    this.activeTurn = turn.catch((err: unknown) => {
+      this.handleError(err instanceof Error ? err : new Error(String(err)));
+    });
+    await turn;
+  }
+
+  private async executeBrainTurn(userText: string, alreadyInHistory: boolean): Promise<void> {
     // A real turn is starting — clear the processing watchdog so it doesn't fire.
     this.clearProcessingTimer();
     this.interruptTurn();
 
     if (!alreadyInHistory) {
       const userMsg = this.history.addUser(userText);
-      this.transport.sendEvent({
+      this.safeSendEvent({
         type: "transcript:final",
         text: userText,
         messageId: userMsg.id,
@@ -416,17 +474,17 @@ export class Session {
         // has already claimed outboundEpoch.
         if (signal.aborted || this.destroyed || turnGen !== this.ttsGeneration) break;
         this.assistantBuffer += token;
-        this.transport.sendEvent({
+        this.safeSendEvent({
           type: "bot:text:delta",
           delta: token,
-          messageId: this.assistantMessageId,
+          messageId: this.assistantMessageId!,
         });
         await this.outbound.push({ kind: "text", text: token });
       }
 
-      if (!signal.aborted && turnGen === this.ttsGeneration) {
+      if (!signal.aborted && turnGen === this.ttsGeneration && !this.destroyed) {
         await this.outbound.push({ kind: "flush" });
-        await this.ttsTail;
+        await this.ttsTail.catch(() => {});
       }
 
       // Interrupted and partial already finalized by interruptTurn.
@@ -440,7 +498,7 @@ export class Session {
           id: this.assistantMessageId,
           partial,
         });
-        this.transport.sendEvent({
+        this.safeSendEvent({
           type: "bot:text:done",
           text: this.assistantBuffer,
           messageId: this.assistantMessageId,
@@ -450,15 +508,15 @@ export class Session {
         this.assistantBuffer = "";
       }
 
-      if (!this.destroyed) {
+      if (!this.destroyed && !this.closing) {
         if (this.state === "speaking" || this.state === "processing") {
           this.setState("listening");
         }
       }
     } catch (err) {
-      if (!signal.aborted && turnGen === this.ttsGeneration) {
+      if (!signal.aborted && turnGen === this.ttsGeneration && !this.destroyed) {
         this.handleError(err instanceof Error ? err : new Error(String(err)));
-        if (!this.destroyed) this.setState("listening");
+        if (!this.destroyed && !this.closing) this.setState("listening");
       }
     } finally {
       // Only the active turn may clear shared turn fields / drain the queue.
@@ -468,12 +526,14 @@ export class Session {
         this.assistantBuffer = "";
         this.outboundEpoch = -1;
         this.outbound.reset();
-        this.bumpIdle();
+        if (!this.destroyed && !this.closing) {
+          this.bumpIdle();
 
-        if (this.transcriptQueue.length > 0 && !this.destroyed) {
-          const nextPrompt = this.transcriptQueue.join("\n");
-          this.transcriptQueue = [];
-          void this.runBrainTurn(nextPrompt, true);
+          if (this.transcriptQueue.length > 0) {
+            const nextPrompt = this.transcriptQueue.join("\n");
+            this.transcriptQueue = [];
+            this.safeVoid(this.runBrainTurn(nextPrompt, true));
+          }
         }
       }
     }
@@ -494,11 +554,16 @@ export class Session {
 
         for await (const chunk of stream) {
           if (epoch !== this.ttsGeneration || this.destroyed) break;
-          this.transport.sendAudio(chunk.data);
+          try {
+            this.transport.sendAudio(chunk.data);
+          } catch (err) {
+            this.handleError(err instanceof Error ? err : new Error(String(err)));
+            break;
+          }
         }
       })
       .catch((err: unknown) => {
-        if (epoch !== this.ttsGeneration) return;
+        if (epoch !== this.ttsGeneration || this.destroyed || this.closing) return;
         this.handleError(err instanceof Error ? err : new Error(String(err)));
       });
   }
@@ -512,20 +577,28 @@ export class Session {
       this.turnAbort.abort();
       this.turnAbort = null;
     }
-    this.tts.abort();
+    try {
+      this.tts.abort();
+    } catch {
+      /* provider abort must never throw out of interrupt */
+    }
     // Invalidate every in-flight TTS item and revoke outbound ownership.
     this.ttsGeneration += 1;
     this.outboundEpoch = -1;
+    // Keep the prior chain attached so its rejection is always handled, but
+    // stop awaiting it for new work — epoch guards make old items no-ops.
+    const prior = this.ttsTail;
     this.ttsTail = Promise.resolve();
+    void prior.catch(() => {});
     this.outbound.reset();
-    this.transport.sendEvent({ type: "audio:flush" });
+    this.safeSendEvent({ type: "audio:flush" });
 
     if (this.assistantMessageId && this.assistantBuffer.length > 0) {
       this.history.addAssistant(this.assistantBuffer, {
         id: this.assistantMessageId,
         partial: true,
       });
-      this.transport.sendEvent({
+      this.safeSendEvent({
         type: "bot:text:done",
         text: this.assistantBuffer,
         messageId: this.assistantMessageId,
@@ -540,25 +613,53 @@ export class Session {
     if (this.state === next) return;
     const prev = this.state;
     this.state = next;
-    this.transport.sendEvent({ type: "state:change", state: next });
+    this.safeSendEvent({ type: "state:change", state: next });
     for (const listener of this.stateListeners) {
-      listener(next, prev);
+      try {
+        listener(next, prev);
+      } catch (err) {
+        // Listener errors must not kill the session state machine.
+        if (!this.closing && !this.destroyed) {
+          this.onError?.(toVoiceLineError("ERR_INTERNAL", err));
+        }
+      }
     }
   }
 
   private handleError(error: unknown): void {
+    if (this.closing || this.destroyed) return;
     const vle = toVoiceLineError("ERR_INTERNAL", error);
-    this.onError?.(vle);
-    this.transport.sendEvent({
+    try {
+      this.onError?.(vle);
+    } catch {
+      /* ignore */
+    }
+    this.safeSendEvent({
       type: "error",
       error: { code: vle.code, message: vle.message },
     });
   }
 
+  /** Fire-and-forget with guaranteed rejection handling. */
+  private safeVoid(p: Promise<unknown>): void {
+    void p.catch((err: unknown) => {
+      this.handleError(err instanceof Error ? err : new Error(String(err)));
+    });
+  }
+
+  private safeSendEvent(event: VoiceLineEvent): void {
+    if (this.destroyed && event.type !== "state:change") return;
+    try {
+      this.transport.sendEvent(event);
+    } catch {
+      /* transport may already be closed during teardown */
+    }
+  }
+
   private armMaxDuration(): void {
     this.clearTimers();
     this.maxDurationTimer = setTimeout(() => {
-      void this.close();
+      this.safeVoid(this.close());
     }, this.sessionConfig.maxDurationMs);
     this.bumpIdle();
   }
@@ -566,7 +667,7 @@ export class Session {
   private bumpIdle(): void {
     if (this.idleTimer) clearTimeout(this.idleTimer);
     this.idleTimer = setTimeout(() => {
-      void this.close();
+      this.safeVoid(this.close());
     }, this.sessionConfig.idleTimeoutMs);
   }
 
@@ -595,4 +696,8 @@ export class Session {
     this.maxDurationTimer = null;
     this.idleTimer = null;
   }
+}
+
+function sleep(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
 }

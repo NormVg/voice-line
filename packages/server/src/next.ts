@@ -161,7 +161,9 @@ export function createNextWebSocketHandler(
       
       // When the socket closes, close the session
       client.on("close", () => {
-        void session.close();
+        void session.close().catch((err: unknown) => {
+          console.error("[voice-line] session close failed:", err);
+        });
       });
       
     } catch (err) {
