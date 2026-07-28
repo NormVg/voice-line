@@ -801,7 +801,10 @@ voice-line/
 - [x] `@voice-line/transport-ws` — raw WebSocket client + `fromWebSocket` server accept path
 - [x] WS integration tests (events, audio, full session text/voice turns, interrupt)
 - [x] `examples/nuxt-app` — Nuxt + WebSocket + Sarvam + AI SDK
-- [ ] `examples/` — remaining demo apps (eve, multi-agent, Ably)
+- [x] `examples/nuxt-showcase` — polished WS showcase with barge-in + text interrupt
+- [x] `examples/nuxt-ably` — Ably transport demo
+- [x] `examples/standalone` — minimal Node WS server (shared SessionManager + caps)
+- [ ] `examples/` — remaining demos (eve, multi-agent)
 
 ### Phase 4 — Ecosystem & Utilities
 - [x] `@voice-line/transport-ws` — raw WebSocket adapter

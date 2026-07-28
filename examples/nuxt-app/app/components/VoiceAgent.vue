@@ -20,6 +20,7 @@ const transport = shallowRef(
       const sep = base.includes("?") ? "&" : "?";
       return `${base}${sep}session=${encodeURIComponent(sessionId)}`;
     },
+    maxBufferedBytes: 256 * 1024,
   }),
 );
 
@@ -137,8 +138,11 @@ async function onToggleMic() {
           Disconnect
         </button>
       </template>
-      <span v-if="isBotSpeaking" class="pill">bot speaking</span>
+      <span v-if="isBotSpeaking" class="pill">bot speaking · barge-in ready</span>
     </div>
+    <p v-if="isConnected && isBotSpeaking" class="hint">
+      Talk over the bot or type below to interrupt.
+    </p>
 
     <div class="messages" aria-live="polite">
       <div
@@ -156,8 +160,8 @@ async function onToggleMic() {
         <p>{{ partial }}…</p>
       </div>
       <p v-if="messages.length === 0 && !partial" class="empty">
-        Connect, then speak or type. Audio goes over WebSocket; Sarvam does
-        STT/TTS; AI SDK is the brain.
+        Connect, then speak or type. Audio over WebSocket · Sarvam STT/TTS · AI
+        SDK brain. Interrupt anytime while the bot is speaking.
       </p>
     </div>
 
@@ -300,6 +304,12 @@ h1 {
   border: 1px solid #5b4b8a;
   border-radius: 999px;
   padding: 0.25rem 0.6rem;
+}
+
+.hint {
+  margin: 0;
+  font-size: 0.8rem;
+  color: var(--muted);
 }
 
 .messages {

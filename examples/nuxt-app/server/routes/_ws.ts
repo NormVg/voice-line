@@ -2,7 +2,8 @@ import { createNitroWebSocketHandler, nitroToWs } from "@voice-line/server/nitro
 import { fromWebSocket } from "@voice-line/transport-ws";
 import { createVoiceStack } from "../utils/voice-stack";
 
-// Cache the stack globally to avoid recreating it on every connection
+// Cache the stack globally — shared STT/TTS is multi-session safe
+// (barge-in uses per-turn AbortSignal, not provider-global abort).
 let globalStack: ReturnType<typeof createVoiceStack> | null = null;
 
 function getStack() {
@@ -14,27 +15,28 @@ function getStack() {
     ollamaBaseUrl: String(config.ollamaBaseUrl || "https://ollama.com"),
     ollamaModel: String(config.ollamaModel || "gemma4:31b-cloud"),
   });
+  if (globalStack.warnings.length) {
+    for (const w of globalStack.warnings) console.warn(`[voice-line] ${w}`);
+  }
   return globalStack;
 }
 
 export default defineWebSocketHandler(
-  createNitroWebSocketHandler((peer: any, url, wsListeners) => {
-    // We can't log here because we need to log inside the message handler
-    // We will do it in nitro.ts instead
-    const env = useRuntimeConfig();
+  createNitroWebSocketHandler((peer: any, _url, wsListeners) => {
     const stack = getStack();
 
     return {
-      // 1. Pass the Nitro peer through our polyfill into the standard WS transport
-      //    wsListeners is the SAME object the message dispatcher writes to
-      transport: fromWebSocket(nitroToWs(peer, wsListeners)),
-      
-      // 2. Attach providers and brain
+      transport: fromWebSocket(nitroToWs(peer, wsListeners), {
+        maxBufferedBytes: 256 * 1024,
+      }),
       stt: stack.stt,
       tts: stack.tts,
       brain: stack.brain,
-
-      // 3. Configure the session details
+      maxSessions: 20,
+      chunker: {
+        maxChars: 80,
+        flushOnPunctuation: true,
+      },
       sttConfig: {
         language: "unknown",
         sampleRate: 16_000,
@@ -56,28 +58,20 @@ export default defineWebSocketHandler(
       session: {
         maxDurationMs: 30 * 60 * 1000,
         idleTimeoutMs: 5 * 60 * 1000,
+        bargeIn: "interrupt",
       },
       onSessionStart: (session: any) => {
-        console.log(`[voice-line] Started WS session: ${session.id}`);
-        session.onStateChange((state) => {
-          console.log(`[voice-line ${session.id}] State changed to: ${state}`);
+        console.log(`[voice-line] session ${session.id} started`);
+        session.onStateChange((state: string, prev: string) => {
+          console.log(`[voice-line ${session.id}] ${prev} → ${state}`);
         });
-        session.inbound.onFrame((frame) => {
-          if (frame.kind === "text") {
-            console.log(`[voice-line ${session.id}] Inbound text: ${frame.text}`);
-          } else if (frame.kind === "error") {
-            console.error(`[voice-line ${session.id}] Inbound error:`, frame.error);
-          } else if (frame.kind === "audio") {
-            // console.log(`Audio chunk of ${frame.buffer.byteLength} bytes`);
-          } else {
-            console.log(`[voice-line ${session.id}] Inbound frame: ${frame.kind}`);
-          }
-        });
+      },
+      onSessionEnd: (session: any) => {
+        console.log(`[voice-line] session ${session.id} ended`);
       },
       onError: (err: any, session: any) => {
-        console.error(`[voice-line ${session?.id}] ERROR:`, err);
+        console.error(`[voice-line ${session?.id}]`, err.message ?? err);
       },
     };
-  })
+  }),
 );
-

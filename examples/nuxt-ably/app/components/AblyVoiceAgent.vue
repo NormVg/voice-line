@@ -128,8 +128,11 @@ onUnmounted(() => {
         <button class="btn" type="button" @click="onToggleMic">Mic</button>
         <button class="btn danger" type="button" @click="onDisconnect">Disconnect</button>
       </template>
-      <span v-if="isBotSpeaking" class="pill">bot speaking</span>
+      <span v-if="isBotSpeaking" class="pill">bot speaking · barge-in ready</span>
     </div>
+    <p v-if="isConnected && isBotSpeaking" class="hint">
+      Talk over the bot or type below to interrupt.
+    </p>
 
     <div class="messages" aria-live="polite">
       <div v-for="m in messages" :key="m.id" class="msg" :class="m.role">
@@ -142,7 +145,8 @@ onUnmounted(() => {
         <p>{{ partial }}…</p>
       </div>
       <p v-if="messages.length === 0 && !partial" class="empty">
-        Connect, then speak or type. Audio and events go over Ably!
+        Connect, then speak or type. Audio and events go over Ably. Interrupt
+        anytime while the bot is speaking.
       </p>
     </div>
 
@@ -289,6 +293,12 @@ onUnmounted(() => {
 .btn.primary:hover:not(:disabled) { background: #e5e5e5; }
 .btn.danger { color: #fca5a5; border-color: rgba(239,68,68,0.3); }
 .btn.danger:hover:not(:disabled) { background: rgba(239,68,68,0.1); }
+
+.hint {
+  margin: 0;
+  font-size: 0.8rem;
+  color: var(--muted);
+}
 
 .pill {
   font-size: 0.75rem;

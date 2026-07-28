@@ -39,7 +39,12 @@ export default defineEventHandler(
       stt: stack.stt,
       tts: stack.tts,
       brain: stack.brain,
-      
+      // Shared createServer path — SessionManager enforces this.
+      maxSessions: 20,
+      chunker: {
+        maxChars: 80,
+        flushOnPunctuation: true,
+      },
       sttConfig: {
         language: "unknown",
         sampleRate: 16_000,
@@ -61,14 +66,17 @@ export default defineEventHandler(
       },
       session: {
         maxDurationMs: 30 * 60 * 1000, // 30 mins
-        idleTimeoutMs: 5 * 60 * 1000,  // 5 mins
+        idleTimeoutMs: 5 * 60 * 1000, // 5 mins
         bargeIn: "interrupt",
       },
-      onStateChange: (state: any, prev: any) => {
-        console.log(`[session] ${prev} → ${state}`);
+      onSessionStart: (session: any) => {
+        console.log(`[voice-line] ably session ${session.id} started`);
       },
-      onError: (err: any) => {
-        console.error(`[session error]`, err.message);
+      onSessionEnd: (session: any) => {
+        console.log(`[voice-line] ably session ${session.id} ended`);
+      },
+      onError: (err: any, session: any) => {
+        console.error(`[voice-line ${session?.id ?? "session"}]`, err.message);
       },
     };
   })

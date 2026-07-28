@@ -61,6 +61,8 @@ Without `SARVAM_API_KEY`, STT/TTS calls will fail (text path still exercises the
 1. Click **Connect** (allows microphone when prompted).
 2. Speak — VAD detects end of utterance → Sarvam STT → LLM → Sarvam TTS.
 3. Or type in the box and hit **Send** (bypasses STT, same brain + TTS).
+4. **Barge-in:** while the bot is speaking, talk over it or type a new message — playback flushes and a new turn starts. Headphones work best.
+5. Server enforces `maxSessions: 20` and drops outbound audio under WS backpressure (~256KB).
 
 ---
 

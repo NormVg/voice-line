@@ -1,7 +1,22 @@
 import type { VoiceLineServerConfig } from "./config.js";
+import { DEFAULT_MAX_SESSIONS } from "./config.js";
 import { createServer } from "./server.js";
 import { createTTSHandlerBase, type TTSHandlerConfig } from "./tts-handler.js";
 import { createStatelessHandlerBase, type StatelessHandlerConfig } from "./stateless.js";
+
+/**
+ * Process-wide live sessions for Nitro WS peers.
+ * createNitroWebSocketHandler builds a server per peer (transport is socket-bound),
+ * so SessionManager.maxSessions alone cannot cap peers — this Set does.
+ */
+const nitroLiveSessions = new Set<string>();
+
+/**
+ * Process-wide live sessions for HTTP createEventHandler (Ably / token path).
+ * Factory configs create a new SessionManager per request; this Set enforces
+ * maxSessions across the process.
+ */
+const httpLiveSessions = new Set<string>();
 
 /**
  * Nuxt / Nitro event handler factory.
@@ -17,7 +32,7 @@ import { createStatelessHandlerBase, type StatelessHandlerConfig } from "./state
 export function createEventHandler(
   configOrFactory: VoiceLineServerConfig | ((event: any) => Promise<VoiceLineServerConfig> | VoiceLineServerConfig)
 ) {
-  // If static config, create the server once globally.
+  // If static config, create the server once globally (true multi-session manager).
   const staticServer = typeof configOrFactory === "function" ? null : createServer(configOrFactory);
 
   return async (event: any) => {
@@ -28,22 +43,42 @@ export function createEventHandler(
       currentConfig = configOrFactory;
     }
 
-    const server = staticServer ?? createServer(currentConfig);
+    const maxSessions = currentConfig.maxSessions ?? DEFAULT_MAX_SESSIONS;
+    // Factory path creates a new SessionManager per request — enforce capacity
+    // process-wide. Static config uses SessionManager.maxSessions directly.
+    const useGlobalCap = !staticServer && maxSessions > 0;
+
+    if (useGlobalCap && httpLiveSessions.size >= maxSessions) {
+      const err = new Error(
+        `Session limit reached (${maxSessions}). Try again later.`,
+      );
+      (err as Error & { code?: string }).code = "ERR_CAPACITY";
+      currentConfig.onError?.(err);
+      throw err;
+    }
+
+    const server =
+      staticServer ??
+      createServer({
+        ...currentConfig,
+        // One session per throwaway manager; global Set is the real cap.
+        maxSessions: maxSessions > 0 ? 1 : 0,
+      });
 
     try {
       const body = event.context?.body ?? null;
       const { session, clientPayload } = await server.createSession(body?.sessionId);
-      
-      // If we created a dynamic server just for this request, close it when the session ends
-      // to avoid leaking the session manager, OR we can just let it GC. 
-      // Actually, SessionManager doesn't hold references outside of its sessions.
-      
+
+      if (useGlobalCap) {
+        httpLiveSessions.add(session.id);
+        session.onStateChange((state) => {
+          if (state === "closed") httpLiveSessions.delete(session.id);
+        });
+      }
+
       return { sessionId: session.id, ...clientPayload };
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err);
-      
-      // We don't have currentConfig in scope if it fails before initialization, 
-      // but try block is inside, so we do.
       currentConfig?.onError?.(err instanceof Error ? err : new Error(message));
       throw err;
     }
@@ -179,27 +214,56 @@ export function createNitroWebSocketHandler(
   configFactory: (peer: any, url: URL, wsListeners: Record<string, Function[]>) => VoiceLineServerConfig | Promise<VoiceLineServerConfig>
 ) {
   // Store peer contexts to route messages and handle closures
-  const peerContexts = new WeakMap<any, { listeners: Record<string, Function[]>; server?: ReturnType<typeof createServer>; session?: any }>();
+  const peerContexts = new WeakMap<
+    any,
+    { listeners: Record<string, Function[]>; server?: ReturnType<typeof createServer>; session?: any; sessionId?: string }
+  >();
 
   return {
     async open(peer: any) {
       const url = new URL(peer.url, "http://localhost");
-      const ctx: { listeners: Record<string, Function[]>; server?: ReturnType<typeof createServer>; session?: any } = { listeners: {} };
+      const ctx: {
+        listeners: Record<string, Function[]>;
+        server?: ReturnType<typeof createServer>;
+        session?: any;
+        sessionId?: string;
+      } = { listeners: {} };
       peerContexts.set(peer, ctx);
 
       try {
         const config = await configFactory(peer, url, ctx.listeners);
-        const server = createServer(config);
+        const maxSessions = config.maxSessions ?? DEFAULT_MAX_SESSIONS;
+
+        // Process-wide cap (SessionManager is per-peer for socket-bound transports).
+        if (maxSessions > 0 && nitroLiveSessions.size >= maxSessions) {
+          console.error(
+            `[voice-line] Session limit reached (${maxSessions}). Rejecting peer.`,
+          );
+          try {
+            peer.close(1013, "Session limit reached");
+          } catch {
+            peer.close();
+          }
+          return;
+        }
+
+        const server = createServer({
+          ...config,
+          // Per-peer manager only holds one session; global Set enforces the real cap.
+          maxSessions: maxSessions > 0 ? 1 : 0,
+        });
         ctx.server = server;
-        
+
         // Use the raw peer.id or session query param
         const sessionId = url.searchParams.get("session") ?? peer.id;
-        
+
         // For raw WebSockets, the config's transport property is already the connected socket!
         // `createServer.createSession` will call `session.start()`, which waits for transport connect.
         // `WsTransport.connect` resolves instantly since the socket is already open.
         const { session } = await server.createSession(sessionId);
         ctx.session = session;
+        ctx.sessionId = session.id;
+        nitroLiveSessions.add(session.id);
       } catch (err) {
         console.error("[voice-line] Failed to start WS session:", err);
         peer.close();
@@ -248,6 +312,9 @@ export function createNitroWebSocketHandler(
     },
     close(peer: any) {
       const ctx = peerContexts.get(peer);
+      if (ctx?.sessionId) {
+        nitroLiveSessions.delete(ctx.sessionId);
+      }
       const listeners = ctx?.listeners?.close || [];
       listeners.forEach((l: any) => l());
       // Always catch — unhandled rejections during WS teardown crash Node.

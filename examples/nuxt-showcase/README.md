@@ -1,75 +1,61 @@
-# Nuxt Minimal Starter
+# voice-line · Nuxt Showcase
 
-Look at the [Nuxt documentation](https://nuxt.com/docs/getting-started/introduction) to learn more.
+Polished demo of `@voice-line/*` over a raw WebSocket:
+
+| Layer | Implementation |
+|-------|----------------|
+| App | Nuxt 4 + Vue 3 |
+| Transport | `@voice-line/transport-ws` |
+| STT / TTS | Sarvam Saaras + Bulbul |
+| Brain | Vercel AI SDK + Ollama Cloud (or echo fallback) |
+
+## Features exercised
+
+- **Barge-in** — speak or type while the bot is talking; audio flushes and the turn aborts
+- **Shared providers** — one STT/TTS instance for all peers (per-turn `AbortSignal`)
+- **Session cap** — `maxSessions: 20` process-wide via Nitro handler
+- **Backpressure** — outbound audio dropped if the socket buffer exceeds 256KB
+- **Text interrupt** — composer uses the same brain path as voice
 
 ## Setup
 
-Make sure to install dependencies:
+From the monorepo root:
 
 ```bash
-# npm
-npm install
-
-# pnpm
 pnpm install
-
-# yarn
-yarn install
-
-# bun
-bun install
-```
-
-## Development Server
-
-Start the development server on `http://localhost:3000`:
-
-```bash
-# npm
-npm run dev
-
-# pnpm
-pnpm dev
-
-# yarn
-yarn dev
-
-# bun
-bun run dev
-```
-
-## Production
-
-Build the application for production:
-
-```bash
-# npm
-npm run build
-
-# pnpm
 pnpm build
-
-# yarn
-yarn build
-
-# bun
-bun run build
+# optional env in examples/nuxt-showcase/.env
+# SARVAM_API_KEY=...
+# OLLAMA_API_KEY=...
+pnpm --filter nuxt-showcase dev
 ```
 
-Locally preview production build:
+Open [http://localhost:3000](http://localhost:3000).
 
-```bash
-# npm
-npm run preview
+### Env
 
-# pnpm
-pnpm preview
+| Variable | Required | Purpose |
+|----------|----------|---------|
+| `SARVAM_API_KEY` | for real STT/TTS | Sarvam subscription key |
+| `OLLAMA_API_KEY` | for real LLM | Ollama Cloud API key |
+| `OLLAMA_BASE_URL` | no | default `https://ollama.com` |
+| `OLLAMA_MODEL` | no | default `gpt-oss:20b-cloud` |
 
-# yarn
-yarn preview
+Without Ollama keys the brain echoes. Without Sarvam, STT/TTS will fail (text path still works for session plumbing).
 
-# bun
-bun run preview
+## Usage
+
+1. **Initialize Session** — allow the microphone.
+2. Speak — VAD → STT → LLM → TTS.
+3. While the bot speaks, **talk over it** (headphones best) or type a new message to barge-in.
+4. Partial assistant messages show a red interrupt marker.
+
+## Layout
+
 ```
-
-Check out the [deployment documentation](https://nuxt.com/docs/getting-started/deployment) for more information.
+examples/nuxt-showcase/
+├── app/app.vue                 # UI + useVoiceAgent
+├── server/routes/_ws.ts        # Nitro WS + voice-line session
+├── nuxt.config.ts
+└── README.md
+```

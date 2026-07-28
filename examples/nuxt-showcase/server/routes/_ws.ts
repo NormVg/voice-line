@@ -5,26 +5,51 @@ import { fromAISDK } from '@voice-line/adapter-ai-sdk';
 import { createOllama } from 'ai-sdk-ollama';
 import { streamText } from 'ai';
 
-// This handles the WebSocket upgrade directly within Nuxt Nitro
+/**
+ * Shared providers across peers — safe because barge-in uses per-turn
+ * AbortSignal (not provider-global abort).
+ */
+let sharedStt: ReturnType<typeof sarvam.stt> | null = null;
+let sharedTts: ReturnType<typeof sarvam.tts> | null = null;
+
+function getProviders(apiKey: string | undefined) {
+  if (!sharedStt) {
+    sharedStt = sarvam.stt({
+      apiKey: apiKey || undefined,
+      language: 'en-IN',
+      mode: 'transcribe',
+      streaming: true,
+    });
+  }
+  if (!sharedTts) {
+    sharedTts = sarvam.tts({
+      apiKey: apiKey || undefined,
+      voice: 'anushka',
+    });
+  }
+  return { stt: sharedStt, tts: sharedTts };
+}
+
 export default defineWebSocketHandler(
-  createNitroWebSocketHandler((peer: any, url, wsListeners) => {
+  createNitroWebSocketHandler((peer: any, _url, wsListeners) => {
     const config = useRuntimeConfig();
     const hasOllama = !!config.ollamaApiKey;
-    let brain;
+    const { stt, tts } = getProviders(config.sarvamApiKey as string | undefined);
 
+    let brain;
     if (hasOllama) {
       const ollama = createOllama({
         apiKey: String(config.ollamaApiKey),
         baseURL: String(config.ollamaBaseUrl || 'https://ollama.com'),
       });
       brain = fromAISDK({
-        model: ollama('gpt-oss:20b-cloud'),
+        model: ollama(String(config.ollamaModel || 'gpt-oss:20b-cloud')),
         system: `You are the voice of 'voice-line', a high-performance, real-time voice layer for AI agents.
 You are speaking to a developer who is testing this showcase application.
 Keep your responses extremely concise (1-2 sentences maximum).
 Never use markdown or lists.
-Speak in a confident, direct, and slightly technical tone.`,
-        // Force AI SDK 7 from this app
+Speak in a confident, direct, and slightly technical tone.
+If the user interrupts you, answer the new question — do not continue the previous monologue.`,
         streamText: (opts) =>
           streamText({
             model: opts.model,
@@ -42,30 +67,30 @@ Speak in a confident, direct, and slightly technical tone.`,
     }
 
     return {
-      transport: fromWebSocket(nitroToWs(peer, wsListeners)),
-      stt: sarvam.stt({
-        apiKey: config.sarvamApiKey || undefined,
-        language: 'en-IN',
-        mode: 'transcribe',
-        streaming: true
+      transport: fromWebSocket(nitroToWs(peer, wsListeners), {
+        // Drop outbound audio if the client is too slow (~256KB default).
+        maxBufferedBytes: 256 * 1024,
       }),
-      tts: sarvam.tts({ apiKey: config.sarvamApiKey || undefined, voice: 'anushka' }),
+      stt,
+      tts,
       brain,
+      maxSessions: 20,
       chunker: {
-        maxChars: 120, // slightly shorter for snappy response
+        maxChars: 80, // snappier first TTS chunk
+        flushOnPunctuation: true,
       },
       sttConfig: {
-        language: "en-IN",
+        language: 'en-IN',
         sampleRate: 16_000,
-        encoding: "pcm_s16le",
-        model: "saaras:v3",
+        encoding: 'pcm_s16le',
+        model: 'saaras:v3',
       },
       ttsConfig: {
-        voice: "shubh",
-        language: "en-IN",
+        voice: 'shubh',
+        language: 'en-IN',
         sampleRate: 16_000,
-        format: "pcm16",
-        model: "bulbul:v3",
+        format: 'pcm16',
+        model: 'bulbul:v3',
       },
       vad: {
         confidence: 0.35,
@@ -75,13 +100,19 @@ Speak in a confident, direct, and slightly technical tone.`,
       session: {
         maxDurationMs: 30 * 60 * 1000,
         idleTimeoutMs: 5 * 60 * 1000,
+        bargeIn: 'interrupt',
       },
       onSessionStart: (session: any) => {
-        console.log(`[voice-line] Started WS session: ${session.id}`);
+        console.log(
+          `[voice-line] session ${session.id} live (showcase)`,
+        );
+      },
+      onSessionEnd: (session: any) => {
+        console.log(`[voice-line] session ${session.id} ended`);
       },
       onError: (err: any, session: any) => {
         console.error(`[voice-line ${session?.id}]`, err.message);
       },
     };
-  })
+  }),
 );
